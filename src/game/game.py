@@ -7,43 +7,19 @@ from game.player import Player
 from game.state_manager import GameStateManager
 
 
-class Prsi:
+class PrsiEnv:
     STARTING_HAND_SIZE = 4
-    MAX_PLAYER_COUNT = 6  # 32 - 7 * 4 is not enough for everyone to draw
+    PLAYER_COUNT = 2
 
-    def __init__(self) -> None:
-        self._player_count: int = 0
+    def __init__(self, show_ui: bool = False) -> None:
         self._players: list[Player] = []
         self._deck: Deck = Deck()
         self._effect_manager: GameStateManager = GameStateManager()
         self._last_winner: Player | None = None
-        self._last_player_count: int = 0
-        self._done_playing: list[Player] = []
-
-    @staticmethod
-    def _print_menu() -> int:
-        """
-        Print the menu.
-
-        Returns:
-          The number of players who will be playing. 0 is returned if the user
-          wishes to exit.
-        """
-        os.system("clear")
-        while True:
-            user_input = input(
-                "Please select the number of players (2-6). Enter 0 to exit: "
-            )
-            try:
-                num_players = int(user_input)
-                if 2 <= num_players <= Prsi.MAX_PLAYER_COUNT or num_players == 0:
-                    return num_players
-                raise ValueError
-            except ValueError:
-                print("Please insert a valid number of players.")
+        self._show_ui = show_ui
 
     def _deal(self) -> None:
-        for _ in range(Prsi.STARTING_HAND_SIZE):
+        for _ in range(PrsiEnv.STARTING_HAND_SIZE):
             for player in self._players:
                 player.take_drawn_cards([self._deck.draw_card()])
 
@@ -84,19 +60,12 @@ class Prsi:
 
         return player_choice
 
-    def start_game(self) -> None:
-        while True:
-            self._player_count = Prsi._print_menu()
-            if not self._player_count:
-                return
-            self._deck.reset()
-            self._players = [Player(i) for i in range(self._player_count)]
-            if self._last_winner and self._last_player_count != self._player_count:
-                self._last_winner = None
-            self._effect_manager.update(self._deck.discard_pile[0], first_card=True)
-            self._done_playing = []
-            self._deal()
-            self._game_loop()
+    def play(self) -> None:
+        self._deck.reset()
+        self._players = [Player(i) for i in range(self.PLAYER_COUNT)]
+        self._effect_manager.update(self._deck.discard_pile[0], first_card=True)
+        self._deal()
+        self._game_loop()
 
     def _draw_cards(self) -> list[Card]:
         match self._effect_manager.current_effect:
@@ -118,19 +87,16 @@ class Prsi:
         if self._last_winner is None:
             raise RuntimeError
         print(f"Winner: Player #{self._last_winner.id + 1}")
-        for position, player in enumerate(self._done_playing[1:], start=2):
-            print(f"Finished at position {position}: Player #{player.id + 1}")
-
         input("\nPress Enter to continue.")
 
     def _end_game(self) -> None:
-        if not self._done_playing:
-            raise RuntimeError("Game ended without any players finishing.")
-        self._last_winner = self._done_playing[0]
         self._print_order()
 
-    def _take_turn(self, player: Player) -> None:
-
+    def _take_turn(self, player: Player) -> bool:
+        """
+        Returns:
+          Whether `player` won the game
+        """
         if not player.card_count():
             seven_hearts = Card(Suit.HEARTS, Rank.SEVEN)
             if (
@@ -139,9 +105,9 @@ class Prsi:
             ):
                 pass
             else:
-                self._done_playing.append(player)
+                self._last_winner = player
                 self._effect_manager.update()
-                return
+                return True
         player_choice = self._get_player_card_choice(player)
 
         if player_choice is not None:
@@ -151,25 +117,16 @@ class Prsi:
             player.take_drawn_cards(drawn)
 
         self._effect_manager.update(player_choice)
+        return False
 
     def _game_loop(self) -> None:
-        if not 2 <= self._player_count <= Prsi.MAX_PLAYER_COUNT:
-            raise RuntimeError("Player count not valid.")
-
-        while len(self._done_playing) + 1 < self._player_count:
+        victory = False
+        while not victory:
             for player in self._players:
-                if len(self._done_playing) + 1 >= self._player_count:
-                    break
-                if player in self._done_playing:
-                    continue
                 if self._last_winner is not None and player != self._last_winner:
                     continue  # start with last winner
                 self._last_winner = None
-
-                self._take_turn(player)
-
-        for player in self._players:  # add last player for displaying purposes
-            if player not in self._done_playing:
-                self._done_playing.append(player)
+                if victory := self._take_turn(player):
+                    break
 
         self._end_game()
