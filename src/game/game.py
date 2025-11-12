@@ -7,7 +7,7 @@ from game.player import Player
 from game.state_manager import GameStateManager
 
 
-class PrsiEnv:
+class Prsi:
     STARTING_HAND_SIZE = 4
     PLAYER_COUNT = 2
 
@@ -19,7 +19,7 @@ class PrsiEnv:
         self._show_ui = show_ui
 
     def _deal(self) -> None:
-        for _ in range(PrsiEnv.STARTING_HAND_SIZE):
+        for _ in range(Prsi.STARTING_HAND_SIZE):
             for player in self._players:
                 player.take_drawn_cards([self._deck.draw_card()])
 
