@@ -5,6 +5,7 @@ from game.deck import Deck
 from game.card import Card
 from game.player import Player
 from game.state_manager import GameStateManager
+from agents.utils import Action, CARD_TO_INDEX, SUIT_TO_INDEX
 
 
 class Prsi:
@@ -50,7 +51,7 @@ class Prsi:
         print("\nCards on hand:")
         player.print_hand()
 
-    def _get_player_card_choice(self, player: Player) -> Card | None:
+    def prompt_player_for_card_choice(self, player: Player) -> Card | None:
         self._print_game_state(player)
         allowed = self._effect_manager.find_allowed_cards()
         print("\nPlayable cards:")
@@ -62,7 +63,7 @@ class Prsi:
     def play(self) -> None:
         self._deck.reset()
         self._players = [Player(i) for i in range(self.PLAYER_COUNT)]
-        self._effect_manager.update(self._deck.discard_pile[0], first_card=True)
+        self._effect_manager.update(self._deck.discard_pile[0], self._deck.discard_pile[0].suit)
         self._deal()
         self._game_loop()
 
@@ -107,7 +108,7 @@ class Prsi:
                 self._last_winner = player
                 self._effect_manager.update()
                 return True
-        player_choice = self._get_player_card_choice(player)
+        player_choice = self.prompt_player_for_card_choice(player)
 
         if player_choice is not None:
             self._deck.play_card(player_choice)

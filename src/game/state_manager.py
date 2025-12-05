@@ -15,7 +15,7 @@ class GameStateManager:
         self.current_effect: CardEffect | None = None
         self.effect_strength: int = 0  # values range from 0 to 4 (draw 8 cards)
 
-    def update(self, card: Card | None = None, first_card: bool = False) -> None:
+    def update(self, card: Card | None, suit: Suit) -> None:
         if card is None:
             self.current_effect = None  # No card was played -> No effect
             self.effect_strength = 0
@@ -35,11 +35,8 @@ class GameStateManager:
         elif card.rank is Rank.OBER:
             self.current_effect = None
             self.effect_strength = 0
-            chosen_suit = (
-                GameStateManager._get_suit_choice() if not first_card else card.suit
-            )
             self.top_card = card
-            self.actual_suit = chosen_suit
+            self.actual_suit = suit
 
         else:
             self.current_effect = None

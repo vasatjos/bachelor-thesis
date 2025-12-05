@@ -1,9 +1,10 @@
 from game.card import Card
+from game.card_utils import COLOR_RESET, Rank, Suit
 
 
 class Player:
     def __init__(self, player_id: int) -> None:
-        self._hand_set: set[Card] = set()
+        self.hand_set: set[Card] = set()
         self._id = player_id
 
     @property
@@ -16,7 +17,7 @@ class Player:
         return self._id == other._id
 
     def card_count(self) -> int:
-        return len(self._hand_set)
+        return len(self.hand_set)
 
     def print_hand(self, cards: list[Card] | None = None) -> None:
         """
@@ -24,12 +25,12 @@ class Player:
         """
 
         if cards is None:
-            cards = list(self._hand_set)
+            cards = list(self.hand_set)
         cards.sort()
         for i, card in enumerate(cards, start=1):
             print(f"{i:>3}. {card}")
 
-    def select_card_to_play(self, allowed: set[Card]) -> Card | None:
+    def select_card_to_play(self, allowed: set[Card]) -> tuple[Card | None, Suit | None]:
         """
         Select a card from the players hand which he will play.
 
@@ -42,10 +43,10 @@ class Player:
           Otherwise simply the card the player chose to play.
         """
 
-        playable = list(self._hand_set & allowed)
+        playable = list(self.hand_set & allowed)
         if len(playable) == 0:
             input("No cards available, press enter to draw/skip.")
-            return None
+            return None, None
         self.print_hand(playable)
 
         while True:
@@ -54,7 +55,7 @@ class Player:
                 + "don't enter anything to draw a card: "
             )
             if choice_input == "":
-                return None
+                return None, None
 
             try:
                 choice = int(choice_input)
@@ -67,8 +68,36 @@ class Player:
 
         card_index = choice - 1
         chosen_card = playable[card_index]
-        self._hand_set.remove(chosen_card)
-        return chosen_card
+        self.hand_set.remove(chosen_card)
+        return chosen_card, self._get_suit_choice(chosen_card)
+
+    @staticmethod
+    def _get_suit_choice(card: Card) -> Suit:
+        if card.rank != Rank.OBER:
+            return card.suit
+
+        suit_names = [
+            f"{suit.value}({suit.name[0]}){suit.name[1:]}{COLOR_RESET}" for suit in Suit
+        ]
+        print(f"Available suits: {", ".join(suit_names)}")
+
+        valid_suits = {"h", "l", "a", "b"}
+
+        while True:
+            choice = input("Please choose suit (first letter): ").strip().lower()
+            if choice in valid_suits:
+                break
+            print("Please insert a valid suit letter.")
+
+        if choice == "h":
+            return Suit.HEARTS
+        if choice == "l":
+            return Suit.LEAVES
+        if choice == "a":
+            return Suit.ACORNS
+        if choice == "b":
+            return Suit.BELLS
+        raise RuntimeError("Suit choice failed.")
 
     def take_drawn_cards(self, drawn_cards: list[Card]) -> None:
-        self._hand_set.update(drawn_cards)
+        self.hand_set.update(drawn_cards)
