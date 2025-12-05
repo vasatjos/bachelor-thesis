@@ -1,12 +1,7 @@
 [project]
-name = "thesis"
+name = "src"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
-
-[tool.uv.workspace]
-members = [
-    "src",
-]

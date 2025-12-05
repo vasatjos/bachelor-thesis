@@ -1,9 +1,9 @@
 import os
-from game.game import PrsiEnv
+from game.game import Prsi
 
 
 def main() -> None:
-    env = PrsiEnv(show_ui=True)
+    env = Prsi()
     env.play()
     os.system("clear")
 

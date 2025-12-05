@@ -11,12 +11,11 @@ class Prsi:
     STARTING_HAND_SIZE = 4
     PLAYER_COUNT = 2
 
-    def __init__(self, show_ui: bool = False) -> None:
+    def __init__(self) -> None:
         self._players: list[Player] = []
         self._deck: Deck = Deck()
         self._effect_manager: GameStateManager = GameStateManager()
         self._last_winner: Player | None = None
-        self._show_ui = show_ui
 
     def _deal(self) -> None:
         for _ in range(Prsi.STARTING_HAND_SIZE):
