@@ -1,6 +1,7 @@
-from typing import Any
+from typing import Any # TODO: maybe state should be Hashable instead of Any
 from abc import ABC, abstractmethod
 from game.player import Player
+from agents.utils import Action
 
 
 class BaseAgent(ABC):
@@ -8,8 +9,8 @@ class BaseAgent(ABC):
         self.player_info: Player | None = player_info
 
     @abstractmethod
-    def perform_action(self, state: Any) -> int:
-        raise NotImplementedError("Base class cannot perform action.")
+    def choose_action(self, state: Any) -> Action:
+        raise NotImplementedError("Base class cannot choose action.")
 
     def set_player_info(self, player_info: Player) -> None:
         self.player_info = player_info

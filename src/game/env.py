@@ -1,66 +1,44 @@
 import os
 
-from game.card_utils import CardEffect, COLOR_RESET, Rank, Suit
+from game.card_utils import CardEffect, Rank, Suit
 from game.deck import Deck
 from game.card import Card
 from game.player import Player
 from game.state_manager import GameStateManager
 from agents.utils import Action, CARD_TO_INDEX, SUIT_TO_INDEX
+from agents.random import RandomAgent
+from agents.base import BaseAgent
 
 
-class Prsi:
+class PrsiEnv:
     STARTING_HAND_SIZE = 4
     PLAYER_COUNT = 2
 
-    def __init__(self) -> None:
-        self._players: list[Player] = []
+    def __init__(self, opponent: BaseAgent = RandomAgent()) -> None:
+        # TODO: maybe should also be agent, maybe shouldn't be private
+        self._player: Player = Player(0)
+        self._opponent: BaseAgent = opponent
+        self._opponent.set_player_info(Player(1))
         self._deck: Deck = Deck()
         self._effect_manager: GameStateManager = GameStateManager()
-        self._last_winner: Player | None = None
+        self._last_winner: BaseAgent | None = None
+
 
     def _deal(self) -> None:
-        for _ in range(Prsi.STARTING_HAND_SIZE):
+        for _ in range(PrsiEnv.STARTING_HAND_SIZE):
             for player in self._players:
                 player.take_drawn_cards([self._deck.draw_card()])
 
-    def _print_game_state(self, player: Player) -> None:
-        player_id = player.id + 1  # print with one based index
-        os.system("clear")
-        input(f"Press enter to start player #{player_id} turn.")
-        os.system("clear")
+    def reset(self) -> None: ...
 
-        for p in self._players:
-            if p == player:
-                print(f"Player #{player_id} currently playing.")
-            else:
-                print(f"Player #{p.id + 1} has {p.card_count()} cards")
-        print(f"\nTop card: {self._effect_manager.top_card}")
-
-        if (
-            self._effect_manager.actual_suit is None
-            or self._effect_manager.top_card is None
-        ):
-            raise RuntimeError("Manager not initialized.")
-
-        if self._effect_manager.top_card.rank is Rank.OBER:
-            print(
-                f"Current suit: {self._effect_manager.actual_suit.value}"
-                + f"{self._effect_manager.actual_suit.name}{COLOR_RESET}"
-            )
-
-        print("\nCards on hand:")
-        player.print_hand()
-
-    def prompt_player_for_card_choice(
-        self, player: Player
-    ) -> tuple[Card | None, Suit | None]:
-        self._print_game_state(player)
-        allowed = self._effect_manager.find_allowed_cards()
-        print("\nPlayable cards:")
-        player_choice = player.select_card_to_play(allowed)
-        print()
-
-        return player_choice
+    # TODO: figure out how to represent state on the output
+    def step(self, action: Action) -> ...:
+        # perform action
+        # update game state
+        # have opponent select and perform action
+        # update game state
+        # return state ( + done, reward, etc.)
+        ...
 
     def play(self) -> None:
         self._deck.reset()
@@ -83,18 +61,6 @@ class Prsi:
                 return []
             case _:
                 return [self._deck.draw_card()]
-
-    def _print_order(self) -> None:
-        os.system("clear")
-        print("---GAME OVER---\n\nResults:\n")
-
-        if self._last_winner is None:
-            raise RuntimeError
-        print(f"Winner: Player #{self._last_winner.id + 1}")
-        input("\nPress Enter to continue.")
-
-    def _end_game(self) -> None:
-        self._print_order()
 
     def _take_turn(self, player: Player) -> bool:
         """
