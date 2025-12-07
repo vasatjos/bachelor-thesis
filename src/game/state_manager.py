@@ -1,4 +1,4 @@
-from game.card_utils import COLOR_RESET, Rank, Suit, CardEffect
+from game.card_utils import Rank, Suit, CardEffect
 from game.card import Card
 from game.deck import Deck
 
@@ -43,31 +43,6 @@ class GameStateManager:
             self.effect_strength = 0
             self.top_card = card
             self.actual_suit = card.suit
-
-    @staticmethod
-    def _get_suit_choice() -> Suit:
-        suit_names = [
-            f"{suit.value}({suit.name[0]}){suit.name[1:]}{COLOR_RESET}" for suit in Suit
-        ]
-        print(f"Available suits: {", ".join(suit_names)}")
-
-        valid_suits = {"h", "l", "a", "b"}
-
-        while True:
-            choice = input("Please choose suit (first letter): ").strip().lower()
-            if choice in valid_suits:
-                break
-            print("Please insert a valid suit letter.")
-
-        if choice == "h":
-            return Suit.HEARTS
-        if choice == "l":
-            return Suit.LEAVES
-        if choice == "a":
-            return Suit.ACORNS
-        if choice == "b":
-            return Suit.BELLS
-        raise RuntimeError("Suit choice failed.")
 
     def find_allowed_cards(self) -> set[Card]:
         if self.current_effect is CardEffect.SKIP_TURN:

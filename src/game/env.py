@@ -29,16 +29,17 @@ class PrsiEnv:
             for player in self._players:
                 player.take_drawn_cards([self._deck.draw_card()])
 
-    def reset(self) -> None: ...
+    def reset(self) -> None:
+        raise NotImplementedError("TODO: Implement reset env method.")
 
     # TODO: figure out how to represent state on the output
     def step(self, action: Action) -> ...:
         # perform action
-        # update game state
+        # update game state (TODO: maybe GameStateManager is unnecessary?)
         # have opponent select and perform action
         # update game state
-        # return state ( + done, reward, etc.)
-        ...
+        # return state ( + done, reward, opponent card count etc.)
+        raise NotImplementedError("TODO: Implement env step method.")
 
     def play(self) -> None:
         self._deck.reset()

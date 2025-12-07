@@ -6,6 +6,7 @@ from game.card_utils import Rank
 from game.player import Player
 from random import choice, randint
 
+
 class RandomAgent(BaseAgent):
     def __init__(self, player_info: Player | None = None) -> None:
         super().__init__(player_info)
@@ -20,7 +21,7 @@ class RandomAgent(BaseAgent):
 
         card: Card | None = choice(hand_list)
         if card is None:
-            return CARD_TO_INDEX[card], -42 # suit will get discarded on drawing a card
+            return CARD_TO_INDEX[card], -42  # suit will get discarded on drawing a card
 
         card_index = CARD_TO_INDEX[card]
         suit_index = SUIT_TO_INDEX[card.suit]
@@ -28,3 +29,6 @@ class RandomAgent(BaseAgent):
             suit_index = randint(1, 4)
 
         return card_index, suit_index
+
+    def train(self) -> None: # no training necessary, just chooses random action
+        pass
