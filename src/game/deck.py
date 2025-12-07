@@ -1,11 +1,13 @@
 from random import shuffle
 
-from game.card_utils import Suit, Rank, CardEffect
+from game.card_utils import Suit, Rank, CardEffect, generate_rank
 from game.card import Card
 
 
 class Deck:
     CARD_COUNT = len(Suit) * len(Rank)
+    SEVENS = generate_rank(Rank.SEVEN)
+    ACES = generate_rank(Rank.ACE)
 
     def __init__(self) -> None:
         self.discard_pile: list[Card]
@@ -23,13 +25,6 @@ class Deck:
         top_card = self.draw_card()
         self.play_card(top_card)
 
-    @staticmethod
-    def generate_suit(suit: Suit) -> set[Card]:
-        return {Card(suit, rank) for rank in Rank}
-
-    @staticmethod
-    def generate_rank(rank: Rank) -> set[Card]:
-        return {Card(suit, rank) for suit in Suit}
 
     def draw_card(self) -> Card:
         """

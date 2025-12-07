@@ -1,11 +1,11 @@
-import os
+from dataclasses import replace
 
-from game.card_utils import CardEffect, Rank, Suit
+from game.card_utils import CardEffect, Rank, Suit, generate_rank, generate_suit
 from game.deck import Deck
 from game.card import Card
 from game.player import Player
-from game.state_manager import GameStateManager
-from agents.utils import Action, CARD_TO_INDEX, SUIT_TO_INDEX
+from game.game_state import GameState
+from agents.utils import Action, INDEX_TO_SUIT, INDEX_TO_CARD
 from agents.random import RandomAgent
 from agents.base import BaseAgent
 
@@ -15,46 +15,127 @@ class PrsiEnv:
     PLAYER_COUNT = 2
 
     def __init__(self, opponent: BaseAgent = RandomAgent()) -> None:
-        # TODO: maybe should also be agent, maybe shouldn't be private
         self._player: Player = Player(0)
         self._opponent: BaseAgent = opponent
         self._opponent.set_player_info(Player(1))
         self._deck: Deck = Deck()
-        self._effect_manager: GameStateManager = GameStateManager()
-        self._last_winner: BaseAgent | None = None
+        self._state: GameState = GameState()
+        self._done: bool = False
+        self._player_won_last: bool = True  # winning player starts game
 
+    @property
+    def state(self) -> GameState:
+        return self._state
 
-    def _deal(self) -> None:
-        for _ in range(PrsiEnv.STARTING_HAND_SIZE):
-            for player in self._players:
-                player.take_drawn_cards([self._deck.draw_card()])
+    def reset(self, full: bool = False) -> GameState:
+        """
+        Reset the environment to initial state and return the starting state.
 
-    def reset(self) -> None:
-        raise NotImplementedError("TODO: Implement reset env method.")
-
-    # TODO: figure out how to represent state on the output
-    def step(self, action: Action) -> ...:
-        # perform action
-        # update game state (TODO: maybe GameStateManager is unnecessary?)
-        # have opponent select and perform action
-        # update game state
-        # return state ( + done, reward, opponent card count etc.)
-        raise NotImplementedError("TODO: Implement env step method.")
-
-    def play(self) -> None:
+        Args:
+            full: Controls whether who starts will be reset. If `True`, player starts.
+                  If `False`, whoever won the last game starts.
+        """
         self._deck.reset()
-        self._players = [Player(i) for i in range(self.PLAYER_COUNT)]
-        self._effect_manager.update(
-            self._deck.discard_pile[0], self._deck.discard_pile[0].suit
+        self._player = Player(0)
+        self._opponent.set_player_info(Player(1))
+        self._done = False
+        if full:
+            self._player_won_last = True
+
+        # Initialize effect with first card from discard pile
+        first_card = self._deck.discard_pile[0]
+        self._state = GameState(
+            top_card=first_card,
+            actual_suit=first_card.suit,
+            current_effect=first_card.effect,
+            effect_strength=1 if first_card.rank == Rank.SEVEN else 0,
         )
+
         self._deal()
-        self._game_loop()
+        return self._state
+
+    # TODO: handle returning to the game on 7 of hearts
+    def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
+        """
+        Execute one step in the environment.
+
+        Args:
+            action: The action to take (card_index, suit_index)
+
+        Returns:
+            Tuple of (state, reward, done, info)
+        """
+        if self._opponent.player_info is None:
+            raise RuntimeError("Opponent not initialized correctly.")
+
+        if self._done:
+            raise RuntimeError("Game is over. Call reset() to start a new game.")
+
+        # Player's turn
+        player_won = self._execute_action(self._player, action)
+        if player_won:
+            self._done = True
+            return self._state, 1.0, True, {}
+
+        # Opponent's turn
+        opponent_action = self._opponent.choose_action(self._state)
+        opponent_won = self._execute_action(self._opponent.player_info, opponent_action)
+        if opponent_won:
+            self._done = True
+            return self._state, -1.0, True, {}
+
+        # Game continues
+        return (
+            self._state,
+            0.0,
+            False,
+            {"opponent_card_count": self._opponent.player_info.card_count()},
+        )
+
+    @staticmethod
+    def find_allowed_cards(state: GameState) -> set[Card]:
+        """Find all cards that can legally be played given current state."""
+        if state.current_effect == CardEffect.SKIP_TURN:
+            return generate_rank(Rank.ACE)
+
+        if state.current_effect == CardEffect.DRAW_TWO:
+            return generate_rank(Rank.SEVEN)
+
+        if state.top_card is None or state.actual_suit is None:
+            raise RuntimeError("Game state not initialized")
+
+        current_suit_cards = generate_suit(state.actual_suit)
+        current_rank_cards = generate_rank(state.top_card.rank)
+        obers = generate_rank(Rank.OBER)
+
+        return current_suit_cards | current_rank_cards | obers
+
+    def _execute_action(self, player: Player, action: Action) -> bool:
+        """
+        Execute an action for a player.
+        Returns True if the player won.
+        """
+        card_idx, suit_idx = action
+        card = INDEX_TO_CARD.get(card_idx)
+        suit = INDEX_TO_SUIT.get(suit_idx)
+
+        if card is not None:  # Playing a card
+            player.play_card(card)
+            self._deck.play_card(card)
+            self._update_state(card, suit)
+        else:  # Drawing cards
+            drawn = self._draw_cards()
+            player.take_drawn_cards(drawn)
+            self._update_state(None)
+
+        return player.card_count() == 0
 
     def _draw_cards(self) -> list[Card]:
-        match self._effect_manager.current_effect:
+        """Draw the appropriate number of cards based on current effect."""
+        match self._state.current_effect:
             case CardEffect.DRAW_TWO:
                 drawn = []
-                for _ in range(self._effect_manager.effect_strength):
+                for _ in range(self._state.effect_strength):
                     drawn.append(self._deck.draw_card())
                     drawn.append(self._deck.draw_card())
                 return drawn
@@ -63,41 +144,56 @@ class PrsiEnv:
             case _:
                 return [self._deck.draw_card()]
 
-    def _take_turn(self, player: Player) -> bool:
-        """
-        Returns:
-          Whether `player` won the game
-        """
-        if not player.card_count():
-            seven_hearts = Card(Suit.HEARTS, Rank.SEVEN)
-            if (
-                self._effect_manager.top_card == seven_hearts
-                and self._effect_manager.current_effect is not None
-            ):
-                pass
+    def _deal(self) -> None:
+        if self._opponent.player_info is None:
+            raise TypeError("Can't deal to uninitialised player.")
+
+        for _ in range(PrsiEnv.STARTING_HAND_SIZE):
+            if self._player_won_last:
+                self._player.take_drawn_cards([self._deck.draw_card()])
+                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()])
             else:
-                self._last_winner = player
-                self._effect_manager.update(None, self._effect_manager.top_card.suit)
-                return True
-        player_choice = self.prompt_player_for_card_choice(player)
+                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()])
+                self._player.take_drawn_cards([self._deck.draw_card()])
 
-        if player_choice is not None:
-            self._deck.play_card(player_choice)
+    def _update_state(self, card: Card | None, suit: Suit | None = None) -> None:
+        if card is None:  # Player drew card(s) instead of playing
+            self._state = replace(
+                self._state,
+                current_effect=None,
+                effect_strength=0,
+            )
+        elif card.rank == Rank.SEVEN:
+            self._state = replace(
+                self._state,
+                top_card=card,
+                actual_suit=card.suit,
+                current_effect=CardEffect.DRAW_TWO,
+                effect_strength=self._state.effect_strength + 1,
+            )
+        elif card.rank == Rank.ACE:
+            self._state = replace(
+                self._state,
+                top_card=card,
+                actual_suit=card.suit,
+                current_effect=CardEffect.SKIP_TURN,
+                effect_strength=1,
+            )
+        elif card.rank == Rank.OBER:
+            if suit is None:  # Ober requires suit selection
+                raise ValueError("Suit must be provided when playing an Ober")
+            self._state = replace(
+                self._state,
+                top_card=card,
+                actual_suit=suit,
+                current_effect=None,
+                effect_strength=0,
+            )
         else:
-            drawn = self._draw_cards()
-            player.take_drawn_cards(drawn)
-
-        self._effect_manager.update(player_choice)
-        return False
-
-    def _game_loop(self) -> None:
-        victory = False
-        while not victory:
-            for player in self._players:
-                if self._last_winner is not None and player != self._last_winner:
-                    continue  # start with last winner
-                self._last_winner = None
-                if victory := self._take_turn(player):
-                    break
-
-        self._end_game()
+            self._state = replace(
+                self._state,
+                top_card=card,
+                actual_suit=card.suit,
+                current_effect=None,
+                effect_strength=0,
+            )

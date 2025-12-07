@@ -30,5 +30,11 @@ class RandomAgent(BaseAgent):
 
         return card_index, suit_index
 
-    def train(self) -> None: # no training necessary, just chooses random action
+    def train(self) -> None:  # no training necessary, just chooses random action
         pass
+
+    def save(self, path: str) -> None:
+        pass
+
+    def evaluate(self) -> None:
+        raise NotImplementedError("TODO: should be simple though")
