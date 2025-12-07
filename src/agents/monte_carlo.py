@@ -15,7 +15,8 @@ import numpy as np
 #           top card: CardIndex (int)
 #           played cards subset: bit array -> i32
 #           state: u8 ((probably))
-        
+
+
 class MonteCarloAgent(BaseAgent):
     def __init__(self, player_info: Player | None = None) -> None:
         super().__init__(player_info)

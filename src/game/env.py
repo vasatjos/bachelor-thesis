@@ -106,14 +106,13 @@ class PrsiEnv:
     @staticmethod
     def find_allowed_cards(state: GameState) -> set[Card]:
         """Find all cards that can legally be played given current state."""
-        if state.current_effect == CardEffect.SKIP_TURN:
-            return generate_rank(Rank.ACE)
-
-        if state.current_effect == CardEffect.DRAW_TWO:
-            return generate_rank(Rank.SEVEN)
-
         if state.top_card is None or state.actual_suit is None:
             raise RuntimeError("Game state not initialized")
+
+        if state.current_effect == CardEffect.SKIP_TURN:
+            return generate_rank(Rank.ACE)
+        if state.current_effect == CardEffect.DRAW_TWO:
+            return generate_rank(Rank.SEVEN)
 
         return (
             generate_suit(state.actual_suit)

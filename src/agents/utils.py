@@ -1,10 +1,6 @@
 from game.card import Card
 from game.card_utils import Rank, Suit
 
-
-# Action: a tuple of card + suit change, agents decides these 2 separately
-# TODO: decide if game decides validity of change or agent decides validity of change
-
 CardIndex = int
 SuitIndex = int
 Action = tuple[CardIndex, SuitIndex]

@@ -1,5 +1,4 @@
 from game.card import Card
-from game.card_utils import COLOR_RESET, Rank, Suit
 
 
 class Player:
