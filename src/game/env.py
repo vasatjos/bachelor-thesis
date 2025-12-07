@@ -54,7 +54,6 @@ class PrsiEnv:
         self._deal()
         return self._state
 
-    # TODO: handle returning to the game on 7 of hearts
     def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
         """
         Execute one step in the environment.
@@ -71,25 +70,39 @@ class PrsiEnv:
         if self._done:
             raise RuntimeError("Game is over. Call reset() to start a new game.")
 
+        seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
+
         # Player's turn
-        player_won = self._execute_action(self._player, action)
-        if player_won:
+        player_card = self._execute_action(self._player, action)
+        if not self._opponent.player_info.card_count and player_card != seven_of_hearts:
             self._done = True
-            return self._state, 1.0, True, {}
+            return (
+                self._state,
+                -1.0,
+                True,
+                {"opponent_card_count": self._opponent.player_info.card_count},
+            )
+            # else: simply fall through to opponent's turn
 
         # Opponent's turn
         opponent_action = self._opponent.choose_action(self._state)
-        opponent_won = self._execute_action(self._opponent.player_info, opponent_action)
-        if opponent_won:
+        opponent_card = self._execute_action(
+            self._opponent.player_info, opponent_action
+        )
+        if not self._player.card_count and opponent_card != seven_of_hearts:
             self._done = True
-            return self._state, -1.0, True, {}
+            return (
+                self._state,
+                1.0,
+                True,
+                {"opponent_card_count": self._opponent.player_info.card_count},
+            )
 
-        # Game continues
         return (
             self._state,
             0.0,
             False,
-            {"opponent_card_count": self._opponent.player_info.card_count()},
+            {"opponent_card_count": self._opponent.player_info.card_count},
         )
 
     @staticmethod
@@ -104,17 +117,13 @@ class PrsiEnv:
         if state.top_card is None or state.actual_suit is None:
             raise RuntimeError("Game state not initialized")
 
-        current_suit_cards = generate_suit(state.actual_suit)
-        current_rank_cards = generate_rank(state.top_card.rank)
-        obers = generate_rank(Rank.OBER)
+        return (
+            generate_suit(state.actual_suit)
+            | generate_rank(state.top_card.rank)
+            | generate_rank(Rank.OBER)
+        )
 
-        return current_suit_cards | current_rank_cards | obers
-
-    def _execute_action(self, player: Player, action: Action) -> bool:
-        """
-        Execute an action for a player.
-        Returns True if the player won.
-        """
+    def _execute_action(self, player: Player, action: Action) -> Card | None:
         card_idx, suit_idx = action
         card = INDEX_TO_CARD.get(card_idx)
         suit = INDEX_TO_SUIT.get(suit_idx)
@@ -128,7 +137,7 @@ class PrsiEnv:
             player.take_drawn_cards(drawn)
             self._update_state(None)
 
-        return player.card_count() == 0
+        return card
 
     def _draw_cards(self) -> list[Card]:
         """Draw the appropriate number of cards based on current effect."""

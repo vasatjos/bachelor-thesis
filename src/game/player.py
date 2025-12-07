@@ -16,6 +16,7 @@ class Player:
             return False
         return self._id == other._id
 
+    @property
     def card_count(self) -> int:
         return len(self.hand_set)
 
