@@ -72,7 +72,6 @@ class PrsiEnv:
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
 
-        # Player's turn
         player_card = self._execute_action(self._player, action)
         if not self._opponent.player_info.card_count and player_card != seven_of_hearts:
             self._done = True
@@ -84,7 +83,6 @@ class PrsiEnv:
             )
             # else: simply fall through to opponent's turn
 
-        # Opponent's turn
         opponent_action = self._opponent.choose_action(self._state)
         opponent_card = self._execute_action(
             self._opponent.player_info, opponent_action
@@ -128,11 +126,11 @@ class PrsiEnv:
         card = INDEX_TO_CARD.get(card_idx)
         suit = INDEX_TO_SUIT.get(suit_idx)
 
-        if card is not None:  # Playing a card
+        if card is not None:
             player.play_card(card)
             self._deck.play_card(card)
             self._update_state(card, suit)
-        else:  # Drawing cards
+        else:
             drawn = self._draw_cards()
             player.take_drawn_cards(drawn)
             self._update_state(None)
@@ -166,7 +164,7 @@ class PrsiEnv:
                 self._player.take_drawn_cards([self._deck.draw_card()])
 
     def _update_state(self, card: Card | None, suit: Suit | None = None) -> None:
-        if card is None:  # Player drew card(s) instead of playing
+        if card is None:  # Player drew card(s)
             self._state = replace(
                 self._state,
                 current_effect=None,
@@ -189,7 +187,7 @@ class PrsiEnv:
                 effect_strength=1,
             )
         elif card.rank == Rank.OBER:
-            if suit is None:  # Ober requires suit selection
+            if suit is None:
                 raise ValueError("Suit must be provided when playing an Ober")
             self._state = replace(
                 self._state,
