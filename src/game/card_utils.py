@@ -1,4 +1,5 @@
 from enum import Enum, StrEnum, IntEnum
+from game.card import Card
 
 COLOR_RESET = "\033[0m"
 
@@ -24,3 +25,11 @@ class Rank(IntEnum):
 class CardEffect(Enum):
     SKIP_TURN = 0
     DRAW_TWO = 2
+
+
+def generate_suit(suit: Suit) -> set[Card]:
+    return {Card(suit, rank) for rank in Rank}
+
+
+def generate_rank(rank: Rank) -> set[Card]:
+    return {Card(suit, rank) for suit in Suit}

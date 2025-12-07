@@ -25,9 +25,12 @@ CARD_TO_INDEX: dict[Card | None, CardIndex] = {
 }
 CARD_TO_INDEX[None] = 0  # Draw a card
 
-INDEX_TO_SUIT: dict[SuitIndex, Suit] = {
-    i: suit for i, suit in enumerate(Suit)
+INDEX_TO_SUIT: dict[SuitIndex, Suit | None] = {
+    i: suit for i, suit in enumerate(Suit, start=1)
 }
-SUIT_TO_INDEX: dict[Suit, SuitIndex] = {
-    suit: i for i, suit in enumerate(Suit)
+INDEX_TO_SUIT[0] = None
+
+SUIT_TO_INDEX: dict[Suit | None, SuitIndex] = {
+    suit: i for i, suit in enumerate(Suit, start=1)
 }
+SUIT_TO_INDEX[None] = 0
