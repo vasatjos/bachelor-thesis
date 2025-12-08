@@ -1,5 +1,5 @@
 from game.card import Card
-from game.card_utils import Suit, Rank, CardEffect, generate_suit, generate_rank
+from game.card_utils import Suit, Rank, CardEffect, get_suit, get_rank
 from game.deck import Deck
 
 
@@ -38,17 +38,17 @@ def test_play_card_sets_no_effect():
     assert effect == CardEffect.NONE
 
 
-def test_generate_suit():
+def test_get_suit():
     for suit in Suit:
-        cards = generate_suit(suit)
+        cards = get_suit(suit)
         assert len(cards) == 8
         for card in cards:
             assert card.suit == suit
 
 
-def test_generate_rank():
+def test_get_rank():
     for rank in Rank:
-        cards = generate_rank(rank)
+        cards = get_rank(rank)
         assert len(cards) == 4
         for card in cards:
             assert card.rank == rank

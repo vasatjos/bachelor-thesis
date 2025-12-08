@@ -1,7 +1,7 @@
 from dataclasses import replace
 
 from game.card_utils import CardEffect, Rank, Suit
-from game.deck import Deck, generate_rank, generate_suit
+from game.deck import Deck, get_rank, get_suit
 from game.card import Card
 from game.player import Player
 from game.game_state import GameState
@@ -22,6 +22,7 @@ class PrsiEnv:
         self._state: GameState = GameState()
         self._done: bool = False
         self._player_won_last: bool = True  # winning player starts game
+        self._ran_out_of_cards: bool = False
 
     @property
     def state(self) -> GameState:
@@ -42,6 +43,7 @@ class PrsiEnv:
         self._player = Player(0)
         self._opponent_player_info = Player(1)
         self._done = False
+        self._ran_out_of_cards = False
         if full:
             self._player_won_last = True
 
@@ -121,23 +123,6 @@ class PrsiEnv:
                 "opponent_card_count": self._opponent_player_info.card_count,
                 "deck_flipped_over": flipped_player or flipped_opponent,
             },
-        )
-
-    @staticmethod
-    def find_allowed_cards(state: GameState) -> set[Card]:
-        """Find all cards that can legally be played given current state."""
-        if state.top_card is None or state.actual_suit is None:
-            raise RuntimeError("Game state not initialized")
-
-        if state.current_effect == CardEffect.SKIP_TURN:
-            return generate_rank(Rank.ACE)
-        if state.current_effect == CardEffect.DRAW_TWO:
-            return generate_rank(Rank.SEVEN)
-
-        return (
-            generate_suit(state.actual_suit)
-            | generate_rank(state.top_card.rank)
-            | generate_rank(Rank.OBER)
         )
 
     def _execute_action(

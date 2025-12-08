@@ -10,7 +10,7 @@ class BaseAgent(ABC):
         return deepcopy(self)
 
     @abstractmethod
-    def choose_action(self, state: Any, hand: set[Card]) -> Action:
+    def choose_action(self, state: Any, hand: set[Card], *args, **kwargs) -> Action:
         raise NotImplementedError("Base class cannot choose action.")
 
     @abstractmethod

@@ -1,13 +1,13 @@
 from game.card import Card
 from game.card_utils import Rank, Suit
-from game.deck import Deck
+from game.deck import Deck, get_suit
 from game.player import Player
 
 
 def test_choose_playing_card_allowed(monkeypatch):
     allowed: set[Card] = set()
     for suit in Suit:
-        cards = set(Deck.generate_suit(suit))
+        cards = set(get_suit(suit))
         allowed |= cards
 
     player = Player(0)
