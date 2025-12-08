@@ -1,3 +1,4 @@
+import pickle
 from typing import Any
 import argparse
 from agents.base import BaseAgent
@@ -14,7 +15,9 @@ parser = argparse.ArgumentParser()
 
 # TODO: fix seeding, doesn't work properly currently
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
-parser.add_argument("--episodes", default=1_000_000, type=int, help="Training episodes.")
+parser.add_argument(
+    "--episodes", default=1_000_000, type=int, help="Training episodes."
+)
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
@@ -99,7 +102,7 @@ class MonteCarloAgent(BaseAgent):
 
             while not done:
                 state = self._process_state(game_state, info, hand)
-                action = self.choose_action(game_state, hand, info)
+                action = self.choose_action(game_state, hand, state)
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
@@ -156,7 +159,9 @@ class MonteCarloAgent(BaseAgent):
 
             reward = 0
             while not done:
-                action = self.choose_action(game_state, hand, info)
+                action = self.choose_action(
+                    game_state, hand, self._process_state(game_state, info, hand)
+                )
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
 
@@ -167,7 +172,9 @@ class MonteCarloAgent(BaseAgent):
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
-    def choose_action(self, state: Any, hand: set[Card], info: dict[str, Any] = {}) -> Action:
+    def choose_action(
+        self, state: Any, hand: set[Card], processed_state: State
+    ) -> Action:
         valid_actions = self._get_valid_actions(state, hand)
 
         # Epsilon-greedy
@@ -175,8 +182,6 @@ class MonteCarloAgent(BaseAgent):
             return choice(valid_actions)
 
         # Greedy: find best Q-value among valid actions
-        processed_state = self._process_state(state, info, hand)
-
         best_action: Action = valid_actions[0]
         best_value = -np.inf
 
@@ -189,7 +194,6 @@ class MonteCarloAgent(BaseAgent):
         return best_action
 
     def save(self, path: str) -> None:
-        import pickle
 
         data = {
             "action_value_fn": self.action_value_fn,
