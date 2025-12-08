@@ -33,7 +33,7 @@ parser.add_argument(
     "--evaluate_for", default=500, type=int, help="Evaluation episodes."
 )
 parser.add_argument(
-    "--model_path", default="mc_agent.pkl", type=str, help="Path to save model."
+    "--model_path", default="agent-strategies/mc_agent.pkl", type=str, help="Path to save model."
 )
 parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
