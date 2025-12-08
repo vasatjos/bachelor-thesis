@@ -4,28 +4,24 @@ from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
 from game.card import Card
 from game.card_utils import Rank
 from game.game_state import find_allowed_cards
-from random import choice
+from random import choice, randint
 
 
 class RandomAgent(BaseAgent):
     def choose_action(self, state: Any, hand: set[Card]) -> Action:
-        valid_actions: list[Action] = []
-        allowed_cards = find_allowed_cards(state)
+        playable = tuple(find_allowed_cards(state) & hand)
 
-        for card in hand:
-            if card in allowed_cards:
-                if card.rank == Rank.OBER:
-                    for suit_idx in range(1, 4):
-                        valid_actions.append((CARD_TO_INDEX[card], suit_idx))
-                else:
-                    valid_actions.append(
-                        (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
-                    )
+        if not playable or randint(0, len(playable)) == len(playable):
+            return (CARD_TO_INDEX[None], SUIT_TO_INDEX[None])  # draw
 
-        # Can always draw
-        valid_actions.append((0, 0))
+        card_choice = choice(playable)
+        suit_index = (
+            SUIT_TO_INDEX[card_choice.suit]
+            if card_choice.rank != Rank.OBER
+            else randint(1, 4)
+        )
 
-        return choice(valid_actions)
+        return (CARD_TO_INDEX[card_choice], suit_index)
 
     def train(self) -> None:  # no training necessary, just chooses random action
         pass

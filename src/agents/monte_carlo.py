@@ -33,10 +33,10 @@ parser.add_argument(
     "--evaluate_for", default=500, type=int, help="Evaluation episodes."
 )
 parser.add_argument(
-    "--model_path", default="mc-model.plk", type=str, help="Path to save model."
+    "--model_path", default="mc_agent.pkl", type=str, help="Path to save model."
 )
 parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
-# TODO: load model
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 # TODO: add epsilon decay
 
 
@@ -81,11 +81,10 @@ class MonteCarloAgent(BaseAgent):
         self.action_value_fn: dict[State, dict[Action, float]] = {}
         self.num_visits: dict[State, dict[Action, int]] = {}
 
-        self.played_cards_subset: list[np.uint8]
-        self.played_cards_subset_option: str
-        self._init_played_subset(args)
-
         self.args = args
+
+        self.played_cards_subset: list[np.uint8]
+        self._init_played_subset()
 
     def train(self, env: PrsiEnv) -> None:
         for episode in range(self.args.episodes):
@@ -112,11 +111,11 @@ class MonteCarloAgent(BaseAgent):
                 rewards.append(reward)
 
             # Compute returns from rewards
-            G = 0.0
+            return_G = 0.0
             returns: list[float] = []
             for r in reversed(rewards):
-                G = r + self.args.gamma * G
-                returns.append(G)
+                return_G = r + self.args.gamma * return_G
+                returns.append(return_G)
             returns.reverse()
 
             # Update Q-values (first-visit MC)
@@ -194,21 +193,27 @@ class MonteCarloAgent(BaseAgent):
         return best_action
 
     def save(self, path: str) -> None:
-
         data = {
             "action_value_fn": self.action_value_fn,
             "num_visits": self.num_visits,
-            "epsilon": self.args.epsilon,
-            "gamma": self.args.gamma,
-            "hand_state_option": self.args.hand_state_option,
-            "played_cards_subset_option": self.played_cards_subset_option,
+            "args": self.args.epsilon,
         }
         with open(path, "wb") as f:
             pickle.dump(data, f)
         print(f"Model saved to {path}")
 
-    def _init_played_subset(self, args: argparse.Namespace) -> None:
-        match args.played_subset:
+    def load(self, path: str) -> None:
+        with open(path, "rb") as f:
+            data = pickle.load(f)
+
+        self.action_value_fn = data["action_value_fn"]
+        self.num_visits = data["num_visits"]
+        self.args = data["args"]
+        self._init_played_subset()
+        print(f"Model loaded from {path}")
+
+    def _init_played_subset(self) -> None:
+        match self.args.played_subset:
             case "specials":  # sevens + obers + aces
                 self.played_cards_subset = [np.uint8(0)] * 3
             case "sevens":
@@ -217,7 +222,6 @@ class MonteCarloAgent(BaseAgent):
                 self.played_cards_subset = [np.uint8(0)] * 32
             case _:
                 raise ValueError("Invalid argument.")
-        self.played_cards_subset_option = args.played_subset
 
     def _process_state(
         self, state: GameState, info: dict[str, Any], hand: set[Card]
@@ -259,7 +263,7 @@ class MonteCarloAgent(BaseAgent):
     def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
         if deck_flipped_over:
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
-        match self.played_cards_subset_option:
+        match self.args.played_subset:
             case "all":
                 idx = CARD_TO_INDEX[card] - 1  # None is 0
                 self.played_cards_subset[idx] += 1
@@ -316,6 +320,11 @@ if __name__ == "__main__":
 
     env = PrsiEnv()
     agent = MonteCarloAgent(args)
-    agent.train(env)
+    if args.load_model:
+        agent.load(args.model_path)
+    else:
+        agent.train(env)
+        agent.save(args.model_path)
+
     agent.evaluate(env, episodes=args.evaluate_for)
-    agent.save("mc_agent.pkl")
+
