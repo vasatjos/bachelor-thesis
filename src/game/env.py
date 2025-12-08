@@ -48,7 +48,7 @@ class PrsiEnv:
             top_card=first_card,
             actual_suit=first_card.suit,
             current_effect=first_card.effect,
-            effect_strength=1 if first_card.rank == Rank.SEVEN else 0,
+            effect_strength=1 if first_card.effect != CardEffect.NONE else 0,
         )
 
         self._deal()
@@ -182,7 +182,7 @@ class PrsiEnv:
         if card is None:  # Player drew card(s)
             self._state = replace(
                 self._state,
-                current_effect=None,
+                current_effect=CardEffect.NONE,
                 effect_strength=0,
             )
         elif card.rank == Rank.SEVEN:
@@ -208,7 +208,7 @@ class PrsiEnv:
                 self._state,
                 top_card=card,
                 actual_suit=suit,
-                current_effect=None,
+                current_effect=CardEffect.NONE,
                 effect_strength=0,
             )
         else:
@@ -216,6 +216,6 @@ class PrsiEnv:
                 self._state,
                 top_card=card,
                 actual_suit=card.suit,
-                current_effect=None,
+                current_effect=CardEffect.NONE,
                 effect_strength=0,
             )

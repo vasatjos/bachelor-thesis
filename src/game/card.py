@@ -9,7 +9,7 @@ class Card:
         self.suit = suit
         self.rank = rank
 
-        self.effect: CardEffect | None
+        self.effect: CardEffect
         self._init_effect()
 
     def _init_effect(self) -> None:
@@ -18,7 +18,7 @@ class Card:
         elif self.rank is Rank.ACE:
             self.effect = CardEffect.SKIP_TURN
         else:
-            self.effect = None
+            self.effect = CardEffect.NONE
 
     def __str__(self) -> str:
         return f"{self.suit.value}{self.rank.name} of {self.suit.name}{COLOR_RESET}"
@@ -26,7 +26,7 @@ class Card:
     def __repr__(self) -> str:
         return (
             f"Card(rank={self.rank.name}, suit={self.suit.name}, "
-            + f"effect={self.effect.name if self.effect is not None else None}"
+            + f"effect={self.effect.name}"
         )
 
     def __lt__(self, other) -> bool:

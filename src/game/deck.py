@@ -44,12 +44,12 @@ class Deck:
 
         return self.drawing_pile.pop(), True
 
-    def play_card(self, card: Card) -> CardEffect | None:
+    def play_card(self, card: Card) -> CardEffect:
         """
         Take a card and put it on top of the discard pile.
 
         Returns:
-          The effect of the played card if it has one, None otherwise.
+          The effect of the played card.
         """
 
         self.discard_pile.append(card)

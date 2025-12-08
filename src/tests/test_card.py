@@ -5,9 +5,9 @@ from game.card_utils import Suit, Rank, CardEffect
 def test_card_effects():
     assert Card(Suit.HEARTS, Rank.SEVEN).effect == CardEffect.DRAW_TWO
     assert Card(Suit.BELLS, Rank.ACE).effect == CardEffect.SKIP_TURN
-    assert Card(Suit.LEAVES, Rank.KING).effect is None
-    assert Card(Suit.HEARTS, Rank.EIGHT).effect is None
-    assert Card(Suit.LEAVES, Rank.TEN).effect is None
+    assert Card(Suit.LEAVES, Rank.KING).effect == CardEffect.NONE
+    assert Card(Suit.HEARTS, Rank.EIGHT).effect == CardEffect.NONE
+    assert Card(Suit.LEAVES, Rank.TEN).effect == CardEffect.NONE
 
 
 def test_card_ordering():

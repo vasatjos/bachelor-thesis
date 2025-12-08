@@ -23,7 +23,8 @@ class Rank(IntEnum):
 
 
 class CardEffect(Enum):
-    SKIP_TURN = 0
+    NONE = 0
+    SKIP_TURN = 1
     DRAW_TWO = 2
 
 

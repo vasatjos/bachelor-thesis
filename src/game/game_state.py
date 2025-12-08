@@ -8,5 +8,5 @@ from game.card_utils import CardEffect, Suit
 class GameState:
     top_card: Card | None = None
     actual_suit: Suit | None = None
-    current_effect: CardEffect | None = None
+    current_effect: CardEffect = CardEffect.NONE
     effect_strength: int = 0
