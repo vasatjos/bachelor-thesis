@@ -19,8 +19,8 @@ class Player:
     def card_count(self) -> int:
         return len(self.hand_set)
 
-    def take_drawn_cards(self, drawn_cards: list[Card]) -> None:
-        self.hand_set.update(drawn_cards)
+    def take_drawn_cards(self, drawn_cards: list[Card | None]) -> None:
+        self.hand_set.update((c for c in drawn_cards if c is not None))
 
     def play_card(self, card: Card) -> None:
         if card not in self.hand_set:

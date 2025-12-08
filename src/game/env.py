@@ -1,7 +1,7 @@
 from dataclasses import replace
 
-from game.card_utils import CardEffect, Rank, Suit, generate_rank, generate_suit
-from game.deck import Deck
+from game.card_utils import CardEffect, Rank, Suit
+from game.deck import Deck, generate_rank, generate_suit
 from game.card import Card
 from game.player import Player
 from game.game_state import GameState
@@ -69,6 +69,9 @@ class PrsiEnv:
 
         if self._done:
             raise RuntimeError("Game is over. Call reset() to start a new game.")
+
+        # if len(self._player.hand_set) < 4:
+        #     print(f"Player hand: {len(self._player.hand_set)}, opponent hand: {len(self._opponent.player_info.hand_set)}")
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
 
@@ -148,7 +151,7 @@ class PrsiEnv:
 
         return card, flipped
 
-    def _draw_cards(self) -> tuple[list[Card], bool]:
+    def _draw_cards(self) -> tuple[list[Card | None], bool]:
         """Draw the appropriate number of cards based on current effect."""
         deck_flipped = False
         match self._state.current_effect:
@@ -158,13 +161,17 @@ class PrsiEnv:
                     for _ in range(2):
                         card, flip = self._deck.draw_card()
                         deck_flipped += flip
-                        drawn.append(card)
+                        if card is not None:
+                            drawn.append(card)
                 return drawn, bool(deck_flipped)
             case CardEffect.SKIP_TURN:
                 return [], False
             case _:
                 drawn_card, flipped = self._deck.draw_card()
-                return [drawn_card], flipped
+                result = []
+                if drawn_card is not None:
+                    result.append(drawn_card)
+                return result, flipped
 
     def _deal(self) -> None:
         if self._opponent.player_info is None:

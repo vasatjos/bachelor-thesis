@@ -1,8 +1,13 @@
 from random import shuffle
 
-from game.card_utils import Suit, Rank, CardEffect, generate_rank
+from game.card_utils import Suit, Rank, CardEffect
 from game.card import Card
 
+def generate_suit(suit: Suit) -> set[Card]:
+    return {Card(suit, rank) for rank in Rank}
+
+def generate_rank(rank: Rank) -> set[Card]:
+    return {Card(suit, rank) for suit in Suit}
 
 class Deck:
     CARD_COUNT = len(Suit) * len(Rank)
@@ -23,9 +28,12 @@ class Deck:
         shuffle(self.drawing_pile)
 
         top_card, _ = self.draw_card()
+        if top_card is None:
+            raise ValueError("Deck reset failed.")
+
         self.play_card(top_card)
 
-    def draw_card(self) -> tuple[Card, bool]:
+    def draw_card(self) -> tuple[Card | None, bool]:
         """
         Draw a card from the drawing pile.
 
@@ -39,8 +47,11 @@ class Deck:
 
         # Flip over playing pile
         playing_pile_top_card = self.discard_pile.pop()
-        self.drawing_pile = self.discard_pile[::-1]
+        self.drawing_pile = list(reversed(self.discard_pile))
         self.discard_pile = [playing_pile_top_card]
+
+        if len(self.drawing_pile) == 0:
+            return None, True  # No cards available
 
         return self.drawing_pile.pop(), True
 
