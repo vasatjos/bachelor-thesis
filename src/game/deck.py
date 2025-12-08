@@ -51,7 +51,8 @@ class Deck:
         self.discard_pile = [playing_pile_top_card]
 
         if len(self.drawing_pile) == 0:
-            return None, True  # No cards available
+            print("Warning, no cards available to draw!")
+            return None, True  # No cards available, shouldn't happen often
 
         return self.drawing_pile.pop(), True
 

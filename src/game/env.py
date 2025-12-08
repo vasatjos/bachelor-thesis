@@ -17,7 +17,7 @@ class PrsiEnv:
     def __init__(self, opponent: BaseAgent = RandomAgent()) -> None:
         self._player: Player = Player(0)
         self._opponent: BaseAgent = opponent
-        self._opponent.set_player_info(Player(1))
+        self._opponent_player_info = Player(1)
         self._deck: Deck = Deck()
         self._state: GameState = GameState()
         self._done: bool = False
@@ -27,17 +27,20 @@ class PrsiEnv:
     def state(self) -> GameState:
         return self._state
 
-    def reset(self, full: bool = False) -> GameState:
+    def reset(self, full: bool = False) -> tuple[GameState, dict]:
         """
         Reset the environment to initial state and return the starting state.
 
         Args:
             full: Controls whether who starts will be reset. If `True`, player starts.
                   If `False`, whoever won the last game starts.
+
+        Returns:
+            Tuple of (state, info) where info contains the player's hand.
         """
         self._deck.reset()
         self._player = Player(0)
-        self._opponent.set_player_info(Player(1))
+        self._opponent_player_info = Player(1)
         self._done = False
         if full:
             self._player_won_last = True
@@ -52,7 +55,11 @@ class PrsiEnv:
         )
 
         self._deal()
-        return self._state
+        return self._state, {
+            "hand": self._player.hand_set,
+            "opponent_card_count": (self._opponent_player_info.card_count),
+            "deck_flipped_over": False,
+        }
 
     def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
         """
@@ -62,36 +69,35 @@ class PrsiEnv:
             action: The action to take (card_index, suit_index)
 
         Returns:
-            Tuple of (state, reward, done, info)
+            Tuple of (state, reward, done, info) where info contains the player's hand.
         """
-        if self._opponent.player_info is None:
-            raise RuntimeError("Opponent not initialized correctly.")
-
         if self._done:
             raise RuntimeError("Game is over. Call reset() to start a new game.")
 
-        # if len(self._player.hand_set) < 4:
-        #     print(f"Player hand: {len(self._player.hand_set)}, opponent hand: {len(self._opponent.player_info.hand_set)}")
-
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
 
+        # print(f"Player card count: {self._player.card_count}, Opponent card count: {self._opponent_player_info.card_count}")
+
         player_card, flipped_player = self._execute_action(self._player, action)
-        if not self._opponent.player_info.card_count and player_card != seven_of_hearts:
+        if not self._opponent_player_info.card_count and player_card != seven_of_hearts:
             self._done = True
             return (
                 self._state,
                 -1.0,
                 True,
                 {
-                    "opponent_card_count": self._opponent.player_info.card_count,
+                    "hand": self._player.hand_set,
+                    "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_player,
                 },
             )
             # else: simply fall through to opponent's turn
 
-        opponent_action = self._opponent.choose_action(self._state)
+        opponent_action = self._opponent.choose_action(
+            self._state, self._opponent_player_info.hand_set
+        )
         opponent_card, flipped_opponent = self._execute_action(
-            self._opponent.player_info, opponent_action
+            self._opponent_player_info, opponent_action
         )
         if not self._player.card_count and opponent_card != seven_of_hearts:
             self._done = True
@@ -100,7 +106,8 @@ class PrsiEnv:
                 1.0,
                 True,
                 {
-                    "opponent_card_count": self._opponent.player_info.card_count,
+                    "hand": self._player.hand_set,
+                    "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_opponent,
                 },
             )
@@ -110,7 +117,8 @@ class PrsiEnv:
             0.0,
             False,
             {
-                "opponent_card_count": self._opponent.player_info.card_count,
+                "hand": self._player.hand_set,
+                "opponent_card_count": self._opponent_player_info.card_count,
                 "deck_flipped_over": flipped_player or flipped_opponent,
             },
         )
@@ -174,15 +182,12 @@ class PrsiEnv:
                 return result, flipped
 
     def _deal(self) -> None:
-        if self._opponent.player_info is None:
-            raise TypeError("Can't deal to uninitialised player.")
-
         for _ in range(PrsiEnv.STARTING_HAND_SIZE):
             if self._player_won_last:
                 self._player.take_drawn_cards([self._deck.draw_card()[0]])
-                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()[0]])
+                self._opponent_player_info.take_drawn_cards([self._deck.draw_card()[0]])
             else:
-                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()[0]])
+                self._opponent_player_info.take_drawn_cards([self._deck.draw_card()[0]])
                 self._player.take_drawn_cards([self._deck.draw_card()[0]])
 
     def _update_state(self, card: Card | None, suit: Suit | None = None) -> None:

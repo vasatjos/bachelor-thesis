@@ -3,20 +3,12 @@ from agents.base import BaseAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
 from game.card import Card
 from game.card_utils import Rank
-from game.player import Player
 from random import choice, randint
 
 
 class RandomAgent(BaseAgent):
-    def __init__(self, player_info: Player | None = None) -> None:
-        super().__init__(player_info)
-
-    def choose_action(self, state: Any) -> Action:
-        if self.player_info is None:
-            msg = "Player info hasn't been set. Use `set_player_info`."
-            raise RuntimeError(msg)
-
-        hand_list: list[Card | None] = list(self.player_info.hand_set)
+    def choose_action(self, state: Any, hand: set[Card]) -> Action:
+        hand_list: list[Card | None] = list(hand)
         hand_list.append(None)
 
         card: Card | None = choice(hand_list)

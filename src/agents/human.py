@@ -2,15 +2,10 @@ from typing import Any
 from agents.base import BaseAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
 from game.card import Card
-from game.card_utils import Rank, Suit
-from game.player import Player
-from random import choice, randint
+from game.card_utils import Rank, Suit, COLOR_RESET
 
 
 class HumanAgent(BaseAgent):
-    def __init__(self, player_info: Player | None = None) -> None:
-        super().__init__(player_info)
-
     # NOTE: maybe could be used in final thesis evaluation against agents?
     def evaluate(self) -> None:
         raise NotImplementedError("Human player can't be evaluated")
@@ -21,37 +16,25 @@ class HumanAgent(BaseAgent):
     def train(self) -> None:
         raise NotImplementedError("Human player strategy can't be trained.")
 
-    def choose_action(self, state: Any) -> Action:
+    def choose_action(self, state: Any, hand: set[Card]) -> Action:
         raise NotImplementedError("TODO: Implement choose_action for human agent")
 
-    def _prompt_player_for_card_choice(
-        self, player: Player
-    ) -> tuple[Card | None, Suit | None]:
-        raise NotImplementedError("TODO: Human agent TUI card choice")
-
-        # self._print_game_state(player)
-        # allowed = self._effect_manager.find_allowed_cards()
-        # print("\nPlayable cards:")
-        # player_choice = player.select_card_to_play(allowed)
-        # print()
-        #
-        # return player_choice
-
-    def _print_hand(self, cards: list[Card] | None = None) -> None:
+    def _print_hand(
+        self, cards: list[Card] | None = None, hand: set[Card] | None = None
+    ) -> None:
         """
         Print given cards in a sorted order.
         """
-        if self.player_info is None:
-            raise RuntimeError("Player info not initialized")
-
         if cards is None:
-            cards = list(self.player_info.hand_set)
+            if hand is None:
+                raise ValueError("Must provide either cards or hand")
+            cards = list(hand)
         cards.sort()
         for i, card in enumerate(cards, start=1):
             print(f"{i:>3}. {card}")
 
     def _select_card_to_play(
-        self, allowed: set[Card]
+        self, allowed: set[Card], hand: set[Card]
     ) -> tuple[Card | None, Suit | None]:
         """
         Select a card from the players hand which he will play.
@@ -59,16 +42,13 @@ class HumanAgent(BaseAgent):
         Parameters:
           allowed: A set of cards which can be played based on the state of the game
             and active effects.
+          hand: The player's current hand.
 
         Returns:
           None if player chose to draw a card.
           Otherwise simply the card the player chose to play.
         """
-
-        if self.player_info is None:
-            raise RuntimeError("Player info not initialized")
-
-        playable = list(self.player_info.hand_set & allowed)
+        playable = list(hand & allowed)
         if len(playable) == 0:
             input("No cards available, press enter to draw/skip.")
             return None, None
@@ -93,7 +73,6 @@ class HumanAgent(BaseAgent):
 
         card_index = choice - 1
         chosen_card = playable[card_index]
-        self.player_info.hand_set.remove(chosen_card)
         return chosen_card, self._get_suit_choice(chosen_card)
 
     @staticmethod
@@ -104,7 +83,7 @@ class HumanAgent(BaseAgent):
         suit_names = [
             f"{suit.value}({suit.name[0]}){suit.name[1:]}{COLOR_RESET}" for suit in Suit
         ]
-        print(f"Available suits: {", ".join(suit_names)}")
+        print(f"Available suits: {', '.join(suit_names)}")
 
         valid_suits = {"h", "l", "a", "b"}
 

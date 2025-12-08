@@ -7,12 +7,12 @@ from game.card_utils import CardEffect, Rank, Suit
 from game.deck import Deck
 from game.env import PrsiEnv
 from game.game_state import GameState
-from game.player import Player
-from random import choice, randint
+from random import choice, randint, seed
 import numpy as np
 
 parser = argparse.ArgumentParser()
 
+# TODO: fix seeding, doesn't work properly currently
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument("--episodes", default=100_000, type=int, help="Training episodes.")
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
@@ -32,6 +32,7 @@ parser.add_argument(
 parser.add_argument(
     "--model_path", default="mc-model.plk", type=str, help="Path to save model."
 )
+parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
 # TODO: load model
 # TODO: add epsilon decay
 
@@ -64,7 +65,7 @@ State = tuple[
     SuitIndex,
     CardEffect,
     np.uint8,
-    tuple[np.uint8, ...]
+    tuple[np.uint8, ...],
 ]
 
 
@@ -72,10 +73,7 @@ class MonteCarloAgent(BaseAgent):
     # estimate for actions in unseen states
     _default_actions = np.zeros(len(CARD_TO_INDEX)), np.zeros(len(SUIT_TO_INDEX))
 
-    def __init__(
-        self, args: argparse.Namespace, player_info: Player | None = None
-    ) -> None:
-        super().__init__(player_info)
+    def __init__(self, args: argparse.Namespace) -> None:
         # both indexed by state + action
         self.action_value_fn: dict[State, dict[Action, float]] = {}
         self.num_visits: dict[State, dict[Action, int]] = {}
@@ -84,15 +82,13 @@ class MonteCarloAgent(BaseAgent):
         self.played_cards_subset_option: str
         self._init_played_subset(args)
 
-        self.train_episodes = args.episodes
-        self.epsilon = args.epsilon
-        self.gamma = args.gamma
-        self.hand_state_option = args.hand_state_option
+        self.args = args
 
-    def train(self, env: PrsiEnv, **opts: dict[str, Any]) -> None:
-        for episode in range(self.train_episodes):
+    def train(self, env: PrsiEnv, **opts) -> None:
+        for episode in range(self.args.episodes):
             # Reset environment and played cards tracking
-            game_state = env.reset()
+            game_state, info = env.reset()
+            hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
             done = False
 
@@ -102,11 +98,11 @@ class MonteCarloAgent(BaseAgent):
             rewards: list[float] = []
 
             while not done:
-                info = {"opponent_card_count": 0, "deck_flipped_over": False}
-                state = self._process_state(game_state, info)
-                action = self.choose_action(game_state)
+                state = self._process_state(game_state, info, hand)
+                action = self.choose_action(game_state, hand)
 
                 game_state, reward, done, info = env.step(action)
+                hand = info["hand"]
 
                 states.append(state)
                 actions.append(action)
@@ -116,7 +112,7 @@ class MonteCarloAgent(BaseAgent):
             G = 0.0
             returns: list[float] = []
             for r in reversed(rewards):
-                G = r + self.gamma * G
+                G = r + self.args.gamma * G
                 returns.append(G)
             returns.reverse()
 
@@ -125,7 +121,7 @@ class MonteCarloAgent(BaseAgent):
             for t in range(len(states)):
                 state = states[t]
                 action = actions[t]
-                sa_pair = (state, action)
+                sa_pair = state, action
 
                 if sa_pair not in visited:
                     visited.add(sa_pair)
@@ -144,51 +140,47 @@ class MonteCarloAgent(BaseAgent):
                         returns[t] - self.action_value_fn[state][action]
                     ) / self.num_visits[state][action]
 
-            if (episode + 1) % 10_000 == 0:
-                print(
-                    f"Episode {episode + 1}/{self. train_episodes}, "
-                    f"States seen: {len(self.action_value_fn)}"
-                )
+            self._log(episode)
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
-        original_epsilon = self.epsilon
-        self.epsilon = 0.0  # Greedy evaluation
+        original_epsilon = self.args.epsilon
+        self.args.epsilon = 0.0  # Greedy evaluation
 
         wins = 0
         for _ in range(episodes):
-            game_state = env.reset()
+            game_state, info = env.reset()
+            hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
             done = False
 
+            reward = 0
             while not done:
-                action = self.choose_action(game_state)
-                game_state, reward, done, _ = env.step(action)
+                action = self.choose_action(game_state, hand)
+                game_state, reward, done, info = env.step(action)
+                hand = info["hand"]
 
-            if reward > 0:  # type: ignore
+            if reward > 0:
                 wins += 1
 
-        self.epsilon = original_epsilon
+        self.args.epsilon = original_epsilon
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
-    def choose_action(self, state: Any) -> Action:
-        if self.player_info is None:
-            raise RuntimeError("Player info hasn't been set.  Use `set_player_info`.")
-
-        valid_actions = self._get_valid_actions(state)
+    def choose_action(self, state: Any, hand: set[Card]) -> Action:
+        valid_actions = self._get_valid_actions(state, hand)
 
         # Epsilon-greedy
-        if np.random.random() < self.epsilon:
+        if np.random.random() < self.args.epsilon:
             return choice(valid_actions)
 
         # Greedy: find best Q-value among valid actions
         info = {"opponent_card_count": 0, "deck_flipped_over": False}
-        processed_state = self._process_state(state, info)
+        processed_state = self._process_state(state, info, hand)
 
-        best_action = valid_actions[0]
-        best_value = self.action_value_fn.get(processed_state, {}).get(best_action, 0.0)
+        best_action: Action = valid_actions[0]
+        best_value = -np.inf
 
-        for action in valid_actions[1:]:
+        for action in valid_actions:
             value = self.action_value_fn.get(processed_state, {}).get(action, 0.0)
             if value > best_value:
                 best_value = value
@@ -202,9 +194,9 @@ class MonteCarloAgent(BaseAgent):
         data = {
             "action_value_fn": self.action_value_fn,
             "num_visits": self.num_visits,
-            "epsilon": self.epsilon,
-            "gamma": self.gamma,
-            "hand_state_option": self.hand_state_option,
+            "epsilon": self.args.epsilon,
+            "gamma": self.args.gamma,
+            "hand_state_option": self.args.hand_state_option,
             "played_cards_subset_option": self.played_cards_subset_option,
         }
         with open(path, "wb") as f:
@@ -223,13 +215,15 @@ class MonteCarloAgent(BaseAgent):
                 raise ValueError("Invalid argument.")
         self.played_cards_subset_option = args.played_subset
 
-    def _process_state(self, state: GameState, info: dict[str, Any]) -> State:
+    def _process_state(
+        self, state: GameState, info: dict[str, Any], hand: set[Card]
+    ) -> State:
         """Correctly set played_cards_subset based on the state"""
 
         if state.top_card is None:
             raise ValueError("Can't process state without top card.")
 
-        hand_state = self._get_hand_state()
+        hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
         top_card = CARD_TO_INDEX[state.top_card]
         active_suit = SUIT_TO_INDEX[state.actual_suit]
@@ -247,8 +241,8 @@ class MonteCarloAgent(BaseAgent):
             tuple(self.played_cards_subset),
         )
 
-    def _get_hand_state(self) -> np.uint32:
-        match self.hand_state_option:
+    def _get_hand_state(self, hand: set[Card]) -> np.uint32:
+        match self.args.hand_state_option:
             case "none":
                 return np.uint32(0)
             case "simple":
@@ -268,8 +262,8 @@ class MonteCarloAgent(BaseAgent):
             case "specials":
                 if (
                     card.rank != Rank.SEVEN
-                    or card.rank != Rank.OBER
-                    or card.rank != Rank.ACE
+                    and card.rank != Rank.OBER
+                    and card.rank != Rank.ACE
                 ):
                     return
                 if card.rank == Rank.SEVEN:
@@ -283,15 +277,14 @@ class MonteCarloAgent(BaseAgent):
                     return
                 self.played_cards_subset[0] += 1
 
-    def _get_valid_actions(self, game_state: GameState) -> list[Action]:
+    def _get_valid_actions(
+        self, game_state: GameState, hand: set[Card]
+    ) -> list[Action]:
         """Get list of valid actions given current game state and hand."""
-        if self.player_info is None:
-            raise RuntimeError("Player info hasn't been set. Use `set_player_info`.")
-
         valid_actions: list[Action] = []
         allowed_cards = PrsiEnv.find_allowed_cards(game_state)
 
-        for card in self.player_info.hand_set:
+        for card in hand:
             if card in allowed_cards:
                 if card.rank == Rank.OBER:
                     # Ober can change suit to any of the 4 suits
@@ -307,12 +300,19 @@ class MonteCarloAgent(BaseAgent):
 
         return valid_actions
 
+    def _log(self, episode: int) -> None:
+        if (episode + 1) % self.args.log_each == 0:
+            print(
+                f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+                f"States seen: {len(self.action_value_fn):_}"
+            )
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
     env = PrsiEnv()
-    agent = MonteCarloAgent(args, Player(0))
-    agent.train(env)
+    agent = MonteCarloAgent(args)
+    agent.train(env, log_each=args.log_each)
     agent.evaluate(env, episodes=args.evaluate_for)
     agent.save("mc_agent.pkl")
