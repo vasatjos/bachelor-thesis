@@ -72,19 +72,22 @@ class PrsiEnv:
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
 
-        player_card = self._execute_action(self._player, action)
+        player_card, flipped_player = self._execute_action(self._player, action)
         if not self._opponent.player_info.card_count and player_card != seven_of_hearts:
             self._done = True
             return (
                 self._state,
                 -1.0,
                 True,
-                {"opponent_card_count": self._opponent.player_info.card_count},
+                {
+                    "opponent_card_count": self._opponent.player_info.card_count,
+                    "deck_flipped_over": flipped_player,
+                },
             )
             # else: simply fall through to opponent's turn
 
         opponent_action = self._opponent.choose_action(self._state)
-        opponent_card = self._execute_action(
+        opponent_card, flipped_opponent = self._execute_action(
             self._opponent.player_info, opponent_action
         )
         if not self._player.card_count and opponent_card != seven_of_hearts:
@@ -93,14 +96,20 @@ class PrsiEnv:
                 self._state,
                 1.0,
                 True,
-                {"opponent_card_count": self._opponent.player_info.card_count},
+                {
+                    "opponent_card_count": self._opponent.player_info.card_count,
+                    "deck_flipped_over": flipped_opponent,
+                },
             )
 
         return (
             self._state,
             0.0,
             False,
-            {"opponent_card_count": self._opponent.player_info.card_count},
+            {
+                "opponent_card_count": self._opponent.player_info.card_count,
+                "deck_flipped_over": flipped_player or flipped_opponent,
+            },
         )
 
     @staticmethod
@@ -120,35 +129,42 @@ class PrsiEnv:
             | generate_rank(Rank.OBER)
         )
 
-    def _execute_action(self, player: Player, action: Action) -> Card | None:
+    def _execute_action(
+        self, player: Player, action: Action
+    ) -> tuple[Card | None, bool]:
         card_idx, suit_idx = action
         card = INDEX_TO_CARD.get(card_idx)
         suit = INDEX_TO_SUIT.get(suit_idx)
 
+        flipped = False
         if card is not None:
             player.play_card(card)
             self._deck.play_card(card)
             self._update_state(card, suit)
         else:
-            drawn = self._draw_cards()
+            drawn, flipped = self._draw_cards()
             player.take_drawn_cards(drawn)
             self._update_state(None)
 
-        return card
+        return card, flipped
 
-    def _draw_cards(self) -> list[Card]:
+    def _draw_cards(self) -> tuple[list[Card], bool]:
         """Draw the appropriate number of cards based on current effect."""
+        deck_flipped = False
         match self._state.current_effect:
             case CardEffect.DRAW_TWO:
                 drawn = []
                 for _ in range(self._state.effect_strength):
-                    drawn.append(self._deck.draw_card())
-                    drawn.append(self._deck.draw_card())
-                return drawn
+                    for _ in range(2):
+                        card, flip = self._deck.draw_card()
+                        deck_flipped += flip
+                        drawn.append(card)
+                return drawn, bool(deck_flipped)
             case CardEffect.SKIP_TURN:
-                return []
+                return [], False
             case _:
-                return [self._deck.draw_card()]
+                drawn_card, flipped = self._deck.draw_card()
+                return [drawn_card], flipped
 
     def _deal(self) -> None:
         if self._opponent.player_info is None:
@@ -156,11 +172,11 @@ class PrsiEnv:
 
         for _ in range(PrsiEnv.STARTING_HAND_SIZE):
             if self._player_won_last:
-                self._player.take_drawn_cards([self._deck.draw_card()])
-                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()])
+                self._player.take_drawn_cards([self._deck.draw_card()[0]])
+                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()[0]])
             else:
-                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()])
-                self._player.take_drawn_cards([self._deck.draw_card()])
+                self._opponent.player_info.take_drawn_cards([self._deck.draw_card()[0]])
+                self._player.take_drawn_cards([self._deck.draw_card()[0]])
 
     def _update_state(self, card: Card | None, suit: Suit | None = None) -> None:
         if card is None:  # Player drew card(s)

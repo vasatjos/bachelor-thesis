@@ -22,27 +22,27 @@ class Deck:
         ]
         shuffle(self.drawing_pile)
 
-        top_card = self.draw_card()
+        top_card, _ = self.draw_card()
         self.play_card(top_card)
 
-
-    def draw_card(self) -> Card:
+    def draw_card(self) -> tuple[Card, bool]:
         """
         Draw a card from the drawing pile.
 
         If the drawing pile is empty, the discard pile gets flipped over
         and becomes the drawing pile.
+        Whether the deck was flipped over or not is returned.
         """
 
         if len(self.drawing_pile) > 0:
-            return self.drawing_pile.pop()
+            return self.drawing_pile.pop(), False
 
         # Flip over playing pile
         playing_pile_top_card = self.discard_pile.pop()
         self.drawing_pile = self.discard_pile[::-1]
         self.discard_pile = [playing_pile_top_card]
 
-        return self.drawing_pile.pop()
+        return self.drawing_pile.pop(), True
 
     def play_card(self, card: Card) -> CardEffect | None:
         """
