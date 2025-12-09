@@ -24,3 +24,7 @@ class BaseAgent(ABC):
     @abstractmethod
     def save(self, path: str) -> None:
         raise NotImplementedError("Base class cannot be saved to file.")
+
+    @abstractmethod
+    def load(self, path: str) -> None:
+        raise NotImplementedError("Base class cannot be saved to file.")
