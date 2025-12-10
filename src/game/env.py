@@ -7,6 +7,7 @@ from game.player import Player
 from game.game_state import GameState
 from agents.utils import Action, INDEX_TO_SUIT, INDEX_TO_CARD
 from agents.random import RandomAgent
+from agents.greedy import GreedyAgent
 from agents.base import BaseAgent
 
 
@@ -14,7 +15,7 @@ class PrsiEnv:
     STARTING_HAND_SIZE = 4
     PLAYER_COUNT = 2
 
-    def __init__(self, opponent: BaseAgent = RandomAgent()) -> None:
+    def __init__(self, opponent: BaseAgent = GreedyAgent()) -> None:
         self._player: Player = Player(0)
         self._opponent: BaseAgent = opponent
         self._opponent_player_info = Player(1)

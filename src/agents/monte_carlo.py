@@ -2,6 +2,8 @@ import pickle
 from typing import Any
 import argparse
 from agents.base import BaseAgent
+from agents.greedy import GreedyAgent
+from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action, CardIndex, SuitIndex
 from game.card import Card
 from game.card_utils import CardEffect, Rank, Suit
@@ -37,6 +39,7 @@ parser.add_argument(
 )
 parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
+parser.add_argument("--opponent", default="greedy", type=str, choices=["random", "greedy"])
 # TODO: add epsilon decay
 
 
@@ -147,7 +150,7 @@ class MonteCarloAgent(BaseAgent):
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon
-        self.args.epsilon = 1.0  # Greedy evaluation
+        self.args.epsilon = 0.0
 
         wins = 0
         for _ in range(episodes):
@@ -193,10 +196,11 @@ class MonteCarloAgent(BaseAgent):
         return best_action
 
     def save(self, path: str) -> None:
+        # Save the whole args as a dict so we can restore a Namespace on load.
         data = {
             "action_value_fn": self.action_value_fn,
             "num_visits": self.num_visits,
-            "args": self.args.epsilon,
+            "args": vars(self.args),
         }
         with open(path, "wb") as f:
             pickle.dump(data, f)
@@ -208,7 +212,8 @@ class MonteCarloAgent(BaseAgent):
 
         self.action_value_fn = data["action_value_fn"]
         self.num_visits = data["num_visits"]
-        self.args = data["args"]
+        args_dict = data.get("args", {})
+        self.args = argparse.Namespace(**args_dict)
         self._init_played_subset()
         print(f"Model loaded from {path}")
 
@@ -318,7 +323,15 @@ class MonteCarloAgent(BaseAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    env = PrsiEnv()
+    match args.opponent:
+        case "random":
+            opponent = RandomAgent()
+        case "greedy":
+            opponent = GreedyAgent()
+        case _:
+            raise ValueError("Invalid opponent")
+
+    env = PrsiEnv(opponent)
     agent = MonteCarloAgent(args)
     if args.load_model:
         agent.load(args.model_path)
@@ -327,4 +340,3 @@ if __name__ == "__main__":
         agent.save(args.model_path)
 
     agent.evaluate(env, episodes=args.evaluate_for)
-
