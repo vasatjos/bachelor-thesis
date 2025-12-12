@@ -90,6 +90,7 @@ class MonteCarloAgent(BaseAgent):
         self._init_played_subset()
 
     def train(self, env: PrsiEnv) -> None:
+        batch_wins = 0
         for episode in range(self.args.episodes):
             # Reset environment and played cards tracking
             game_state, info = env.reset()
@@ -108,6 +109,8 @@ class MonteCarloAgent(BaseAgent):
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
+                if reward == 1:
+                    batch_wins += 1
 
                 states.append(state)
                 actions.append(action)
@@ -146,7 +149,8 @@ class MonteCarloAgent(BaseAgent):
                     ) / self.num_visits[state][action]
 
             if (episode + 1) % self.args.log_each == 0:
-                self.log(episode)
+                self.log(episode, batch_wins)
+                batch_wins = 0
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon
@@ -238,6 +242,8 @@ class MonteCarloAgent(BaseAgent):
 
         hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
+        if opponent_card_count > 4:
+            opponent_card_count = np.uint8(4)
         top_card = CARD_TO_INDEX[state.top_card]
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
@@ -257,7 +263,10 @@ class MonteCarloAgent(BaseAgent):
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
             case "none":
-                return np.uint32(0)
+                l = len(hand)
+                if l > 4:
+                    l = 4
+                return np.uint32(l)
             case "simple":
                 raise NotImplementedError('TODO: _get_hand_state for "simple"')
             case "full":
@@ -313,10 +322,11 @@ class MonteCarloAgent(BaseAgent):
 
         return valid_actions
 
-    def log(self, episode: int) -> None:
+    def log(self, episode: int, batch_wins: int) -> None:
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
-            f"States seen: {len(self.action_value_fn):_}"
+            f"States seen: {len(self.action_value_fn):_}, "
+            f"Batch win rate: {batch_wins / self.args.evaluate_for:.2%}"
         )
 
 
