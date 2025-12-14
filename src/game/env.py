@@ -4,7 +4,7 @@ from game.card_utils import CardEffect, Rank, Suit
 from game.deck import Deck, get_rank, get_suit
 from game.card import Card
 from game.player import Player
-from game.game_state import GameState
+from game.game_state import GameState, find_allowed_cards
 from agents.utils import Action, INDEX_TO_SUIT, INDEX_TO_CARD
 from agents.random import RandomAgent
 from agents.greedy import GreedyAgent
@@ -79,8 +79,6 @@ class PrsiEnv:
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
 
-        # print(f"Player card count: {self._player.card_count}, Opponent card count: {self._opponent_player_info.card_count}")
-
         player_card, flipped_player = self._execute_action(self._player, action)
         if not self._opponent_player_info.card_count and player_card != seven_of_hearts:
             self._done = True
@@ -135,6 +133,8 @@ class PrsiEnv:
 
         flipped = False
         if card is not None:
+            if card not in find_allowed_cards(self.state):
+                raise ValueError("Selected card not allowed!")
             player.play_card(card)
             self._deck.play_card(card)
             self._update_state(card, suit)
