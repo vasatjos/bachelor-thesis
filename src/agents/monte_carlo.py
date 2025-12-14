@@ -333,7 +333,7 @@ class MonteCarloAgent(BaseAgent):
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
             f"States seen: {len(self.action_value_fn):_}, "
-            f"Batch win rate: {batch_wins / self.args.evaluate_for:.2%}"
+            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
 
 
