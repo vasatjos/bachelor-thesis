@@ -1,6 +1,6 @@
 from typing import Any
 from agents.base import BaseAgent
-from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
+from agents.utils import CARD_TO_INDEX, DRAW_ACTION, SUIT_TO_INDEX, Action
 from game.card import Card
 from game.card_utils import Rank
 from game.game_state import find_allowed_cards
@@ -11,8 +11,9 @@ class RandomAgent(BaseAgent):
     def choose_action(self, state: Any, hand: set[Card]) -> Action:
         playable = tuple(find_allowed_cards(state) & hand)
 
-        if not playable or randint(0, len(playable)) == len(playable):
-            return (CARD_TO_INDEX[None], SUIT_TO_INDEX[None])  # draw
+        l = len(playable)
+        if not playable or randint(0, l) == l:
+            return DRAW_ACTION
 
         card_choice = choice(playable)
         suit_index = (

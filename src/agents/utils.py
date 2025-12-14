@@ -4,6 +4,7 @@ from game.card_utils import Rank, Suit
 CardIndex = int
 SuitIndex = int
 Action = tuple[CardIndex, SuitIndex]
+DRAW_ACTION = 0, 0
 
 ACTION_SPACE_SIZE = 1 + 32 + 1 + 4 # 2*None + cards + suits
 
