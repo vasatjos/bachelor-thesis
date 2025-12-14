@@ -4,7 +4,14 @@ import argparse
 from agents.base import BaseAgent
 from agents.greedy import GreedyAgent
 from agents.random import RandomAgent
-from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action, CardIndex, SuitIndex
+from agents.utils import (
+    CARD_TO_INDEX,
+    DRAW_ACTION,
+    SUIT_TO_INDEX,
+    Action,
+    CardIndex,
+    SuitIndex,
+)
 from game.card import Card
 from game.card_utils import CardEffect, Rank, Suit
 from game.deck import Deck
@@ -184,13 +191,23 @@ class MonteCarloAgent(BaseAgent):
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
     def choose_action(
-        self, state: Any, hand: set[Card], processed_state: State
+        self, state: GameState, hand: set[Card], processed_state: State
     ) -> Action:
-        valid_actions = self._get_valid_actions(state, hand)
-
         # Epsilon-greedy
         if np.random.random() < self.args.epsilon:
-            return choice(valid_actions)
+            playable = tuple(find_allowed_cards(state) & hand)
+
+            l = len(playable)
+            if l == 0 or randint(0, l) == l:
+                return DRAW_ACTION
+
+            card = choice(tuple(playable))
+            suit_idx = (
+                SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
+            )
+            return CARD_TO_INDEX[card], suit_idx
+
+        valid_actions = self._get_valid_actions(state, hand)
 
         # Greedy: find best Q-value among valid actions
         best_action: Action = valid_actions[0]
@@ -284,7 +301,7 @@ class MonteCarloAgent(BaseAgent):
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
         match self.args.played_subset:
             case "all":
-                idx = CARD_TO_INDEX[card] - 1  # None is 0
+                idx = CARD_TO_INDEX[card] - 1  # None is 0, so indexing is 1 based
                 self.played_cards_subset[idx] += 1
             case "specials":
                 if (
@@ -318,14 +335,12 @@ class MonteCarloAgent(BaseAgent):
                     for suit_idx in range(1, 5):
                         valid_actions.append((CARD_TO_INDEX[card], suit_idx))
                 else:
-                    # Add each action 4 times so obers aren't more probable
-                    for _ in range(1, 5):
-                        valid_actions.append(
-                            (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
-                        )
+                    valid_actions.append(
+                        (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
+                    )
 
         # Can always draw a card
-        valid_actions.append((0, 0))
+        valid_actions.append(DRAW_ACTION)
 
         return valid_actions
 
