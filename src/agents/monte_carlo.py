@@ -23,7 +23,10 @@ parser.add_argument(
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
-    "--hand_state_option", default="none", type=str, choices=["none", "simple", "full"]
+    "--hand_state_option",
+    default="count",
+    type=str,
+    choices=["count", "simple", "full"],
 )
 parser.add_argument(
     "--played_subset",
@@ -35,16 +38,21 @@ parser.add_argument(
     "--evaluate_for", default=500, type=int, help="Evaluation episodes."
 )
 parser.add_argument(
-    "--model_path", default="agent-strategies/mc_agent.pkl", type=str, help="Path to save model."
+    "--model_path",
+    default="agent-strategies/mc.pkl",
+    type=str,
+    help="Path to save model.",
 )
 parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
-parser.add_argument("--opponent", default="greedy", type=str, choices=["random", "greedy"])
+parser.add_argument(
+    "--opponent", default="greedy", type=str, choices=["random", "greedy"]
+)
 # TODO: add epsilon decay
 
 
-# No hand state:
-# Don't use hand in state at all
+# Count hand state:
+# number of cards in hand
 
 # Full hand state:
 # bit array (converted -> int)
@@ -76,9 +84,6 @@ State = tuple[
 
 
 class MonteCarloAgent(BaseAgent):
-    # estimate for actions in unseen states
-    _default_actions = np.zeros(len(CARD_TO_INDEX)), np.zeros(len(SUIT_TO_INDEX))
-
     def __init__(self, args: argparse.Namespace) -> None:
         # both indexed by state + action
         self.action_value_fn: dict[State, dict[Action, float]] = {}
@@ -262,7 +267,7 @@ class MonteCarloAgent(BaseAgent):
 
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
-            case "none":
+            case "count":
                 l = len(hand)
                 if l > 4:
                     l = 4
@@ -313,9 +318,11 @@ class MonteCarloAgent(BaseAgent):
                     for suit_idx in range(1, 5):
                         valid_actions.append((CARD_TO_INDEX[card], suit_idx))
                 else:
-                    valid_actions.append(
-                        (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
-                    )
+                    # Add each action 4 times so obers aren't more probable
+                    for _ in range(1, 5):
+                        valid_actions.append(
+                            (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
+                        )
 
         # Can always draw a card
         valid_actions.append((0, 0))
