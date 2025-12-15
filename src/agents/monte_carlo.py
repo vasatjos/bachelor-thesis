@@ -222,7 +222,7 @@ class MonteCarloAgent(BaseAgent):
         return best_action
 
     def save(self, path: str) -> None:
-        # Save the whole args as a dict so we can restore a Namespace on load.
+        print(f"Saving model to {path}")
         data = {
             "action_value_fn": self.action_value_fn,
             "num_visits": self.num_visits,
@@ -230,9 +230,10 @@ class MonteCarloAgent(BaseAgent):
         }
         with open(path, "wb") as f:
             pickle.dump(data, f)
-        print(f"Model saved to {path}")
+        print(f"Model saved successfully!")
 
     def load(self, path: str) -> None:
+        print(f"Loading model from {path}")
         with open(path, "rb") as f:
             data = pickle.load(f)
 
@@ -241,7 +242,7 @@ class MonteCarloAgent(BaseAgent):
         args_dict = data.get("args", {})
         self.args = argparse.Namespace(**args_dict)
         self._init_played_subset()
-        print(f"Model loaded from {path}")
+        print(f"Model loaded successfully!")
 
     def _init_played_subset(self) -> None:
         match self.args.played_subset:
