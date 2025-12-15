@@ -168,6 +168,7 @@ class MonteCarloAgent(BaseAgent):
         original_epsilon = self.args.epsilon
         self.args.epsilon = 0.0
 
+        env.reset(full=True)  # Agent starts first evaluation game
         wins = 0
         for _ in range(episodes):
             game_state, info = env.reset()
