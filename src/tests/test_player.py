@@ -1,6 +1,6 @@
 from game.card import Card
 from game.card_utils import Rank, Suit
-from game.deck import Deck, get_suit
+from game.deck import get_suit
 from game.player import Player
 
 

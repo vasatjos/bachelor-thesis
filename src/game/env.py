@@ -1,12 +1,11 @@
 from dataclasses import replace
 
 from game.card_utils import CardEffect, Rank, Suit
-from game.deck import Deck, get_rank, get_suit
+from game.deck import Deck
 from game.card import Card
 from game.player import Player
 from game.game_state import GameState, find_allowed_cards
 from agents.utils import Action, INDEX_TO_SUIT, INDEX_TO_CARD
-from agents.random import RandomAgent
 from agents.greedy import GreedyAgent
 from agents.base import BaseAgent
 

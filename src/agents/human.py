@@ -1,6 +1,6 @@
 from typing import Any
 from agents.base import BaseAgent
-from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
+from agents.utils import Action
 from game.card import Card
 from game.card_utils import Rank, Suit, COLOR_RESET
 

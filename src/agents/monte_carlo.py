@@ -13,11 +13,10 @@ from agents.utils import (
     SuitIndex,
 )
 from game.card import Card
-from game.card_utils import CardEffect, Rank, Suit
-from game.deck import Deck
+from game.card_utils import CardEffect, Rank
 from game.env import PrsiEnv
 from game.game_state import GameState, find_allowed_cards
-from random import choice, randint, seed
+from random import choice, randint
 import numpy as np
 
 parser = argparse.ArgumentParser()
@@ -231,7 +230,7 @@ class MonteCarloAgent(BaseAgent):
         }
         with open(path, "wb") as f:
             pickle.dump(data, f)
-        print(f"Model saved successfully!")
+        print("Model saved successfully!")
 
     def load(self, path: str) -> None:
         print(f"Loading model from {path}")
@@ -243,7 +242,7 @@ class MonteCarloAgent(BaseAgent):
         args_dict = data.get("args", {})
         self.args = argparse.Namespace(**args_dict)
         self._init_played_subset()
-        print(f"Model loaded successfully!")
+        print("Model loaded successfully!")
 
     def _init_played_subset(self) -> None:
         match self.args.played_subset:
