@@ -30,9 +30,9 @@ parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration fact
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
-    default="count",
+    default="count_simple",
     type=str,
-    choices=["count", "simple", "full"],
+    choices=["count","count_simple", "simple", "full"],
 )
 parser.add_argument(
     "--played_subset",
@@ -45,7 +45,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--model_path",
-    default="agent-strategies/mc.pkl",
+    default="agent-strategies/monte-carlo/model.pkl",
     type=str,
     help="Path to save model.",
 )
@@ -265,7 +265,7 @@ class MonteCarloAgent(BaseAgent):
 
         hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
-        if opponent_card_count > 4:
+        if args.hand_state_option == "count_simple" and opponent_card_count > 4:
             opponent_card_count = np.uint8(4)
         top_card = CARD_TO_INDEX[state.top_card]
         active_suit = SUIT_TO_INDEX[state.actual_suit]
@@ -285,11 +285,13 @@ class MonteCarloAgent(BaseAgent):
 
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
-            case "count":
+            case "count_simple":
                 l = len(hand)
                 if l > 4:
                     l = 4
                 return np.uint32(l)
+            case "count":
+                return np.uint32(len(hand))
             case "simple":
                 raise NotImplementedError('TODO: _get_hand_state for "simple"')
             case "full":
