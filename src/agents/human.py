@@ -93,7 +93,7 @@ class HumanAgent(BaseAgent):
         cards = list(cards)
         cards.sort()
         for i, card in enumerate(cards, start=1):
-            print(f"{i:>3}. {card}")
+            print(f"{i:>3}. {card}") # TODO: unicode pictures for suits
 
     def _select_card_to_play(
         self, allowed: set[Card], hand: set[Card]
