@@ -1,10 +1,10 @@
 import os
-from typing import Any
 from agents.base import BaseAgent
 from agents.greedy import GreedyAgent
 from agents.monte_carlo import MonteCarloAgent
 from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
+from agents.utils import Action
 from game.card import Card
 from game.card_utils import Rank, Suit, COLOR_RESET
 import argparse
