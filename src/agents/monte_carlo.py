@@ -274,7 +274,7 @@ class MonteCarloAgent(BaseAgent):
 
         hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
-        if args.hand_state_option == "count_simple" and opponent_card_count > 4:
+        if self.args.hand_state_option == "count_simple" and opponent_card_count > 4:
             opponent_card_count = np.uint8(4)
         top_card = CARD_TO_INDEX[state.top_card]
         active_suit = SUIT_TO_INDEX[state.actual_suit]
