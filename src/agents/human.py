@@ -5,7 +5,7 @@ from agents.greedy import GreedyAgent
 from agents.monte_carlo import MonteCarloAgent
 from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
-from game.card import Card
+from game.card import Card, ICONS, USE_ICONS
 from game.card_utils import Rank, Suit, COLOR_RESET
 import argparse
 
@@ -55,7 +55,8 @@ class HumanAgent(BaseAgent):
         print(f"Episode: {info["episode"] + 1}/{info["episodes"]}")
         print(f"\nTop card: {top_card}")
         if top_card.rank is Rank.OBER:
-            print(f"Suit: {active_suit.value}{active_suit.name}{COLOR_RESET}")
+            icon = f"{ICONS[active_suit]} " if USE_ICONS else ""
+            print(f"Suit: {active_suit.value}{icon}{active_suit.name}{COLOR_RESET}")
         print(f"Opponent card count: {info.get('opponent_card_count', 0)}")
 
         card, suit = self._select_card_to_play(allowed, hand)
