@@ -23,7 +23,6 @@ parser.add_argument(
     type=str,
     help="Path to load model.",
 )
-parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--opponent",
     default="greedy",
@@ -49,13 +48,16 @@ class HumanAgent(BaseAgent):
         active_suit = state.actual_suit
         if top_card is None or active_suit is None:
             raise RuntimeError("Invalid game state values.")
+
         allowed = find_allowed_cards(state)
+
         os.system("clear")
         print(f"Episode: {info["episode"] + 1}/{info["episodes"]}")
         print(f"\nTop card: {top_card}")
         if top_card.rank is Rank.OBER:
             print(f"Suit: {active_suit.value}{active_suit.name}{COLOR_RESET}")
         print(f"Opponent card count: {info.get('opponent_card_count', 0)}")
+
         card, suit = self._select_card_to_play(allowed, hand)
         return CARD_TO_INDEX[card], SUIT_TO_INDEX[suit]
 
@@ -70,6 +72,7 @@ class HumanAgent(BaseAgent):
 
             info["episodes"] = episodes
             info["episode"] = i
+
             while not done:
                 action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
