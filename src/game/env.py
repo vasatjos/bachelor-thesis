@@ -15,7 +15,7 @@ class PrsiEnv:
     PLAYER_COUNT = 2
 
     def __init__(self, opponent: BaseAgent = GreedyAgent()) -> None:
-        self._player: Player = Player(0)
+        self._player_info: Player = Player(0)
         self._opponent: BaseAgent = opponent
         self._opponent_player_info = Player(1)
         self._deck: Deck = Deck()
@@ -40,7 +40,7 @@ class PrsiEnv:
             Tuple of (state, info) where info contains the player's hand.
         """
         self._deck.reset()
-        self._player = Player(0)
+        self._player_info = Player(0)
         self._opponent_player_info = Player(1)
         self._done = False
         self._ran_out_of_cards = False
@@ -58,7 +58,7 @@ class PrsiEnv:
 
         self._deal()
         return self._state, {
-            "hand": self._player.hand_set,
+            "hand": self._player_info.hand_set,
             "opponent_card_count": (self._opponent_player_info.card_count),
             "deck_flipped_over": False,
         }
@@ -78,7 +78,7 @@ class PrsiEnv:
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
 
-        player_card, flipped_player = self._execute_action(self._player, action)
+        player_card, flipped_player = self._execute_action(self._player_info, action)
         if not self._opponent_player_info.card_count and player_card != seven_of_hearts:
             self._done = True
             return (
@@ -86,27 +86,32 @@ class PrsiEnv:
                 -1.0,
                 True,
                 {
-                    "hand": self._player.hand_set,
+                    "hand": self._player_info.hand_set,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_player,
                 },
             )
             # else: simply fall through to opponent's turn
 
+        player_info = { # player here meaning opponent's opponent
+            "hand": self._opponent_player_info.hand_set,
+            "opponent_card_count":  self._player_info. card_count,
+            "deck_flipped_over": flipped_player
+        }
         opponent_action = self._opponent.choose_action(
-            self._state, self._opponent_player_info.hand_set
+            self._state, self._opponent_player_info.hand_set, player_info
         )
         opponent_card, flipped_opponent = self._execute_action(
             self._opponent_player_info, opponent_action
         )
-        if not self._player.card_count and opponent_card != seven_of_hearts:
+        if not self._player_info.card_count and opponent_card != seven_of_hearts:
             self._done = True
             return (
                 self._state,
                 1.0,
                 True,
                 {
-                    "hand": self._player.hand_set,
+                    "hand": self._player_info.hand_set,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_opponent,
                 },
@@ -117,7 +122,7 @@ class PrsiEnv:
             0.0,
             False,
             {
-                "hand": self._player.hand_set,
+                "hand": self._player_info.hand_set,
                 "opponent_card_count": self._opponent_player_info.card_count,
                 "deck_flipped_over": flipped_player or flipped_opponent,
             },
@@ -169,11 +174,11 @@ class PrsiEnv:
     def _deal(self) -> None:
         for _ in range(PrsiEnv.STARTING_HAND_SIZE):
             if self._player_won_last:
-                self._player.take_drawn_cards([self._deck.draw_card()[0]])
+                self._player_info.take_drawn_cards([self._deck.draw_card()[0]])
                 self._opponent_player_info.take_drawn_cards([self._deck.draw_card()[0]])
             else:
                 self._opponent_player_info.take_drawn_cards([self._deck.draw_card()[0]])
-                self._player.take_drawn_cards([self._deck.draw_card()[0]])
+                self._player_info.take_drawn_cards([self._deck.draw_card()[0]])
 
     def _update_state(self, card: Card | None, suit: Suit | None = None) -> None:
         if card is None:  # Player drew card(s)

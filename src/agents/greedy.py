@@ -8,7 +8,7 @@ from random import choice, randint
 
 
 class GreedyAgent(BaseAgent):
-    def choose_action(self, state: Any, hand: set[Card]) -> Action:
+    def choose_action(self, state: Any, hand: set[Card], info: dict[str, Any]) -> Action:
         playable = tuple(find_allowed_cards(state) & hand)
 
         if not playable:

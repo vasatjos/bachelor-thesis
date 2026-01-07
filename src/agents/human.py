@@ -1,4 +1,5 @@
 import os
+from typing import Any
 from agents.base import BaseAgent
 from agents.greedy import GreedyAgent
 from agents.monte_carlo import MonteCarloAgent
@@ -36,7 +37,7 @@ class HumanAgent(BaseAgent):
     def load(self, path: str) -> None:
         raise NotImplementedError("Human player strategy can't be loaded.")
 
-    def choose_action(self, state: GameState, hand: set[Card], opponent_card_count: int) -> Action:
+    def choose_action(self, state: GameState, hand: set[Card], info: dict[str, Any]) -> Action:
         top_card = state.top_card
         active_suit = state.actual_suit
         if top_card is None or active_suit is None:
@@ -46,7 +47,7 @@ class HumanAgent(BaseAgent):
         print(f"Top card: {top_card}")
         if top_card.rank is Rank.OBER:
             print(f"Suit: {active_suit.value}{active_suit.name}{COLOR_RESET}")
-        print(f"Opponent card count: {opponent_card_count}")
+        print(f"Opponent card count: {info.get("opponent_card_count", 0)}")
         card, suit = self._select_card_to_play(allowed, hand)
         return CARD_TO_INDEX[card], SUIT_TO_INDEX[suit]
 
@@ -60,7 +61,7 @@ class HumanAgent(BaseAgent):
 
             reward = 0
             while not done:
-                action = self.choose_action(game_state, hand, info["opponent_card_count"])
+                action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
 
@@ -166,11 +167,10 @@ if __name__ == "__main__":
         case "greedy":
             opponent = GreedyAgent()
         case "monte_carlo":
-            opponent = MonteCarloAgent(args) # TODO: default args here
+            opponent = MonteCarloAgent(path=args.model_path)
         case _:
             raise ValueError("Invalid opponent")
 
-    opponent.load(args.model_path)
     env = PrsiEnv(opponent)
     agent = HumanAgent()
     agent.evaluate(env, episodes=args.evaluate_for)

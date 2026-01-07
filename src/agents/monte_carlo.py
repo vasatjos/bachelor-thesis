@@ -124,7 +124,7 @@ class MonteCarloAgent(BaseAgent):
 
             while not done:
                 state = self._process_state(game_state, info, hand)
-                action = self.choose_action(game_state, hand, state)
+                action = self.choose_action(game_state, hand, info)
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
@@ -186,7 +186,7 @@ class MonteCarloAgent(BaseAgent):
             reward = 0
             while not done:
                 action = self.choose_action(
-                    game_state, hand, self._process_state(game_state, info, hand)
+                    game_state, hand, info
                 )
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
@@ -199,7 +199,7 @@ class MonteCarloAgent(BaseAgent):
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
     def choose_action(
-        self, state: GameState, hand: set[Card], processed_state: State
+        self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:
         # Epsilon-greedy
         if np.random.random() < self.args.epsilon:
@@ -215,6 +215,7 @@ class MonteCarloAgent(BaseAgent):
             )
             return CARD_TO_INDEX[card], suit_idx
 
+        processed_state = self._process_state(state, info, hand)
         valid_actions = self._get_valid_actions(state, hand)
 
         # Greedy: find best Q-value among valid actions
