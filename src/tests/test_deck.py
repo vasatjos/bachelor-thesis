@@ -1,6 +1,6 @@
 from game.card import Card
-from game.card_utils import Suit, Rank, CardEffect, get_suit, get_rank
-from game.deck import Deck
+from game.card_utils import Suit, Rank, CardEffect
+from game.deck import Deck, get_suit, get_rank
 
 
 def test_deck_initialization():
@@ -13,12 +13,22 @@ def test_deck_initialization():
 def test_draw_card_reduces_drawpile():
     deck = Deck()
     count_before = len(deck.drawing_pile)
-    card = deck.draw_card()
+    card, _ = deck.draw_card()
     count_after = len(deck.drawing_pile)
 
     assert isinstance(card, Card)
     assert count_after == count_before - 1
 
+def test_deck_flip():
+    deck = Deck()
+    _, flipped = deck.draw_card()
+    
+    assert not flipped
+
+    for _ in range(31):
+        _, flipped = deck.draw_card()
+
+    assert flipped
 
 def test_play_card_sets_effect():
     deck = Deck()
