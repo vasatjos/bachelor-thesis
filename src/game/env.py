@@ -57,10 +57,29 @@ class PrsiEnv:
         )
 
         self._deal()
+
+        if self._player_won_last: # player makes first move
+            return self._state, {
+                "hand": self._player_info.hand_set,
+                "opponent_card_count": (self._opponent_player_info.card_count),
+                "deck_flipped_over": False,
+            }
+
+        # Opponent makes first move
+        player_info = {
+            "hand": self._opponent_player_info.hand_set,
+            "opponent_card_count": self._player_info.card_count,
+            "deck_flipped_over": False,
+        }
+        opponent_action = self._opponent.choose_action(
+            self._state, self._opponent_player_info.hand_set, player_info
+        )
+        _, flipped = self._execute_action(self._opponent_player_info, opponent_action)
+
         return self._state, {
             "hand": self._player_info.hand_set,
-            "opponent_card_count": (self._opponent_player_info.card_count),
-            "deck_flipped_over": False,
+            "opponent_card_count": self._opponent_player_info.card_count,
+            "deck_flipped_over": flipped,
         }
 
     def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
@@ -81,6 +100,7 @@ class PrsiEnv:
         player_card, flipped_player = self._execute_action(self._player_info, action)
         if not self._opponent_player_info.card_count and player_card != seven_of_hearts:
             self._done = True
+            self._player_won_last = False
             return (
                 self._state,
                 -1.0,
@@ -106,6 +126,7 @@ class PrsiEnv:
         )
         if not self._player_info.card_count and opponent_card != seven_of_hearts:
             self._done = True
+            self._player_won_last = True
             return (
                 self._state,
                 1.0,
