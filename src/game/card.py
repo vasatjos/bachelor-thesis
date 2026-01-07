@@ -1,7 +1,24 @@
+from os import getenv
 from functools import total_ordering
 
 from game.card_utils import Suit, Rank, CardEffect, COLOR_RESET
 
+USE_ICONS = getenv("PRSI_USE_ICONS", "true").lower() in ("true", "1", "yes", "t")
+
+ICONS = {
+    Suit.HEARTS: "󰋑",
+    Suit.LEAVES: "󰌪",
+    Suit.BELLS: "",
+    Suit.ACORNS: "󰋟",
+    Rank.SEVEN: "7",
+    Rank.EIGHT: "8",
+    Rank.NINE: "9",
+    Rank.TEN: "10",
+    Rank.UNTER: "",
+    Rank.OBER: "",
+    Rank.KING: "󰆥",
+    Rank.ACE: "",
+}
 
 @total_ordering
 class Card:
@@ -21,7 +38,8 @@ class Card:
             self.effect = CardEffect.NONE
 
     def __str__(self) -> str:
-        return f"{self.suit.value}{self.rank.name} of {self.suit.name}{COLOR_RESET}"
+        icon = f"{ICONS[self.suit]} {ICONS[self.rank]:<3}" if USE_ICONS else ""
+        return f"{self.suit.value}{icon}{self.rank.name} of {self.suit.name}{COLOR_RESET}"
 
     def __repr__(self) -> str:
         return (
