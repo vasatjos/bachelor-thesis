@@ -31,7 +31,7 @@ class Card:
 
     def __lt__(self, other) -> bool:
         return (
-            self.rank < other.rank or self.rank == other.rank and self.suit < other.suit
+            self.suit < other.suit or self.suit == other.suit and self.rank < other.rank
         )
 
     def __eq__(self, other) -> bool:

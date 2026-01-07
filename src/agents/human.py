@@ -1,34 +1,83 @@
+import os
 from typing import Any
 from agents.base import BaseAgent
+from agents.greedy import GreedyAgent
+from agents.monte_carlo import MonteCarloAgent
+from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
 from game.card import Card
 from game.card_utils import Rank, Suit, COLOR_RESET
+import argparse
+
+from game.env import PrsiEnv
+from game.game_state import GameState, find_allowed_cards
+
+parser = argparse.ArgumentParser()
+
+# TODO: fix seeding, doesn't work properly currently
+parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+parser.add_argument(
+    "--evaluate_for", default=1, type=int, help="Evaluation episodes."
+)
+parser.add_argument(
+    "--model_path", default="agent-strategies/mc_agent.pkl", type=str, help="Path to load model."
+)
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
+parser.add_argument("--opponent", default="greedy", type=str, choices=["random", "greedy", "monte_carlo"])
 
 
 class HumanAgent(BaseAgent):
-    # NOTE: maybe could be used in final thesis evaluation against agents?
-    def evaluate(self) -> None:
-        raise NotImplementedError("Human player can't be evaluated")
-
     def save(self, path: str) -> None:
         raise NotImplementedError("Human player strategy can't be saved.")
 
     def train(self) -> None:
         raise NotImplementedError("Human player strategy can't be trained.")
 
-    def choose_action(self, state: Any, hand: set[Card]) -> Action:
-        raise NotImplementedError("TODO: Implement choose_action for human agent")
+    def load(self, path: str) -> None:
+        raise NotImplementedError("Human player strategy can't be loaded.")
+
+    def choose_action(self, state: GameState, hand: set[Card], opponent_card_count: int) -> Action:
+        top_card = state.top_card
+        active_suit = state.actual_suit
+        if top_card is None or active_suit is None:
+            raise RuntimeError("Invalid game state values.")
+        allowed = find_allowed_cards(state)
+        os.system("clear")
+        print(f"Top card: {top_card}")
+        if top_card.rank is Rank.OBER:
+            print(f"Suit: {active_suit.value}{active_suit.name}{COLOR_RESET}")
+        print(f"Opponent card count: {opponent_card_count}")
+        card, suit = self._select_card_to_play(allowed, hand)
+        return CARD_TO_INDEX[card], SUIT_TO_INDEX[suit]
+
+
+    def evaluate(self, env: PrsiEnv, episodes: int) -> None:
+        wins = 0
+        for _ in range(episodes):
+            game_state, info = env.reset()
+            hand = info["hand"]
+            done = False
+
+            reward = 0
+            while not done:
+                action = self.choose_action(game_state, hand, info["opponent_card_count"])
+                game_state, reward, done, info = env.step(action)
+                hand = info["hand"]
+
+            if reward > 0:
+                wins += 1
+
+        win_rate = wins / episodes
+        print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
+
 
     def _print_hand(
-        self, cards: list[Card] | None = None, hand: set[Card] | None = None
+        self, cards: list[Card] | set[Card]
     ) -> None:
         """
         Print given cards in a sorted order.
         """
-        if cards is None:
-            if hand is None:
-                raise ValueError("Must provide either cards or hand")
-            cards = list(hand)
+        cards = list(cards)
         cards.sort()
         for i, card in enumerate(cards, start=1):
             print(f"{i:>3}. {card}")
@@ -48,7 +97,11 @@ class HumanAgent(BaseAgent):
           None if player chose to draw a card.
           Otherwise simply the card the player chose to play.
         """
-        playable = list(hand & allowed)
+
+        print("\nHand:")
+        self._print_hand(hand)
+        print("\nAvailable cards:")
+        playable = sorted(hand & allowed)
         if len(playable) == 0:
             input("No cards available, press enter to draw/skip.")
             return None, None
@@ -102,3 +155,22 @@ class HumanAgent(BaseAgent):
         if choice == "b":
             return Suit.BELLS
         raise RuntimeError("Suit choice failed.")
+
+
+if __name__ == "__main__":
+    args = parser.parse_args([] if "__file__" not in globals() else None)
+
+    match args.opponent:
+        case "random":
+            opponent = RandomAgent()
+        case "greedy":
+            opponent = GreedyAgent()
+        case "monte_carlo":
+            opponent = MonteCarloAgent(args) # TODO: default args here
+        case _:
+            raise ValueError("Invalid opponent")
+
+    opponent.load(args.model_path)
+    env = PrsiEnv(opponent)
+    agent = HumanAgent()
+    agent.evaluate(env, episodes=args.evaluate_for)
