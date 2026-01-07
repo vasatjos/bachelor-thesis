@@ -32,7 +32,7 @@ parser.add_argument(
     "--hand_state_option",
     default="count_simple",
     type=str,
-    choices=["count","count_simple", "simple", "full"],
+    choices=["count", "count_simple", "simple", "full"],
 )
 parser.add_argument(
     "--played_subset",
@@ -90,10 +90,18 @@ State = tuple[
 
 
 class MonteCarloAgent(BaseAgent):
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(
+        self, args: argparse.Namespace | None = None, path: str | None = None
+    ) -> None:
+        if args is None and path is None:
+            raise ValueError("Agent needs either args or a path to load them from.")
+
         # both indexed by state + action
         self.action_value_fn: dict[State, dict[Action, float]] = {}
         self.num_visits: dict[State, dict[Action, int]] = {}
+        if args is None:  # agent is being used as opponent
+            self.load(path)  # type: ignore
+            return
 
         self.args = args
 
@@ -367,7 +375,7 @@ if __name__ == "__main__":
             raise ValueError("Invalid opponent")
 
     env = PrsiEnv(opponent)
-    agent = MonteCarloAgent(args)
+    agent = MonteCarloAgent(args=args)
     if args.load_model:
         agent.load(args.model_path)
     else:
