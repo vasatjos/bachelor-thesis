@@ -5,7 +5,6 @@ from agents.greedy import GreedyAgent
 from agents.monte_carlo import MonteCarloAgent
 from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
-from agents.utils import Action
 from game.card import Card
 from game.card_utils import Rank, Suit, COLOR_RESET
 import argparse
@@ -17,14 +16,20 @@ parser = argparse.ArgumentParser()
 
 # TODO: fix seeding, doesn't work properly currently
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+parser.add_argument("--evaluate_for", default=1, type=int, help="Evaluation episodes.")
 parser.add_argument(
-    "--evaluate_for", default=1, type=int, help="Evaluation episodes."
-)
-parser.add_argument(
-    "--model_path", default="agent-strategies/mc_agent.pkl", type=str, help="Path to load model."
+    "--model_path",
+    default="agent-strategies/mc_agent.pkl",
+    type=str,
+    help="Path to load model.",
 )
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
-parser.add_argument("--opponent", default="greedy", type=str, choices=["random", "greedy", "monte_carlo"])
+parser.add_argument(
+    "--opponent",
+    default="greedy",
+    type=str,
+    choices=["random", "greedy", "monte_carlo"],
+)
 
 
 class HumanAgent(BaseAgent):
@@ -37,7 +42,9 @@ class HumanAgent(BaseAgent):
     def load(self, path: str) -> None:
         raise NotImplementedError("Human player strategy can't be loaded.")
 
-    def choose_action(self, state: GameState, hand: set[Card], info: dict[str, Any]) -> Action:
+    def choose_action(
+        self, state: GameState, hand: set[Card], info: dict[str, Any]
+    ) -> Action:
         top_card = state.top_card
         active_suit = state.actual_suit
         if top_card is None or active_suit is None:
@@ -47,10 +54,9 @@ class HumanAgent(BaseAgent):
         print(f"Top card: {top_card}")
         if top_card.rank is Rank.OBER:
             print(f"Suit: {active_suit.value}{active_suit.name}{COLOR_RESET}")
-        print(f"Opponent card count: {info.get("opponent_card_count", 0)}")
+        print(f"Opponent card count: {info.get('opponent_card_count', 0)}")
         card, suit = self._select_card_to_play(allowed, hand)
         return CARD_TO_INDEX[card], SUIT_TO_INDEX[suit]
-
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         wins = 0
@@ -71,10 +77,7 @@ class HumanAgent(BaseAgent):
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
-
-    def _print_hand(
-        self, cards: list[Card] | set[Card]
-    ) -> None:
+    def _print_hand(self, cards: list[Card] | set[Card]) -> None:
         """
         Print given cards in a sorted order.
         """

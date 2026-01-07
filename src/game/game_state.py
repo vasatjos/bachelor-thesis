@@ -12,6 +12,7 @@ class GameState:
     current_effect: CardEffect = CardEffect.NONE
     effect_strength: int = 0
 
+
 def find_allowed_cards(state: GameState) -> set[Card]:
     """Find all cards that can legally be played given current state."""
     if state.top_card is None or state.actual_suit is None:

@@ -93,10 +93,10 @@ class PrsiEnv:
             )
             # else: simply fall through to opponent's turn
 
-        player_info = { # player here meaning opponent's opponent
+        player_info = {  # player here meaning opponent's opponent
             "hand": self._opponent_player_info.hand_set,
-            "opponent_card_count":  self._player_info. card_count,
-            "deck_flipped_over": flipped_player
+            "opponent_card_count": self._player_info.card_count,
+            "deck_flipped_over": flipped_player,
         }
         opponent_action = self._opponent.choose_action(
             self._state, self._opponent_player_info.hand_set, player_info

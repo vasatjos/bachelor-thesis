@@ -43,14 +43,14 @@ parser.add_argument(
 parser.add_argument(
     "--evaluate_for", default=500, type=int, help="Evaluation episodes."
 )
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--model_path",
     default="agent-strategies/monte-carlo/model.pkl",
     type=str,
-    help="Path to save model.",
+    help="Path to save/load model.",
 )
 parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
-parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )
@@ -185,9 +185,7 @@ class MonteCarloAgent(BaseAgent):
 
             reward = 0
             while not done:
-                action = self.choose_action(
-                    game_state, hand, info
-                )
+                action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
 
@@ -205,8 +203,8 @@ class MonteCarloAgent(BaseAgent):
         if np.random.random() < self.args.epsilon:
             playable = tuple(find_allowed_cards(state) & hand)
 
-            l = len(playable)
-            if l == 0 or randint(0, l) == l:
+            playable_length = len(playable)
+            if playable_length == 0 or randint(0, playable_length) == playable_length:
                 return DRAW_ACTION
 
             card = choice(tuple(playable))
@@ -295,10 +293,10 @@ class MonteCarloAgent(BaseAgent):
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
             case "count_simple":
-                l = len(hand)
-                if l > 4:
-                    l = 4
-                return np.uint32(l)
+                hand_size = len(hand)
+                if hand_size > 4:
+                    hand_size = 4
+                return np.uint32(hand_size)
             case "count":
                 return np.uint32(len(hand))
             case "simple":
