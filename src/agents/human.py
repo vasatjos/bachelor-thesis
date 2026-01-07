@@ -51,7 +51,8 @@ class HumanAgent(BaseAgent):
             raise RuntimeError("Invalid game state values.")
         allowed = find_allowed_cards(state)
         os.system("clear")
-        print(f"Top card: {top_card}")
+        print(f"Episode: {info["episode"] + 1}/{info["episodes"]}")
+        print(f"\nTop card: {top_card}")
         if top_card.rank is Rank.OBER:
             print(f"Suit: {active_suit.value}{active_suit.name}{COLOR_RESET}")
         print(f"Opponent card count: {info.get('opponent_card_count', 0)}")
@@ -60,15 +61,20 @@ class HumanAgent(BaseAgent):
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         wins = 0
-        for _ in range(episodes):
+        for i in range(episodes):
             game_state, info = env.reset()
             hand = info["hand"]
             done = False
 
             reward = 0
+
+            info["episodes"] = episodes
+            info["episode"] = i
             while not done:
                 action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
+                info["episodes"] = episodes
+                info["episode"] = i
                 hand = info["hand"]
 
             if reward > 0:
