@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 # TODO: fix seeding, doesn't work properly currently
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument(
-    "--episodes", default=1_000_000, type=int, help="Training episodes."
+    "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
@@ -41,7 +41,7 @@ parser.add_argument(
     choices=["sevens", "specials", "all"],
 )
 parser.add_argument(
-    "--evaluate_for", default=500, type=int, help="Evaluation episodes."
+    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
 )
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
@@ -50,7 +50,7 @@ parser.add_argument(
     type=str,
     help="Path to save/load model.",
 )
-parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
+parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )
