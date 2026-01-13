@@ -303,6 +303,7 @@ class MonteCarloAgent(BaseAgent):
                 raise NotImplementedError('TODO: _get_hand_state for "simple"')
             case "full":
                 raise NotImplementedError('TODO: _get_hand_state for "full"')
+            # TODO: option to act randomly on many cards
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
