@@ -19,16 +19,18 @@ def test_draw_card_reduces_drawpile():
     assert isinstance(card, Card)
     assert count_after == count_before - 1
 
+
 def test_deck_flip():
     deck = Deck()
     _, flipped = deck.draw_card()
-    
+
     assert not flipped
 
     for _ in range(31):
         _, flipped = deck.draw_card()
 
     assert flipped
+
 
 def test_play_card_sets_effect():
     deck = Deck()

@@ -20,6 +20,7 @@ ICONS = {
     Rank.ACE: "",
 }
 
+
 @total_ordering
 class Card:
     def __init__(self, suit: Suit, rank: Rank) -> None:
@@ -39,7 +40,9 @@ class Card:
 
     def __str__(self) -> str:
         icon = f"{ICONS[self.suit]} {ICONS[self.rank]:<3}" if USE_ICONS else ""
-        return f"{self.suit.value}{icon}{self.rank.name} of {self.suit.name}{COLOR_RESET}"
+        return (
+            f"{self.suit.value}{icon}{self.rank.name} of {self.suit.name}{COLOR_RESET}"
+        )
 
     def __repr__(self) -> str:
         return (

@@ -58,7 +58,7 @@ class PrsiEnv:
 
         self._deal()
 
-        if self._player_won_last: # player makes first move
+        if self._player_won_last:  # player makes first move
             return self._state, {
                 "hand": self._player_info.hand_set,
                 "opponent_card_count": (self._opponent_player_info.card_count),
