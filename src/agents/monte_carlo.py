@@ -27,6 +27,8 @@ parser.add_argument(
     "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
+parser.add_argument("--epsilon_decay", default=1, type=float, help="Epsilon decay factor.")
+parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
@@ -54,7 +56,6 @@ parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.
 parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )
-# TODO: add epsilon decay
 
 
 # Count hand state:
@@ -177,6 +178,9 @@ class MonteCarloAgent(BaseAgent):
             if (episode + 1) % self.args.log_each == 0:
                 self.log(episode, batch_wins)
                 batch_wins = 0
+
+            if self.args.epsilon > self.args.min_epsilon:
+                self.args.epsilon *= self.args.epsilon_decay
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon
