@@ -13,7 +13,7 @@ from agents.utils import (
     SuitIndex,
 )
 from game.card import Card
-from game.card_utils import CardEffect, Rank
+from game.card_utils import CardEffect, Rank, Suit
 from game.env import PrsiEnv
 from game.game_state import GameState, find_allowed_cards
 from random import choice, randint
@@ -77,6 +77,13 @@ State = tuple[
 
 
 class QLearningAgent(TrainableAgent):
+    SIMPLE_HAND_INDICES = {
+        Suit.BELLS: 0,
+        Suit.HEARTS: 1,
+        Suit.LEAVES: 2,
+        Suit.ACORNS: 3,
+    }
+
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
     ) -> None:
@@ -299,9 +306,37 @@ class QLearningAgent(TrainableAgent):
             case "count":
                 return np.uint32(len(hand))
             case "simple":
-                raise NotImplementedError('TODO: _get_hand_state for "simple"')
+                state_array = np.zeros(7, dtype=np.uint8)
+                for card in hand:
+                    state_array[self.SIMPLE_HAND_INDICES[card.suit]] += 1
+                    match card.rank:
+                        case Rank.SEVEN:
+                            state_array[4] += 1
+                        case Rank.OBER:
+                            state_array[5] += 1
+                        case Rank.ACE:
+                            state_array[6] += 1
+                        case _:
+                            pass
+
+                packed = np.uint32(0)
+
+                # Pack suits (4 bits each, max value 8)
+                for i in range(4):
+                    packed |= np.uint32(state_array[i] & 0xF) << (i * 4)
+
+                # Pack specials (3 bits each, max value 4, starting at bit 16)
+                for i in range(3):
+                    packed |= np.uint32(state_array[i + 4] & 0x7) << (16 + i * 3)
+
+                return packed
+
             case "full":
-                raise NotImplementedError('TODO: _get_hand_state for "full"')
+                packed = np.uint32(0)
+                for card in hand:
+                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
+                return packed
+            # TODO: option to act randomly on many cards
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
