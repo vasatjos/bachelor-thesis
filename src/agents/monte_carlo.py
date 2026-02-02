@@ -13,7 +13,7 @@ from agents.utils import (
     SuitIndex,
 )
 from game.card import Card
-from game.card_utils import CardEffect, Rank
+from game.card_utils import CardEffect, Rank, Suit
 from game.env import PrsiEnv
 from game.game_state import GameState, find_allowed_cards
 from random import choice, randint
@@ -24,9 +24,11 @@ parser = argparse.ArgumentParser()
 # TODO: fix seeding, doesn't work properly currently
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument(
-    "--episodes", default=1_000_000, type=int, help="Training episodes."
+    "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
+parser.add_argument("--epsilon_decay", default=1, type=float, help="Epsilon decay factor.")
+parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
@@ -41,7 +43,7 @@ parser.add_argument(
     choices=["sevens", "specials", "all"],
 )
 parser.add_argument(
-    "--evaluate_for", default=500, type=int, help="Evaluation episodes."
+    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
 )
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
@@ -50,11 +52,10 @@ parser.add_argument(
     type=str,
     help="Path to save/load model.",
 )
-parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
+parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )
-# TODO: add epsilon decay
 
 
 # Count hand state:
@@ -90,6 +91,13 @@ State = tuple[
 
 
 class MonteCarloAgent(BaseAgent):
+    SIMPLE_HAND_INDICES = {
+        Suit.BELLS: 0,
+        Suit.HEARTS: 1,
+        Suit.LEAVES: 2,
+        Suit.ACORNS: 3,
+    }
+
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
     ) -> None:
@@ -170,6 +178,9 @@ class MonteCarloAgent(BaseAgent):
             if (episode + 1) % self.args.log_each == 0:
                 self.log(episode, batch_wins)
                 batch_wins = 0
+
+            if self.args.epsilon > self.args.min_epsilon:
+                self.args.epsilon *= self.args.epsilon_decay
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon
@@ -300,9 +311,37 @@ class MonteCarloAgent(BaseAgent):
             case "count":
                 return np.uint32(len(hand))
             case "simple":
-                raise NotImplementedError('TODO: _get_hand_state for "simple"')
+                state_array = np.zeros(7, dtype=np.uint8)
+                for card in hand:
+                    state_array[self.SIMPLE_HAND_INDICES[card.suit]] += 1
+                    match card.rank:
+                        case Rank.SEVEN:
+                            state_array[4] += 1
+                        case Rank.OBER:
+                            state_array[5] += 1
+                        case Rank.ACE:
+                            state_array[6] += 1
+                        case _:
+                            pass
+
+                packed = np.uint32(0)
+
+                # Pack suits (4 bits each, max value 8)
+                for i in range(4):
+                    packed |= np.uint32(state_array[i] & 0xF) << (i * 4)
+
+                # Pack specials (3 bits each, max value 4, starting at bit 16)
+                for i in range(3):
+                    packed |= np.uint32(state_array[i + 4] & 0x7) << (16 + i * 3)
+
+                return packed
+
             case "full":
-                raise NotImplementedError('TODO: _get_hand_state for "full"')
+                packed = np.uint32(0)
+                for card in hand:
+                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
+                return packed
+            # TODO: option to act randomly on many cards
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
