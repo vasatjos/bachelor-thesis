@@ -18,4 +18,3 @@ class BaseAgent(ABC):
     @abstractmethod
     def evaluate(self, *args, **kwargs) -> None:
         raise NotImplementedError("Base class cannot be evaluated.")
-

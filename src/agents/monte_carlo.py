@@ -27,14 +27,22 @@ parser.add_argument(
     "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
-parser.add_argument("--epsilon_decay", default=1, type=float, help="Epsilon decay factor.")
+parser.add_argument(
+    "--epsilon_decay", default=1, type=float, help="Epsilon decay factor."
+)
 parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
-    default="count_simple",
+    default="count_truncated",
     type=str,
-    choices=["count", "count_simple", "simple", "full"],
+    choices=["count", "count_truncated", "simple", "full"],
+)
+parser.add_argument(
+    "--truncated_hand_size",
+    default=4,
+    type=int,
+    help="Max hand size for truncated count.",
 )
 parser.add_argument(
     "--played_subset",
@@ -283,8 +291,11 @@ class MonteCarloAgent(TrainableAgent):
 
         hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
-        if self.args.hand_state_option == "count_simple" and opponent_card_count > 4:
-            opponent_card_count = np.uint8(4)
+        if (
+            self.args.hand_state_option == "count_truncated"
+            and opponent_card_count > self.args.truncated_hand_size
+        ):
+            opponent_card_count = np.uint8(self.args.truncated_hand_size)
         top_card = CARD_TO_INDEX[state.top_card]
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
@@ -303,10 +314,10 @@ class MonteCarloAgent(TrainableAgent):
 
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
-            case "count_simple":
+            case "count_truncated":
                 hand_size = len(hand)
-                if hand_size > 4:
-                    hand_size = 4
+                if hand_size > self.args.truncated_hand_size:
+                    hand_size = self.args.truncated_hand_size
                 return np.uint32(hand_size)
             case "count":
                 return np.uint32(len(hand))

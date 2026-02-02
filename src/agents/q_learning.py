@@ -27,14 +27,22 @@ parser.add_argument(
 )
 parser.add_argument("--alpha", default=0.1, type=float, help="Learning rate.")
 parser.add_argument("--epsilon", default=0.3, type=float, help="Exploration factor.")
-parser.add_argument("--epsilon_decay", default=1, type=float, help="Epsilon decay factor.")
+parser.add_argument(
+    "--epsilon_decay", default=1, type=float, help="Epsilon decay factor."
+)
 parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
-    default="count_simple",
+    default="count_truncated",
     type=str,
-    choices=["count", "count_simple", "simple", "full"],
+    choices=["count", "count_truncated", "simple", "full"],
+)
+parser.add_argument(
+    "--truncated_hand_size",
+    default=4,
+    type=int,
+    help="Max hand size for truncated count.",
 )
 parser.add_argument(
     "--played_subset",
@@ -77,7 +85,7 @@ class QLearningAgent(TrainableAgent):
 
         # Q-value function indexed by state + action
         self.action_value_fn: dict[State, dict[Action, float]] = {}
-        
+
         if args is None:  # agent is being used as opponent
             self.load(path)  # type: ignore
             return
@@ -109,8 +117,12 @@ class QLearningAgent(TrainableAgent):
                     # Terminal state has no future value
                     future_value = 0.0
                 else:
-                    next_state = self._process_state(next_game_state, next_info, next_hand)
-                    future_value = self._get_max_q_value(next_game_state, next_hand, next_state)
+                    next_state = self._process_state(
+                        next_game_state, next_info, next_hand
+                    )
+                    future_value = self._get_max_q_value(
+                        next_game_state, next_hand, next_state
+                    )
 
                 # Initialize Q-value if not seen before
                 if state not in self.action_value_fn:
@@ -120,7 +132,9 @@ class QLearningAgent(TrainableAgent):
 
                 # Q-learning update rule: Q(s,a) += alpha * (r + gamma * max Q(s',a') - Q(s,a))
                 current_q = self.action_value_fn[state][action]
-                update = self.args.alpha * (reward + self.args.gamma * future_value - current_q)
+                update = self.args.alpha * (
+                    reward + self.args.gamma * future_value - current_q
+                )
                 self.action_value_fn[state][action] += update
 
                 # Move to next state
@@ -201,13 +215,13 @@ class QLearningAgent(TrainableAgent):
     ) -> float:
         """Get the maximum Q-value for the given state over all valid actions."""
         valid_actions = self._get_valid_actions(game_state, hand)
-        
+
         max_value = -np.inf
         for action in valid_actions:
             value = self.action_value_fn.get(state, {}).get(action, 0.0)
             if value > max_value:
                 max_value = value
-        
+
         return max_value if max_value > -np.inf else 0.0
 
     def save(self, path: str) -> None:
@@ -254,8 +268,11 @@ class QLearningAgent(TrainableAgent):
 
         hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
-        if self.args.hand_state_option == "count_simple" and opponent_card_count > 4:
-            opponent_card_count = np.uint8(4)
+        if (
+            self.args.hand_state_option == "count_truncated"
+            and opponent_card_count > self.args.truncated_hand_size
+        ):
+            opponent_card_count = np.uint8(self.args.truncated_hand_size)
         top_card = CARD_TO_INDEX[state.top_card]
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
@@ -274,10 +291,10 @@ class QLearningAgent(TrainableAgent):
 
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
-            case "count_simple":
+            case "count_truncated":
                 hand_size = len(hand)
-                if hand_size > 4:
-                    hand_size = 4
+                if hand_size > self.args.truncated_hand_size:
+                    hand_size = self.args.truncated_hand_size
                 return np.uint32(hand_size)
             case "count":
                 return np.uint32(len(hand))
