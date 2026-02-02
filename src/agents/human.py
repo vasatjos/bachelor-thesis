@@ -32,15 +32,6 @@ parser.add_argument(
 
 
 class HumanAgent(BaseAgent):
-    def save(self, path: str) -> None:
-        raise NotImplementedError("Human player strategy can't be saved.")
-
-    def train(self) -> None:
-        raise NotImplementedError("Human player strategy can't be trained.")
-
-    def load(self, path: str) -> None:
-        raise NotImplementedError("Human player strategy can't be loaded.")
-
     def choose_action(
         self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:

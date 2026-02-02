@@ -1,9 +1,9 @@
 import pickle
 from typing import Any
 import argparse
-from agents.base import BaseAgent
 from agents.greedy import GreedyAgent
 from agents.random import RandomAgent
+from agents.trainable import TrainableAgent
 from agents.utils import (
     CARD_TO_INDEX,
     DRAW_ACTION,
@@ -68,7 +68,7 @@ State = tuple[
 ]
 
 
-class QLearningAgent(BaseAgent):
+class QLearningAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
     ) -> None:

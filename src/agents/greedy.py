@@ -27,13 +27,3 @@ class GreedyAgent(BaseAgent):
 
     def evaluate(self) -> None:
         raise NotImplementedError("TODO: should be simple though")
-
-    # implementations for methods below not necessary
-    def train(self) -> None:
-        pass
-
-    def save(self, path: str) -> None:
-        pass
-
-    def load(self, path: str) -> None:
-        pass
