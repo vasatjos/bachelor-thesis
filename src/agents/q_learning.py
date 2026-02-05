@@ -65,6 +65,15 @@ parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )
 
+"""
+    hand_state: bit array -> u32, might be unused, depends on hyperparameter
+    opponent card count: u8
+    top card: CardIndex (int)
+    active suit: SuitIndex (int)
+    CardEffect: IntEnum
+    Effect strength: u8
+    played cards subset: list of ints, size depends on hyperparameter
+"""
 State = tuple[
     np.uint32,
     np.uint8,

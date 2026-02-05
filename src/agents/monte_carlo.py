@@ -66,18 +66,6 @@ parser.add_argument(
 )
 
 
-# Count hand state:
-# number of cards in hand
-
-# Full hand state:
-# bit array (converted -> int)
-
-# Simple hand state:
-# num of normal cards for each color + num of obers + num of aces + num of sevens
-# maybe sort into buckets: 0, 1, 2+
-# still probably bit array
-
-
 """
     hand_state: bit array -> u32, might be unused, depends on hyperparameter
     opponent card count: u8
