@@ -28,7 +28,9 @@ class PrsiEnv:
     def state(self) -> GameState:
         return self._state
 
-    def reset(self, full: bool = False) -> tuple[GameState, dict]:
+    def reset(
+        self, full: bool = False, opponent: BaseAgent | None = None
+    ) -> tuple[GameState, dict]:
         """
         Reset the environment to initial state and return the starting state.
 
@@ -46,6 +48,8 @@ class PrsiEnv:
         self._ran_out_of_cards = False
         if full:
             self._player_won_last = True
+        if opponent is not None:  # change opponent agent (for self-play purposes)
+            self._opponent = opponent
 
         # Initialize effect with first card from discard pile
         first_card = self._deck.discard_pile[0]
