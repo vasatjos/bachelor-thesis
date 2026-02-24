@@ -1,22 +1,10 @@
-import pickle
-from typing import Any
 import argparse
-from agents.greedy import GreedyAgent
-from agents.random import RandomAgent
 from agents.trainable import TrainableAgent
 from agents.utils import (
-    CARD_TO_INDEX,
-    DRAW_ACTION,
-    SUIT_TO_INDEX,
-    Action,
     CardIndex,
     SuitIndex,
 )
-from game.card import Card
-from game.card_utils import CardEffect, Rank, Suit
-from game.env import PrsiEnv
-from game.game_state import GameState, find_allowed_cards
-from random import choice, randint
+from game.card_utils import CardEffect
 import numpy as np
 
 parser = argparse.ArgumentParser()
