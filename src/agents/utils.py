@@ -31,3 +31,6 @@ SUIT_TO_INDEX: dict[Suit | None, SuitIndex] = {
     suit: i for i, suit in enumerate(Suit, start=1)
 }
 SUIT_TO_INDEX[None] = 0
+
+class ReplayBuffer:
+    ...
