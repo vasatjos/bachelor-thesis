@@ -1,6 +1,7 @@
 import pickle
 from typing import Any
 import argparse
+from agents.base import BaseAgent
 from agents.greedy import GreedyAgent
 from agents.random import RandomAgent
 from agents.trainable import TrainableAgent
@@ -196,7 +197,8 @@ class MonteCarloAgent(TrainableAgent):
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
             done = False
 
-            reward = 0
+            reward = 0.0
+
             while not done:
                 action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
@@ -417,6 +419,7 @@ class MonteCarloAgent(TrainableAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
+    opponent: BaseAgent
     match args.opponent:
         case "random":
             opponent = RandomAgent()

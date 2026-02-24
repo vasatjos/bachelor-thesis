@@ -1,0 +1,26 @@
+repos:
+  - repo: local
+    hooks:
+    - id: ruff-format
+      name: ruff-format
+      language: system
+      types: [python]
+      require_serial: true
+      pass_filenames: false
+      entry: uv run ruff format
+
+    - id: ruff
+      name: ruff
+      language: system
+      types: [python]
+      require_serial: true
+      pass_filenames: false
+      entry: uv run ruff check
+
+    - id: mypy
+      name: mypy
+      language: system
+      types: [python]
+      require_serial: true
+      pass_filenames: false
+      entry: uv run mypy .

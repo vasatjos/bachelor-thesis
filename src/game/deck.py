@@ -69,8 +69,8 @@ class Deck:
         self.reset()
 
     def reset(self) -> None:
-        self.discard_pile: list[Card] = []
-        self.drawing_pile: list[Card] = [
+        self.discard_pile: list[Card] = []  # type: ignore[no-redef]
+        self.drawing_pile: list[Card] = [  # type: ignore[no-redef]
             Card(suit, rank) for suit in Suit for rank in Rank
         ]
         shuffle(self.drawing_pile)

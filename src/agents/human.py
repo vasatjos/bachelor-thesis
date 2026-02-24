@@ -60,7 +60,7 @@ class HumanAgent(BaseAgent):
             hand = info["hand"]
             done = False
 
-            reward = 0
+            reward = 0.0
 
             info["episodes"] = episodes
             info["episode"] = i
@@ -168,6 +168,7 @@ class HumanAgent(BaseAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
+    opponent: BaseAgent
     match args.opponent:
         case "random":
             opponent = RandomAgent()

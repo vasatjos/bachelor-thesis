@@ -179,11 +179,11 @@ class PrsiEnv:
         deck_flipped = False
         match self._state.current_effect:
             case CardEffect.DRAW_TWO:
-                drawn = []
+                drawn: list[Card | None] = []
                 for _ in range(self._state.effect_strength):
                     for _ in range(2):
                         card, flip = self._deck.draw_card()
-                        deck_flipped += flip
+                        deck_flipped = deck_flipped or flip
                         if card is not None:
                             drawn.append(card)
                 return drawn, bool(deck_flipped)
@@ -191,7 +191,7 @@ class PrsiEnv:
                 return [], False
             case _:
                 drawn_card, flipped = self._deck.draw_card()
-                result = []
+                result: list[Card | None] = []
                 if drawn_card is not None:
                     result.append(drawn_card)
                 return result, flipped
