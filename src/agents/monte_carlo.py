@@ -22,7 +22,24 @@ import numpy as np
 parser = argparse.ArgumentParser()
 
 # TODO: fix seeding, doesn't work properly currently
+
+# OPTIONS
+# ------------------------------
+parser.add_argument(
+    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
+)
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
+parser.add_argument(
+    "--model_path",
+    default="agent-strategies/monte-carlo/model.pkl",
+    type=str,
+    help="Path to save/load model.",
+)
+parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+
+# HYPERPARAMETERS
+# ------------------------------
 parser.add_argument(
     "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
@@ -50,17 +67,6 @@ parser.add_argument(
     type=str,
     choices=["sevens", "specials", "all"],
 )
-parser.add_argument(
-    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
-)
-parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
-parser.add_argument(
-    "--model_path",
-    default="agent-strategies/monte-carlo/model.pkl",
-    type=str,
-    help="Path to save/load model.",
-)
-parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )

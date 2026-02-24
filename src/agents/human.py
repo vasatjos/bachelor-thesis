@@ -78,14 +78,17 @@ class HumanAgent(BaseAgent):
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
-    def _print_hand(self, cards: list[Card] | set[Card]) -> None:
+    def _print_hand(
+        self, cards: list[Card] | set[Card], show_numbers: bool = True
+    ) -> None:
         """
         Print given cards in a sorted order.
         """
         cards = list(cards)
         cards.sort()
         for i, card in enumerate(cards, start=1):
-            print(f"{i:>3}. {card}")  # TODO: unicode pictures for suits
+            index = f"{i:>3}. " if show_numbers else ""
+            print(f"{index}{card}")
 
     def _select_card_to_play(
         self, allowed: set[Card], hand: set[Card]
@@ -104,7 +107,7 @@ class HumanAgent(BaseAgent):
         """
 
         print("\nHand:")
-        self._print_hand(hand)
+        self._print_hand(hand, show_numbers=False)
         print("\nAvailable cards:")
         playable = sorted(hand & allowed)
         if len(playable) == 0:

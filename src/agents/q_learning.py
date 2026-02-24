@@ -21,9 +21,26 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+
+# OPTIONS
+# ------------------------------
 parser.add_argument(
-    "--episodes", default=1_000_000, type=int, help="Training episodes."
+    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
+)
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
+parser.add_argument(
+    "--model_path",
+    default="agent-strategies/monte-carlo/model.pkl",
+    type=str,
+    help="Path to save/load model.",
+)
+parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
+parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+
+# HYPERPARAMETERS
+# ------------------------------
+parser.add_argument(
+    "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--alpha", default=0.1, type=float, help="Learning rate.")
 parser.add_argument("--epsilon", default=0.3, type=float, help="Exploration factor.")
@@ -51,19 +68,9 @@ parser.add_argument(
     choices=["sevens", "specials", "all"],
 )
 parser.add_argument(
-    "--evaluate_for", default=500, type=int, help="Evaluation episodes."
-)
-parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
-parser.add_argument(
-    "--model_path",
-    default="agent-strategies/q-learning/model.pkl",
-    type=str,
-    help="Path to save/load model.",
-)
-parser.add_argument("--log_each", default=500, type=int, help="Log frequency.")
-parser.add_argument(
     "--opponent", default="greedy", type=str, choices=["random", "greedy"]
 )
+
 
 """
     hand_state: bit array -> u32, might be unused, depends on hyperparameter

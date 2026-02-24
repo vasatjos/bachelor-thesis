@@ -1,8 +1,5 @@
-from typing import Any  # TODO: maybe state should be Hashable instead of Any
 from abc import abstractmethod
 from agents.base import BaseAgent
-from agents.utils import Action
-from game.card import Card
 
 
 class TrainableAgent(BaseAgent):

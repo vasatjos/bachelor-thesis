@@ -14,7 +14,7 @@ class GreedyAgent(BaseAgent):
         playable = tuple(find_allowed_cards(state) & hand)
 
         if not playable:
-            return DRAW_ACTION  # draw
+            return DRAW_ACTION
 
         card_choice = choice(playable)
         suit_index = (
