@@ -36,21 +36,6 @@ SUIT_TO_INDEX: dict[Suit | None, SuitIndex] = {
 SUIT_TO_INDEX[None] = 0
 
 
-# Action index <-> (card_idx, suit_idx) mapping
-def _build_action_maps() -> tuple[list[Action], dict[Action, int]]:
-    """Return (index_to_action, action_to_index)."""
-    actions: list[Action] = [DRAW_ACTION]
-    for card_idx in range(1, 33):  # 32 cards
-        for suit_idx in range(1, 5):  # 4 suits
-            actions.append((card_idx, suit_idx))
-    action_to_index = {a: i for i, a in enumerate(actions)}
-    return actions, action_to_index
-
-
-INDEX_TO_ACTION, ACTION_TO_INDEX = _build_action_maps()
-NUM_ACTIONS = len(INDEX_TO_ACTION)  # 1 + 32*4 = 129
-
-
 class ReplayBuffer:
     """Simple replay buffer with possibly limited capacity.
 

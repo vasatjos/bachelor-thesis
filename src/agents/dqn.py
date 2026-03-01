@@ -12,10 +12,9 @@ from agents.random import RandomAgent
 from agents.trainable import TrainableAgent
 from agents.utils import (
     CARD_TO_INDEX,
+    INDEX_TO_CARD,
     DRAW_ACTION,
     SUIT_TO_INDEX,
-    NUM_ACTIONS,
-    ACTION_TO_INDEX,
     Action,
     CardIndex,
     SuitIndex,
@@ -25,7 +24,7 @@ from game.card import Card
 from game.card_utils import CardEffect, Rank, Suit
 from game.env import PrsiEnv
 from game.game_state import GameState, find_allowed_cards
-from random import choice
+from random import choice, randint
 
 parser = argparse.ArgumentParser()
 
@@ -42,7 +41,7 @@ parser.add_argument("--log_each", default=10_000, type=int)
 # HYPERPARAMETERS
 # ------------------------------
 parser.add_argument("--episodes", default=1_000_000, type=int)
-parser.add_argument("--epsilon", default=0.2, type=float)
+parser.add_argument("--epsilon", default=0.1, type=float)
 parser.add_argument("--epsilon_decay", default=1, type=float)
 parser.add_argument("--min_epsilon", default=0.05, type=float)
 parser.add_argument("--gamma", default=0.99, type=float)
@@ -104,22 +103,35 @@ def _state_to_vector(
 class QNetwork(nn.Module):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def __init__(self, num_actions: int, hidden: int) -> None:
+    def __init__(self, hidden: int) -> None:
         super().__init__()
-        self.net = nn.Sequential(
+        self.trunk = nn.Sequential(
             nn.LazyLinear(hidden),
             nn.ReLU(),
             nn.Linear(hidden, hidden),
             nn.ReLU(),
-            nn.Linear(hidden, num_actions),
         )
+        self.card_head = nn.Linear(hidden, len(CARD_TO_INDEX))  # 0 = draw, 1-32 = cards
+        self.suit_head = nn.Linear(hidden, len(SUIT_TO_INDEX))  # 0 = draw, 1-4 = suits
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        features = self.trunk(x)
+        return self.card_head(features), self.suit_head(features)
 
 
+# card_idx: 0 = draw, 1-32 = card
+# suit_idx: 0 = draw, 1-4 = suit
 Transition = collections.namedtuple(
-    "Transition", ["state", "action_idx", "reward", "done", "next_state"]
+    "Transition",
+    [
+        "state",
+        "card_idx",
+        "suit_idx",
+        "reward",
+        "done",
+        "next_state",
+        "next_valid_cards",
+    ],
 )
 
 
@@ -141,12 +153,8 @@ class DQNAgent(TrainableAgent):
         self._build_networks()
 
     def _build_networks(self) -> None:
-        self.online_net = QNetwork(NUM_ACTIONS, self.args.hidden_layer_size).to(
-            QNetwork.device
-        )
-        self.target_net = QNetwork(NUM_ACTIONS, self.args.hidden_layer_size).to(
-            QNetwork.device
-        )
+        self.online_net = QNetwork(self.args.hidden_layer_size).to(QNetwork.device)
+        self.target_net = QNetwork(self.args.hidden_layer_size).to(QNetwork.device)
         self.target_net.load_state_dict(self.online_net.state_dict())
         self.target_net.eval()
 
@@ -181,14 +189,28 @@ class DQNAgent(TrainableAgent):
             while not done:
                 state_vec = self._process_state(game_state, info, hand)
                 action = self.choose_action(game_state, hand, info)
-                action_idx = ACTION_TO_INDEX[action]
+                card_index, suit_idx = action
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
 
                 next_state_vec = self._process_state(game_state, info, hand)
+
+                next_valid_actions = self._get_valid_actions(game_state, hand)
+                next_valid_cards = np.zeros(len(CARD_TO_INDEX), dtype=bool)
+                for c, _ in next_valid_actions:
+                    next_valid_cards[c] = True
+
                 replay_buffer.append(
-                    Transition(state_vec, action_idx, reward, done, next_state_vec)
+                    Transition(
+                        state_vec,
+                        card_index,
+                        suit_idx,
+                        reward,
+                        done,
+                        next_state_vec,
+                        next_valid_cards,
+                    )
                 )
                 total_steps += 1
 
@@ -214,8 +236,11 @@ class DQNAgent(TrainableAgent):
         states = torch.tensor(
             np.array([t.state for t in batch]), dtype=torch.float32
         ).to(QNetwork.device)
-        action_idxs = torch.tensor(
-            np.array([t.action_idx for t in batch]), dtype=torch.long
+        card_idxs = torch.tensor(
+            np.array([t.card_idx for t in batch]), dtype=torch.long
+        ).to(QNetwork.device)
+        suit_idxs = torch.tensor(
+            np.array([t.suit_idx for t in batch]), dtype=torch.long
         ).to(QNetwork.device)
         rewards = torch.tensor(
             np.array([t.reward for t in batch]), dtype=torch.float32
@@ -226,17 +251,27 @@ class DQNAgent(TrainableAgent):
         next_states = torch.tensor(
             np.array([t.next_state for t in batch]), dtype=torch.float32
         ).to(QNetwork.device)
+        next_valid_cards = torch.tensor(
+            np.array([t.next_valid_cards for t in batch]), dtype=torch.bool
+        ).to(QNetwork.device)
 
-        q_prediciton = (
-            self.online_net(states).gather(1, action_idxs.unsqueeze(1)).squeeze(1)
-        )
+        self.online_net.train()
+        card_q, suit_q = self.online_net(states)
+
+        current_card_q = card_q.gather(1, card_idxs.unsqueeze(1)).squeeze(1)
+        current_suit_q = suit_q.gather(1, suit_idxs.unsqueeze(1)).squeeze(1)
 
         with torch.no_grad():
-            target_q = rewards + self.args.gamma * (
-                self.target_net(next_states).max(dim=1).values
-            ) * (1.0 - dones)
+            next_card_q, _ = self.target_net(next_states)
+            next_card_q[~next_valid_cards] = -torch.inf
+            target_q = rewards + self.args.gamma * next_card_q.max(dim=1).values * (
+                1.0 - dones
+            )
 
-        loss = self.loss(q_prediciton, target_q)
+        card_loss = self.loss(current_card_q, target_q)
+        suit_loss = self.loss(current_suit_q, target_q)
+        loss = card_loss + suit_loss
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -244,6 +279,8 @@ class DQNAgent(TrainableAgent):
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon
         self.args.epsilon = 0.0
+        self.online_net.eval()
+        self.target_net.eval()
 
         env.reset(full=True)
         wins = 0
@@ -268,25 +305,47 @@ class DQNAgent(TrainableAgent):
     def choose_action(
         self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:
-        """Return (env_action, action_index_for_replay_buffer)."""
-        valid_actions = self._get_valid_actions(state, hand)
-
-        # ε-greedy exploration
         if np.random.random() < self.args.epsilon:
-            action = choice(valid_actions)
-            return action
+            return self._behave_randomly(state, hand)
 
-        # Greedy: pick valid action with highest Q-value
+        valid_actions = self._get_valid_actions(state, hand)
         state_vec = self._process_state(state, info, hand)
         state_tensor = torch.tensor(state_vec[np.newaxis], dtype=torch.float32).to(
             QNetwork.device
         )
         self.online_net.eval()
         with torch.no_grad():
-            q_values = self.online_net(state_tensor)[0].cpu().numpy()
+            card_q, suit_q = self.online_net(state_tensor)
+            card_q = card_q[0].cpu().numpy()
+            suit_q = suit_q[0].cpu().numpy()
 
-        best_action = max(valid_actions, key=lambda a: q_values[ACTION_TO_INDEX[a]])
-        return best_action
+        valid_card_indices = list({a[0] for a in valid_actions})
+        card_mask = np.full(len(CARD_TO_INDEX), -np.inf)
+        card_mask[valid_card_indices] = card_q[valid_card_indices]
+        best_card_idx = int(np.argmax(card_mask))
+
+        if best_card_idx == 0:
+            return DRAW_ACTION
+
+        if INDEX_TO_CARD[best_card_idx].rank == Rank.OBER:  # type: ignore
+            # Mask out suit index 0 (draw) and pick best among 1-4
+            suit_q[0] = -np.inf
+            best_suit_idx = int(np.argmax(suit_q))
+        else:
+            best_suit_idx = SUIT_TO_INDEX[INDEX_TO_CARD[best_card_idx].suit]  # type: ignore
+
+        return best_card_idx, best_suit_idx
+
+    def _behave_randomly(self, state: GameState, hand: set[Card]) -> Action:
+        playable = tuple(find_allowed_cards(state) & hand)
+
+        playable_length = len(playable)
+        if playable_length == 0 or randint(0, playable_length) == playable_length:
+            return DRAW_ACTION
+
+        card = choice(playable)
+        suit_idx = SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
+        return CARD_TO_INDEX[card], suit_idx
 
     def _process_state(
         self, state: GameState, info: dict[str, Any], hand: set[Card]
@@ -321,8 +380,7 @@ class DQNAgent(TrainableAgent):
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
             case "count_truncated":
-                hand_size = min(len(hand), self.args.truncated_hand_size)
-                return np.uint32(hand_size)
+                return np.uint32(min(len(hand), self.args.truncated_hand_size))
             case "count":
                 return np.uint32(len(hand))
             case "simple":
