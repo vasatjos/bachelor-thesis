@@ -1,7 +1,7 @@
 from dataclasses import replace
 
 from game.card_utils import CardEffect, Rank, Suit
-from game.deck import Deck
+from game.deck import Deck, DeckEmptyError
 from game.card import Card
 from game.player import Player
 from game.game_state import GameState, find_allowed_cards
@@ -78,7 +78,7 @@ class PrsiEnv:
         opponent_action = self._opponent.choose_action(
             self._state, self._opponent_player_info.hand_set, player_info
         )
-        _, flipped = self._execute_action(self._opponent_player_info, opponent_action)
+        flipped = self._execute_action(self._opponent_player_info, opponent_action)
 
         return self._state, {
             "hand": self._player_info.hand_set,
@@ -99,9 +99,24 @@ class PrsiEnv:
         if self._done:
             raise RuntimeError("Game is over. Call reset() to start a new game.")
 
-        seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
+        try:
+            flipped_player = self._execute_action(self._player_info, action)
+        except DeckEmptyError:  # lose when drawing from empty deck
+            self._done = True
+            self._player_won_last = False
+            return (
+                self._state,
+                -1.0,
+                True,
+                {
+                    "hand": self._player_info.hand_set,
+                    "opponent_card_count": self._opponent_player_info.card_count,
+                    "deck_flipped_over": True,
+                },
+            )
 
-        player_card, flipped_player = self._execute_action(self._player_info, action)
+        seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
+        player_card = INDEX_TO_CARD[action[0]]
         if not self._opponent_player_info.card_count and player_card != seven_of_hearts:
             self._done = True
             self._player_won_last = False
@@ -125,9 +140,26 @@ class PrsiEnv:
         opponent_action = self._opponent.choose_action(
             self._state, self._opponent_player_info.hand_set, player_info
         )
-        opponent_card, flipped_opponent = self._execute_action(
-            self._opponent_player_info, opponent_action
-        )
+        opponent_card = INDEX_TO_CARD[opponent_action[0]]
+
+        try:
+            flipped_opponent = self._execute_action(
+                self._opponent_player_info, opponent_action
+            )
+        except DeckEmptyError:
+            self._done = True
+            self._player_won_last = True
+            return (
+                self._state,
+                1.0,
+                True,
+                {
+                    "hand": self._player_info.hand_set,
+                    "opponent_card_count": self._opponent_player_info.card_count,
+                    "deck_flipped_over": True,
+                },
+            )
+
         if not self._player_info.card_count and opponent_card != seven_of_hearts:
             self._done = True
             self._player_won_last = True
@@ -153,9 +185,10 @@ class PrsiEnv:
             },
         )
 
-    def _execute_action(
-        self, player: Player, action: Action
-    ) -> tuple[Card | None, bool]:
+    def _execute_action(self, player: Player, action: Action) -> bool:
+        """
+        Returns whether the deck was flipped over.
+        """
         card_idx, suit_idx = action
         card = INDEX_TO_CARD.get(card_idx)
         suit = INDEX_TO_SUIT.get(suit_idx)
@@ -172,7 +205,7 @@ class PrsiEnv:
             player.take_drawn_cards(drawn)
             self._update_state(None)
 
-        return card, flipped
+        return flipped
 
     def _draw_cards(self) -> tuple[list[Card | None], bool]:
         """Draw the appropriate number of cards based on current effect."""

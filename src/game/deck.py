@@ -45,6 +45,10 @@ def get_rank(rank: Rank) -> set[Card]:
             return Deck.ACES
 
 
+class DeckEmptyError(Exception):
+    pass
+
+
 class Deck:
     CARD_COUNT = len(Suit) * len(Rank)
 
@@ -81,7 +85,7 @@ class Deck:
 
         self.play_card(top_card)
 
-    def draw_card(self) -> tuple[Card | None, bool]:
+    def draw_card(self) -> tuple[Card, bool]:
         """
         Draw a card from the drawing pile.
 
@@ -98,13 +102,8 @@ class Deck:
         self.drawing_pile = list(reversed(self.discard_pile))
         self.discard_pile = [playing_pile_top_card]
 
-        # TODO: handle this better
-        # Options:
-        #   1) Lose game when no legal move is available (loads of edits OR try-catch)
-        #   2) Don't generate draw action in this scenario
-        if len(self.drawing_pile) == 0:
-            print("Warning, no cards available to draw!")
-            return None, True  # No cards available, shouldn't happen often
+        if len(self.drawing_pile) == 0:  # no cards even after flip, deck is empty
+            raise DeckEmptyError
 
         return self.drawing_pile.pop(), True
 
@@ -118,3 +117,6 @@ class Deck:
 
         self.discard_pile.append(card)
         return card.effect
+
+    def available_card_count(self) -> int:
+        return len(self.drawing_pile) + len(self.discard_pile)
