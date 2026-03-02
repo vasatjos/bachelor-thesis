@@ -101,9 +101,10 @@ class PrsiEnv:
 
         try:
             flipped_player = self._execute_action(self._player_info, action)
-        except DeckEmptyError:  # lose when drawing from empty deck
+        except DeckEmptyError as e:  # lose when drawing from empty deck
             self._done = True
             self._player_won_last = False
+            print(e)
             return (
                 self._state,
                 -1.0,
