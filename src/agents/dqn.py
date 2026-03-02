@@ -178,6 +178,7 @@ class DQNAgent(TrainableAgent):
         replay_buffer = ReplayBuffer(max_length=self.args.replay_buffer_size)
         total_steps = 0
         batch_wins = 0
+        draw_actions = 0
 
         for episode in range(self.args.episodes):
             game_state, info = env.reset()
@@ -190,6 +191,8 @@ class DQNAgent(TrainableAgent):
                 state_vec = self._process_state(game_state, info, hand)
                 action = self.choose_action(game_state, hand, info)
                 card_index, suit_idx = action
+                if action == DRAW_ACTION:
+                    draw_actions += 1
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
@@ -227,7 +230,7 @@ class DQNAgent(TrainableAgent):
                 self.args.epsilon *= self.args.epsilon_decay
 
             if (episode + 1) % self.args.log_each == 0:
-                self.log(episode, batch_wins)
+                self.log(episode, batch_wins, draw_actions, total_steps)
                 batch_wins = 0
 
     def _learn(self, replay_buffer: ReplayBuffer) -> None:
@@ -485,10 +488,13 @@ class DQNAgent(TrainableAgent):
         self.target_net.load_state_dict(data["target_net"])
         print("Model loaded successfully!")
 
-    def log(self, episode: int, batch_wins: int) -> None:
+    def log(
+        self, episode: int, batch_wins: int, draw_actions: int, total_actions: int
+    ) -> None:
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
             f"Epsilon: {self.args.epsilon:.4f}, "
+            f"Draw-action rate: {draw_actions / total_actions:.2%}, "
             f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
 
