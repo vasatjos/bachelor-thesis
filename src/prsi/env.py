@@ -1,10 +1,10 @@
 from dataclasses import replace
 
-from game.card_utils import CardEffect, Rank, Suit
-from game.deck import Deck, DeckEmptyError
-from game.card import Card
-from game.player import Player
-from game.game_state import GameState, find_allowed_cards
+from prsi.card_utils import CardEffect, Rank, Suit
+from prsi.deck import Deck, DeckEmptyError
+from prsi.card import Card
+from prsi.player import Player
+from prsi.game_state import GameState, find_allowed_cards
 from agents.utils import Action, INDEX_TO_SUIT, INDEX_TO_CARD
 from agents.greedy import GreedyAgent
 from agents.base import BaseAgent

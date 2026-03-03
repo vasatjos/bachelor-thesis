@@ -1,5 +1,5 @@
-from game.card import Card
-from game.card_utils import Suit, Rank, CardEffect
+from prsi.card import Card
+from prsi.card_utils import Suit, Rank, CardEffect
 
 
 def test_card_effects():

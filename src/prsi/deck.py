@@ -1,7 +1,7 @@
 from random import shuffle
 
-from game.card_utils import Suit, Rank, CardEffect
-from game.card import Card
+from prsi.card_utils import Suit, Rank, CardEffect
+from prsi.card import Card
 
 
 def generate_suit(suit: Suit) -> set[Card]:

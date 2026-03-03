@@ -1,7 +1,7 @@
 from os import getenv
 from functools import total_ordering
 
-from game.card_utils import Suit, Rank, CardEffect, COLOR_RESET
+from prsi.card_utils import Suit, Rank, CardEffect, COLOR_RESET
 
 USE_ICONS = getenv("PRSI_USE_ICONS", "true").lower() in ("true", "1", "yes", "t")
 

@@ -1,6 +1,6 @@
 from typing import Sequence
-from game.card import Card
-from game.card_utils import Rank, Suit
+from prsi.card import Card
+from prsi.card_utils import Rank, Suit
 
 import numpy as np
 

@@ -1,4 +1,4 @@
-from game.card import Card
+from prsi.card import Card
 
 
 class Player:

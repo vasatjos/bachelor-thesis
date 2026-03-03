@@ -2,7 +2,7 @@ from typing import Any  # TODO: maybe state should be Hashable instead of Any
 from abc import ABC, abstractmethod
 from agents.utils import Action
 from copy import deepcopy
-from game.card import Card
+from prsi.card import Card
 
 
 class BaseAgent(ABC):

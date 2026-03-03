@@ -13,10 +13,10 @@ from agents.utils import (
     CardIndex,
     SuitIndex,
 )
-from game.card import Card
-from game.card_utils import CardEffect, Rank, Suit
-from game.env import PrsiEnv
-from game.game_state import GameState, find_allowed_cards
+from prsi.card import Card
+from prsi.card_utils import CardEffect, Rank, Suit
+from prsi.env import PrsiEnv
+from prsi.game_state import GameState, find_allowed_cards
 from random import choice, randint
 import numpy as np
 

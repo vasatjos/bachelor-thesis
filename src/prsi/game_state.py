@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from game.card import Card
-from game.card_utils import CardEffect, Suit, Rank
-from game.deck import get_suit, get_rank
+from prsi.card import Card
+from prsi.card_utils import CardEffect, Suit, Rank
+from prsi.deck import get_suit, get_rank
 
 
 @dataclass(frozen=True)

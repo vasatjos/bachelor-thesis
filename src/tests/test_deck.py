@@ -1,6 +1,6 @@
-from game.card import Card
-from game.card_utils import Suit, Rank, CardEffect
-from game.deck import Deck, get_suit, get_rank
+from prsi.card import Card
+from prsi.card_utils import Suit, Rank, CardEffect
+from prsi.deck import Deck, get_suit, get_rank
 
 
 def test_deck_initialization():

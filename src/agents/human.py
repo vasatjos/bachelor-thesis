@@ -5,12 +5,12 @@ from agents.greedy import GreedyAgent
 from agents.monte_carlo import MonteCarloAgent
 from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
-from game.card import Card, ICONS, USE_ICONS
-from game.card_utils import Rank, Suit, COLOR_RESET
+from prsi.card import Card, ICONS, USE_ICONS
+from prsi.card_utils import Rank, Suit, COLOR_RESET
 import argparse
 
-from game.env import PrsiEnv
-from game.game_state import GameState, find_allowed_cards
+from prsi.env import PrsiEnv
+from prsi.game_state import GameState, find_allowed_cards
 
 parser = argparse.ArgumentParser()
 

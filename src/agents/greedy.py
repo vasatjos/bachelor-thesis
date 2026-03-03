@@ -1,9 +1,9 @@
 from typing import Any
 from agents.base import BaseAgent
 from agents.utils import CARD_TO_INDEX, DRAW_ACTION, SUIT_TO_INDEX, Action
-from game.card import Card
-from game.card_utils import Rank
-from game.game_state import find_allowed_cards
+from prsi.card import Card
+from prsi.card_utils import Rank
+from prsi.game_state import find_allowed_cards
 from random import choice, randint
 
 
