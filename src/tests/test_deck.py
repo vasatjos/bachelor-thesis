@@ -4,15 +4,18 @@ from prsi.deck import Deck, DeckEmptyError, get_suit, get_rank
 import pytest
 
 
-def test_deck_initialization():
-    deck = Deck()
+@pytest.fixture
+def deck() -> Deck:
+    return Deck()
+
+
+def test_deck_initialization(deck: Deck):
     # Check total number of cards
     assert len(deck.drawing_pile) == Deck.CARD_COUNT - 1
     assert len(deck.discard_pile) == 1
 
 
-def test_draw_card_reduces_drawpile():
-    deck = Deck()
+def test_draw_card_reduces_drawpile(deck: Deck):
     count_before = len(deck.drawing_pile)
     card, _ = deck.draw_card()
     count_after = len(deck.drawing_pile)
@@ -21,8 +24,7 @@ def test_draw_card_reduces_drawpile():
     assert count_after == count_before - 1
 
 
-def test_deck_flip():
-    deck = Deck()
+def test_deck_flip(deck: Deck):
     _, flipped = deck.draw_card()
 
     assert not flipped
@@ -34,15 +36,13 @@ def test_deck_flip():
     assert flipped
 
 
-def test_deck_throws_on_overdraw():
-    deck = Deck()
+def test_deck_throws_on_overdraw(deck: Deck):
     with pytest.raises(DeckEmptyError):
         for _ in range(42):
             deck.draw_card()
 
 
-def test_play_card_sets_effect():
-    deck = Deck()
+def test_play_card_sets_effect(deck: Deck):
     card = Card(Suit.HEARTS, Rank.SEVEN)
     effect = deck.play_card(card)
 
@@ -50,8 +50,7 @@ def test_play_card_sets_effect():
     assert effect == CardEffect.DRAW_TWO
 
 
-def test_play_card_sets_no_effect():
-    deck = Deck()
+def test_play_card_sets_no_effect(deck: Deck):
     card = Card(Suit.LEAVES, Rank.NINE)
     effect = deck.play_card(card)
 
