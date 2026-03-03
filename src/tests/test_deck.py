@@ -1,6 +1,7 @@
 from prsi.card import Card
 from prsi.card_utils import Suit, Rank, CardEffect
-from prsi.deck import Deck, get_suit, get_rank
+from prsi.deck import Deck, DeckEmptyError, get_suit, get_rank
+import pytest
 
 
 def test_deck_initialization():
@@ -27,9 +28,17 @@ def test_deck_flip():
     assert not flipped
 
     for _ in range(31):
-        _, flipped = deck.draw_card()
+        card, flipped = deck.draw_card()
+        deck.play_card(card)
 
     assert flipped
+
+
+def test_deck_throws_on_overdraw():
+    deck = Deck()
+    with pytest.raises(DeckEmptyError):
+        for _ in range(42):
+            deck.draw_card()
 
 
 def test_play_card_sets_effect():
