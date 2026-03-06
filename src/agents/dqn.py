@@ -88,7 +88,7 @@ def _state_to_vector(
     """Pack everything into a 1-D float32 array."""
     return np.array(
         [
-            hand_state,
+            hand_state,  # TODO: make 1hot
             opponent_card_count,
             top_card,
             active_suit,
@@ -135,6 +135,8 @@ Transition = collections.namedtuple(
 )
 
 
+# TODO: rewards - UNO inspiration
+# TODO: make sure Q prediction is correct
 class DQNAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
