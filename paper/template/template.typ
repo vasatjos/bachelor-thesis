@@ -173,7 +173,7 @@
         },
     )
 
-    set heading(numbering: "1.1")
+    set heading(supplement: "Chapter", numbering: "1.1")
     show heading.where(level: 1): it => {
         pagebreak(weak: true)
 
@@ -182,7 +182,7 @@
         let use-supplement = it.outlined and it.numbering != none
         if (use-supplement) {
             text(size: 13pt, fill: rgb(120, 120, 120))[
-                Chapter #counter(heading).display(it.numbering)
+                #it.supplement #counter(heading).display(it.numbering)
             ]
             linebreak()
             v(-16pt)
