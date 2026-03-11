@@ -1,16 +1,8 @@
-// poznamky z tisku:
-//  - zeptat se na studijnim, jestli by nemohli zadani tisknout se spravne zarovnanou zadni stranou (obe strany jsou prirazene doprava, coz pekne vychazi pro prvni stranu, ale ne pro druhou)
-//  - tenke h1 nadpisy pusobi v tisku zvlastne, obzvlast v kontrastu s h2, a margin pod h1 nadpisem taky neni idealni; asi mel Kuba pravdu, ze Technika by na h1 dopadla lip
-//  - marginy pro non-numbered nadpisy jsou moc male, pusobi to zmackle
-//  - #line() je v tisku dost vyrazny, dal by se zesvetlit nebo ztencit, naopak v PDF je v nekterych viewerech spatne videt
-//  - odrazeni o 8mm u title page vypada dobre
-//  - 80g papir u Haronu je hodne pruhledny, 100g je dobry
-
-
 #import "./front.typ": *
 
 #let template(
     meta: (),
+    font: "Libertinus Serif",
     print: false,
     acknowledgement: "",
     declaration: "",
@@ -28,13 +20,13 @@
         date: meta.submission-date,
     )
 
-    set text(font: "New Computer Modern", size: 11pt, lang: "en", fallback: false)
+    set text(font: font, size: 11pt, lang: "en", fallback: false)
 
     // the idea behind the inner margin is that if you lay the book out flat, there should be the same amount of space in the middle as on the outside
     // however, with binding from Haron.cz, the sides do not lay flat; from discussion with the guy at Haron, 8mm is consumed by the binding, and quite a lot of extra space is lost, since the page does not lay flat due to the binding; when I measured it in my printed thesis, I think the inner margin should be roughly 34mm and the outer margin 36mm at the beginning and end (where one side lays flat), and a bit more than that in the middle, but the variance based on how much you press down on the page is quite high, so we can make our lives easier and go with a symmetric 35mm+35mm margin
     let a4-width = 210mm
-    // chosen to fit roughly 85 chars per line; ideally, it should be 45-75 chars for maximum readability, but imo this looks a bit better; feel free to make it smaller
-    let text-width = 140mm
+    // let text-width = 140mm // original value from template
+    let text-width = 130mm
     let margin = (a4-width - text-width) / 2
 
 
@@ -54,7 +46,7 @@
     }
 
     // render title page before configuring the rest, which we don't use
-    title-page(print, ..meta)
+    title-page(print, font: font, ..meta)
 
     pagebreak()
 
@@ -149,9 +141,7 @@
     show figure.caption: box.with(width: 92%)
     show figure.caption: par.with(justify: false)
 
-    // for printing, render code in a monochrome theme
-    set raw(theme: "./res/bw-theme.tmTheme") if print
-    // render code blocks with a grey background and external padding
+    // Render code blocks with a grey background and external padding.
     show raw.where(block: true): it => {
         set par(justify: false)
         set align(left)
@@ -185,9 +175,7 @@
 
     set heading(numbering: "1.1")
     show heading.where(level: 1): it => {
-        // TODO: it is better to have a weak page break here, but currently,
-        //  Typst seems to have a bug: https://github.com/typst/typst/issues/2841
-        pagebreak(weak: false)
+        pagebreak(weak: true)
 
         show: block
 
@@ -201,7 +189,7 @@
         }
 
         set align(end)
-        text(size: 24pt, weight: "bold", font: "New Computer Modern")[
+        text(size: 24pt, weight: "bold", font: font)[
             #it.body
         ]
 
@@ -214,7 +202,6 @@
 
     show heading.where(level: 2): it => {
         set text(size: 18pt, weight: "bold")
-        // TODO: check what the actual spacing should be
         block(it, below: 18pt, above: 32pt)
     }
 
@@ -223,10 +210,7 @@
         block(it, below: 16pt, above: 22pt)
     }
 
-    // TODO: probably find a style that has footnotes, but also a usable
-    //  consistent indexing
-    //set cite(style: "chicago-notes")
-
+    //   set bibliography(style: "chicago-notes", title: none)
     set bibliography(style: "res/IEEE-modified.csl", title: none)
     show bibliography: it => {
         heading("Bibliography")
@@ -252,6 +236,25 @@
     set heading(supplement: "Appendix", numbering: "A.1")
     counter(heading).update(0)
     body
+}
+
+// Renders a two-column borderless table of acronyms.
+// `entries` is an array of (acronym, meaning) pairs, e.g.:
+//   #acronym-table((("API", "Application Programming Interface"), ...))
+#let acronym-table(entries) = {
+    set par(first-line-indent: 0pt)
+    table(
+        columns: (auto, 1fr),
+        stroke: none,
+        inset: (x: 8pt, y: 5pt),
+        align: (right, left),
+        ..for (abbr, meaning) in entries {
+            (
+                text(weight: "bold")[#abbr],
+                meaning,
+            )
+        }
+    )
 }
 
 #let todo(msg) = {
