@@ -1,25 +1,24 @@
 #import "./template/template.typ": *
 
+
 #show: template.with(
     meta: (
-        title: "An Interesting Thesis Title",
+        title: "Reinforcement Learning for Prší Card Game",
         author: (
-            name: "Jan Novák",
+            name: "Josef Vašata",
         ),
         // submission-date: datetime(year: 2012, month: 1, day: 21),
         submission-date: datetime.today(),
         // true for bachelor's thesis, false for master's thesis
         bachelor: true,
         faculty: "Information Technology",
-        department: "Lollygagging",
-        supervisor: "Ing. Jan Novák, PhD.",
+        department: "Applied Mathematics",
+        supervisor: "Ing. Daniel Vašata, Ph.D.",
     ),
-
-    // globally set the font for the entire thesis
     font: "New Computer Modern",
 
     // set to true if generating a PDF for print (shifts page layout, correctly aligns odd/even pages,...)
-    print: true,
+    print: false,
 
     abstract-en: [
         #lorem(40)
@@ -33,16 +32,35 @@
         #lorem(60)
     ],
 
-    acknowledgement: [
-        #lorem(30)
-
-        #lorem(30)
-    ],
     keywords-en: [
         #lorem(10)
     ],
     keywords-cz: [
         #lorem(10)
+    ],
+
+    acknowledgement: [
+        #lorem(30)
+
+        #lorem(30)
+    ],
+
+    declaration: [
+        I hereby declare that the presented thesis is my own work and that I have cited all sources of
+        information in accordance with the Guideline for adhering to ethical principles when elaborating an
+        academic final thesis.
+        I acknowledge that my thesis is subject to the rights and obligations stipulated by the Act No.
+        121/2000 Coll., the Copyright Act, as amended. In accordance with Section 2373(2) of Act No.
+        89/2012 Coll., the Civil Code, as amended, I hereby grant a non-exclusive authorization (licence) to
+        utilize this thesis, including all computer programs that are part of it or attached to it and all
+        documentation thereof (hereinafter collectively referred to as the "Work"), to any and all persons
+        who wish to use the Work. Such persons are entitled to use the Work in any manner that does not
+        diminish the value of the Work and for any purpose (including use for profit). This authorisation is
+        unlimited in time, territory and quantity.
+
+        I declare that I have used AI tools during the preparation and writing of my thesis. I have verified
+        the generated content. I confirm that I am aware that I am fully responsible for the content of the
+        thesis.
     ],
     assignment: read("assignment.pdf", encoding: none),
 )
