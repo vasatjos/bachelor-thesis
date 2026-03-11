@@ -1,0 +1,7 @@
+poznamky z tisku:
+    - zeptat se na studijnim, jestli by nemohli zadani tisknout se spravne zarovnanou zadni stranou (obe strany jsou prirazene doprava, coz pekne vychazi pro prvni stranu, ale ne pro druhou)
+    - tenke h1 nadpisy pusobi v tisku zvlastne, obzvlast v kontrastu s h2, a margin pod h1 nadpisem taky neni idealni; asi mel Kuba pravdu, ze Technika by na h1 dopadla lip
+    - marginy pro non-numbered nadpisy jsou moc male, pusobi to zmackle
+    - #line() je v tisku dost vyrazny, dal by se zesvetlit nebo ztencit, naopak v PDF je v nekterych viewerech spatne videt
+    - odrazeni o 8mm u title page vypada dobre
+    - 80g papir u Haronu je hodne pruhledny, 100g je dobry
