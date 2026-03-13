@@ -55,7 +55,7 @@
     {
         // set text(size: 10pt, weight: "regular")
         [
-            Faculty of #faculty\
+            // Faculty of #faculty\ // NOTE: Logo image contains faculty name, uncomment if logo changes
             Department of #department\
             Supervisor: #supervisor\
             \
