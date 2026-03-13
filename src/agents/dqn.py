@@ -136,7 +136,7 @@ Transition = collections.namedtuple(
 
 
 # TODO: rewards - UNO inspiration
-# TODO: make sure Q prediction is correct
+# TODO: make sure Q prediction is correct: understand Bellman equations (try a single head predicting an Action)
 class DQNAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
@@ -341,6 +341,7 @@ class DQNAgent(TrainableAgent):
 
         return best_card_idx, best_suit_idx
 
+    # TODO: implement as a static method for BaseAgent / utils function
     def _behave_randomly(self, state: GameState, hand: set[Card]) -> Action:
         playable = tuple(find_allowed_cards(state) & hand)
 
