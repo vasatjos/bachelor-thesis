@@ -19,12 +19,12 @@ from agents.utils import (
     CardIndex,
     SuitIndex,
     ReplayBuffer,
+    behave_randomly,
 )
 from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState, find_allowed_cards
-from random import choice, randint
 
 parser = argparse.ArgumentParser()
 
@@ -77,7 +77,7 @@ SIMPLE_HAND_INDICES = {
 
 
 def _state_to_vector(
-    hand_state: np.uint32,
+    hand_state: list[np.uint8] | np.ndarray,
     opponent_card_count: int,
     top_card: CardIndex,
     active_suit: SuitIndex,
@@ -88,7 +88,7 @@ def _state_to_vector(
     """Pack everything into a 1-D float32 array."""
     return np.array(
         [
-            hand_state,
+            *[c for c in hand_state],
             opponent_card_count,
             top_card,
             active_suit,
@@ -135,6 +135,8 @@ Transition = collections.namedtuple(
 )
 
 
+# TODO: rewards - UNO inspiration
+# TODO: make sure Q prediction is correct: understand Bellman equations (try a single head predicting an Action)
 class DQNAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
@@ -309,7 +311,7 @@ class DQNAgent(TrainableAgent):
         self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:
         if np.random.random() < self.args.epsilon:
-            return self._behave_randomly(state, hand)
+            return behave_randomly(state, hand)
 
         valid_actions = self._get_valid_actions(state, hand)
         state_vec = self._process_state(state, info, hand)
@@ -338,17 +340,6 @@ class DQNAgent(TrainableAgent):
             best_suit_idx = SUIT_TO_INDEX[INDEX_TO_CARD[best_card_idx].suit]  # type: ignore
 
         return best_card_idx, best_suit_idx
-
-    def _behave_randomly(self, state: GameState, hand: set[Card]) -> Action:
-        playable = tuple(find_allowed_cards(state) & hand)
-
-        playable_length = len(playable)
-        if playable_length == 0 or randint(0, playable_length) == playable_length:
-            return DRAW_ACTION
-
-        card = choice(playable)
-        suit_idx = SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
-        return CARD_TO_INDEX[card], suit_idx
 
     def _process_state(
         self, state: GameState, info: dict[str, Any], hand: set[Card]
@@ -380,12 +371,12 @@ class DQNAgent(TrainableAgent):
             self.played_cards_subset,
         )
 
-    def _get_hand_state(self, hand: set[Card]) -> np.uint32:
+    def _get_hand_state(self, hand: set[Card]) -> list[np.uint8] | np.ndarray:
         match self.args.hand_state_option:
             case "count_truncated":
-                return np.uint32(min(len(hand), self.args.truncated_hand_size))
+                return [np.uint8(min(len(hand), self.args.truncated_hand_size))]
             case "count":
-                return np.uint32(len(hand))
+                return [np.uint8(len(hand))]
             case "simple":
                 state_array = np.zeros(7, dtype=np.uint8)
                 for card in hand:
@@ -397,24 +388,19 @@ class DQNAgent(TrainableAgent):
                             state_array[5] += 1
                         case Rank.ACE:
                             state_array[6] += 1
-                packed = np.uint32(0)
-                for i in range(4):
-                    packed |= np.uint32(state_array[i] & 0xF) << (i * 4)
-                for i in range(3):
-                    packed |= np.uint32(state_array[i + 4] & 0x7) << (16 + i * 3)
-                return packed
+                return state_array
             case "full":
-                packed = np.uint32(0)
+                state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
-                return packed
+                    state_array[CARD_TO_INDEX[card] - 1] = 1
+                return state_array
             case "full_simple":
                 if len(hand) > self.args.truncated_hand_size:
-                    return np.uint32(0xFFFFFFFF)
-                packed = np.uint32(0)
+                    return [np.uint8(0xFF)]
+                state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
-                return packed
+                    state_array[CARD_TO_INDEX[card] - 1] = 1
+                return state_array
             case _:
                 raise ValueError("Invalid hand_state_option.")
 

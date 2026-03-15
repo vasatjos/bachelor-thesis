@@ -3,6 +3,8 @@ from typing import Any
 from agents.base import BaseAgent
 from agents.greedy import GreedyAgent
 from agents.monte_carlo import MonteCarloAgent
+from agents.q_learning import QLearningAgent
+from agents.dqn import DQNAgent
 from agents.random import RandomAgent
 from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
 from prsi.card import Card, ICONS, USE_ICONS
@@ -27,7 +29,7 @@ parser.add_argument(
     "--opponent",
     default="greedy",
     type=str,
-    choices=["random", "greedy", "monte_carlo"],
+    choices=["random", "greedy", "monte_carlo", "q_learning", "dqn"],
 )
 
 
@@ -176,6 +178,10 @@ if __name__ == "__main__":
             opponent = GreedyAgent()
         case "monte_carlo":
             opponent = MonteCarloAgent(path=args.model_path)
+        case "q_learning":
+            opponent = QLearningAgent(path=args.model_path)
+        case "dqn":
+            opponent = DQNAgent(path=args.model_path)
         case _:
             raise ValueError("Invalid opponent")
 

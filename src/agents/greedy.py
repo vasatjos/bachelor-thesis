@@ -3,13 +3,13 @@ from agents.base import BaseAgent
 from agents.utils import CARD_TO_INDEX, DRAW_ACTION, SUIT_TO_INDEX, Action
 from prsi.card import Card
 from prsi.card_utils import Rank
-from prsi.game_state import find_allowed_cards
+from prsi.game_state import GameState, find_allowed_cards
 from random import choice, randint
 
 
 class GreedyAgent(BaseAgent):
     def choose_action(
-        self, state: Any, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:
         playable = tuple(find_allowed_cards(state) & hand)
 

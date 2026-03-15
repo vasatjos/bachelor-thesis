@@ -1,8 +1,12 @@
 from typing import Sequence
+
+from random import randint, choice
 from prsi.card import Card
 from prsi.card_utils import Rank, Suit
 
 import numpy as np
+
+from prsi.game_state import GameState, find_allowed_cards
 
 CardIndex = int
 SuitIndex = int
@@ -97,3 +101,15 @@ class ReplayBuffer:
                 self._data[index]
                 for index in generator.choice(len(self._data), size=size, replace=False)
             ]
+
+
+def behave_randomly(state: GameState, hand: set[Card]) -> Action:
+    playable = tuple(find_allowed_cards(state) & hand)
+
+    playable_length = len(playable)
+    if playable_length == 0 or randint(0, playable_length) == playable_length:
+        return DRAW_ACTION
+
+    card = choice(playable)
+    suit_idx = SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
+    return CARD_TO_INDEX[card], suit_idx
