@@ -19,12 +19,12 @@ from agents.utils import (
     CardIndex,
     SuitIndex,
     ReplayBuffer,
+    behave_randomly,
 )
 from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState, find_allowed_cards
-from random import choice, randint
 
 parser = argparse.ArgumentParser()
 
@@ -311,7 +311,7 @@ class DQNAgent(TrainableAgent):
         self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:
         if np.random.random() < self.args.epsilon:
-            return self._behave_randomly(state, hand)
+            return behave_randomly(state, hand)
 
         valid_actions = self._get_valid_actions(state, hand)
         state_vec = self._process_state(state, info, hand)
@@ -340,18 +340,6 @@ class DQNAgent(TrainableAgent):
             best_suit_idx = SUIT_TO_INDEX[INDEX_TO_CARD[best_card_idx].suit]  # type: ignore
 
         return best_card_idx, best_suit_idx
-
-    # TODO: implement as a static method for BaseAgent / utils function
-    def _behave_randomly(self, state: GameState, hand: set[Card]) -> Action:
-        playable = tuple(find_allowed_cards(state) & hand)
-
-        playable_length = len(playable)
-        if playable_length == 0 or randint(0, playable_length) == playable_length:
-            return DRAW_ACTION
-
-        card = choice(playable)
-        suit_idx = SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
-        return CARD_TO_INDEX[card], suit_idx
 
     def _process_state(
         self, state: GameState, info: dict[str, Any], hand: set[Card]
