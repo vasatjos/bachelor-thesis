@@ -20,6 +20,9 @@
         date: meta.submission-date,
     )
 
+    // Don't show chapters before the introduction in the thesis contents
+    set heading(outlined: false)
+
     set text(font: font, size: 11pt, lang: "en", fallback: false)
 
     // the idea behind the inner margin is that if you lay the book out flat, there should be the same amount of space in the middle as on the outside
@@ -130,6 +133,8 @@
     // [ = List of Code Listings]
     outline(title: "List of Code Listings", target: figure.where(kind: raw))
 
+
+    set heading(outlined: true)
 
     set par(justify: true)
     set par(first-line-indent: 1.5em)
