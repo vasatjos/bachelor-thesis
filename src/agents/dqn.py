@@ -77,7 +77,7 @@ SIMPLE_HAND_INDICES = {
 
 
 def _state_to_vector(
-    hand_state: np.uint32,
+    hand_state: list[np.uint8] | np.ndarray,
     opponent_card_count: int,
     top_card: CardIndex,
     active_suit: SuitIndex,
@@ -88,7 +88,7 @@ def _state_to_vector(
     """Pack everything into a 1-D float32 array."""
     return np.array(
         [
-            hand_state,  # TODO: make 1hot
+            *[c for c in hand_state],
             opponent_card_count,
             top_card,
             active_suit,
@@ -383,12 +383,12 @@ class DQNAgent(TrainableAgent):
             self.played_cards_subset,
         )
 
-    def _get_hand_state(self, hand: set[Card]) -> np.uint32:
+    def _get_hand_state(self, hand: set[Card]) -> list[np.uint8] | np.ndarray:
         match self.args.hand_state_option:
             case "count_truncated":
-                return np.uint32(min(len(hand), self.args.truncated_hand_size))
+                return [np.uint8(min(len(hand), self.args.truncated_hand_size))]
             case "count":
-                return np.uint32(len(hand))
+                return [np.uint8(len(hand))]
             case "simple":
                 state_array = np.zeros(7, dtype=np.uint8)
                 for card in hand:
@@ -400,24 +400,19 @@ class DQNAgent(TrainableAgent):
                             state_array[5] += 1
                         case Rank.ACE:
                             state_array[6] += 1
-                packed = np.uint32(0)
-                for i in range(4):
-                    packed |= np.uint32(state_array[i] & 0xF) << (i * 4)
-                for i in range(3):
-                    packed |= np.uint32(state_array[i + 4] & 0x7) << (16 + i * 3)
-                return packed
+                return state_array
             case "full":
-                packed = np.uint32(0)
+                state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
-                return packed
+                    state_array[CARD_TO_INDEX[card] - 1] = 1
+                return state_array
             case "full_simple":
                 if len(hand) > self.args.truncated_hand_size:
-                    return np.uint32(0xFFFFFFFF)
-                packed = np.uint32(0)
+                    return [np.uint8(0xFF)]
+                state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
-                return packed
+                    state_array[CARD_TO_INDEX[card] - 1] = 1
+                return state_array
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
