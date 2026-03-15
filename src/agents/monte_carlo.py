@@ -12,12 +12,12 @@ from agents.utils import (
     Action,
     CardIndex,
     SuitIndex,
+    behave_randomly,
 )
 from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState, find_allowed_cards
-from random import choice, randint
 import numpy as np
 
 parser = argparse.ArgumentParser()
@@ -216,17 +216,7 @@ class MonteCarloAgent(TrainableAgent):
     ) -> Action:
         # Epsilon-greedy
         if np.random.random() < self.args.epsilon:
-            playable = tuple(find_allowed_cards(state) & hand)
-
-            playable_length = len(playable)
-            if playable_length == 0 or randint(0, playable_length) == playable_length:
-                return DRAW_ACTION
-
-            card = choice(tuple(playable))
-            suit_idx = (
-                SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
-            )
-            return CARD_TO_INDEX[card], suit_idx
+            return behave_randomly(state, hand)
 
         processed_state = self._process_state(state, info, hand)
         valid_actions = self._get_valid_actions(state, hand)
