@@ -104,6 +104,13 @@ class ReplayBuffer:
 
 
 def behave_randomly(state: GameState, hand: set[Card]) -> Action:
+    """
+    Select a random card to play from the ones available on hand.
+
+    Does not actually select a random action uniformly, since that would make
+    playing an ober 4x more likely than other cards. Instead, selects a random
+    card and if the card is on ober, selects a random suit as well.
+    """
     playable = tuple(find_allowed_cards(state) & hand)
 
     playable_length = len(playable)
