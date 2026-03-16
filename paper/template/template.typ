@@ -97,6 +97,7 @@
     set page(numbering: "i")
 
     {
+        set par(justify: true)
         v(28mm)
         [ = Abstract]
         abstract-en
