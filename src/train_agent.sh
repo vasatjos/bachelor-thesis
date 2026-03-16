@@ -12,7 +12,7 @@ SCRATCH_DIR="${SCRATCHDIR:-/tmp}"
 REPO_URL="git@github.com:vasatjos/bachelor-thesis.git"
 PROJECT_DIR="$SCRATCH_DIR/bachelor-thesis"
 STORAGE_DIR="/storage/praha1/home/vasatjos/thesis"
-AGENT_STRATEGIES_DIR="$STORAGE_DIR/agent-strategies"
+AGENT_STRATEGIES_DIR="$STORAGE_DIR/agent_strategies"
 LOGS_DIR="$STORAGE_DIR/logs"
 
 mkdir -p "$AGENT_STRATEGIES_DIR/$AGENT_NAME"
@@ -39,7 +39,7 @@ echo "Starting training at: $(date)"
 echo "Running: uv run -m agents.${AGENT_NAME} $HYPERPARAMS"
 
 cd src
-mkdir -p "agent-strategies/$AGENT_NAME"
+mkdir -p "agent_strategies/$AGENT_NAME"
 
 PYTHON_FILE="agents/${AGENT_NAME}.py"
 
@@ -51,7 +51,7 @@ uv run -m agents.$AGENT_NAME $HYPERPARAMS
 echo "Training completed at: $(date)"
 
 echo "Copying trained agents to storage..."
-cp -r agent-strategies/* "$AGENT_STRATEGIES_DIR/"
+cp -r agent_strategies/* "$AGENT_STRATEGIES_DIR/"
 
 if [ -d "outputs" ]; then
     echo "Copying additional outputs..."

@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--seed", default=None, type=int)
 parser.add_argument("--evaluate_for", default=10_000, type=int)
 parser.add_argument("--load_model", action="store_true")
-parser.add_argument("--model_path", default="agent-strategies/dqn/model.pth", type=str)
+parser.add_argument("--model_path", default="agent_strategies/dqn/model.pth", type=str)
 parser.add_argument("--log_each", default=10_000, type=int)
 
 # HYPERPARAMETERS

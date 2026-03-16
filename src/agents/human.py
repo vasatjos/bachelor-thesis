@@ -21,7 +21,7 @@ parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument("--evaluate_for", default=1, type=int, help="Evaluation episodes.")
 parser.add_argument(
     "--model_path",
-    default="agent-strategies/mc_agent.pkl",
+    default="agent_strategies/mc_agent.pkl",
     type=str,
     help="Path to load model.",
 )

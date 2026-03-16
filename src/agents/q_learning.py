@@ -31,7 +31,7 @@ parser.add_argument(
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--model_path",
-    default="agent-strategies/q_learning/model.pkl",
+    default="agent_strategies/q_learning/model.pkl",
     type=str,
     help="Path to save/load model.",
 )
