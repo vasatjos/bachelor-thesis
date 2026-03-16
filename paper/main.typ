@@ -21,9 +21,14 @@
     print: false,
 
     abstract-en: [
-        #lorem(40)
+        Reinforcement learning, particularly deep variants, has dominated fully
+        observable games like chess and go. This thesis attempts to apply this machine learning paradigm to Prší,
+        an imperfect-information card game akin to Uno, where agents face limited observability of opponents' hands
+        and therefore moves that can be taken against them.
 
-        #lorem(60)
+        A Gym-like environment for 1v1 playing is implemented in Python, enabling self-play and both
+        cross-agent and human-AI evaluation. Several models -- including Monte Carlo, Q-Learning, DQN, Recurrent DQN --
+        are trained with the models based on neural networks achieving results capable of consistently defeating human players.
     ],
 
     abstract-cz: [
@@ -33,10 +38,10 @@
     ],
 
     keywords-en: [
-        #lorem(10)
+        machine learning, reinforcement learning, card games, Q-Learning, DQN, neural networks
     ],
     keywords-cz: [
-        #lorem(10)
+        strojové učení, posilované učení, karetní hry, Q-Learning, DQN, neuronové sítě
     ],
 
     acknowledgement: [
