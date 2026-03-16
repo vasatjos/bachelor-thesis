@@ -113,6 +113,7 @@
 
 = Acronyms
 
+// TODO: use glossary package
 #acronym-table((
     ("API", "Application Programming Interface"),
     ("CPU", "Central Processing Unit"),
