@@ -88,13 +88,13 @@ def _state_to_vector(
     """Pack everything into a 1-D float32 array."""
     return np.array(
         [
-            *[c for c in hand_state],
+            *[x for x in hand_state],
             opponent_card_count,
             top_card,
             active_suit,
             card_effect.value,
             effect_strength,
-            *[v for v in played_subset],
+            *[x for x in played_subset],
         ],
         dtype=np.float32,
     )
