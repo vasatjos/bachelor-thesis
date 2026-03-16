@@ -138,6 +138,7 @@ Transition = collections.namedtuple(
 
 # TODO: rewards - UNO inspiration
 # TODO: make sure Q prediction is correct: understand Bellman equations (try a single head predicting an Action)
+# TODO: variable network depth
 class DQNAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
