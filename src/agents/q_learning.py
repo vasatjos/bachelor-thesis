@@ -31,7 +31,7 @@ parser.add_argument(
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--model_path",
-    default="agent-strategies/monte-carlo/model.pkl",
+    default="agent-strategies/q_learning/model.pkl",
     type=str,
     help="Path to save/load model.",
 )
@@ -289,7 +289,7 @@ class QLearningAgent(TrainableAgent):
             and opponent_card_count > self.args.truncated_hand_size
         ):
             opponent_card_count = np.uint8(self.args.truncated_hand_size)
-        top_card = CARD_TO_INDEX[state.top_card]
+        top_card = self._handle_top_card(state.top_card)
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
         effect_strength = np.uint8(state.effect_strength)
@@ -304,6 +304,11 @@ class QLearningAgent(TrainableAgent):
             effect_strength,
             tuple(self.played_cards_subset),
         )
+
+    def _handle_top_card(self, top_card: Card) -> CardIndex:
+        if not self.args.hand_state_option.startswith("full"):
+            return 0  # we only care about suit
+        return CARD_TO_INDEX[top_card]
 
     def _get_hand_state(self, hand: set[Card]) -> np.uint32:
         match self.args.hand_state_option:
