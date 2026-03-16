@@ -7,17 +7,17 @@ from agents.random import RandomAgent
 from agents.trainable import TrainableAgent
 from agents.utils import (
     CARD_TO_INDEX,
-    DRAW_ACTION,
     SUIT_TO_INDEX,
     Action,
     CardIndex,
     SuitIndex,
     behave_randomly,
+    get_valid_actions,
 )
 from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
-from prsi.game_state import GameState, find_allowed_cards
+from prsi.game_state import GameState
 import numpy as np
 
 parser = argparse.ArgumentParser()
@@ -212,7 +212,7 @@ class QLearningAgent(TrainableAgent):
             return behave_randomly(state, hand)
 
         processed_state = self._process_state(state, info, hand)
-        valid_actions = self._get_valid_actions(state, hand)
+        valid_actions = get_valid_actions(state, hand)
 
         # Greedy: find best Q-value among valid actions
         best_action: Action = valid_actions[0]
@@ -230,7 +230,7 @@ class QLearningAgent(TrainableAgent):
         self, game_state: GameState, hand: set[Card], state: State
     ) -> float:
         """Get the maximum Q-value for the given state over all valid actions."""
-        valid_actions = self._get_valid_actions(game_state, hand)
+        valid_actions = get_valid_actions(game_state, hand)
 
         max_value = -np.inf
         for action in valid_actions:
@@ -386,29 +386,6 @@ class QLearningAgent(TrainableAgent):
                 if card.rank != Rank.SEVEN:
                     return
                 self.played_cards_subset[0] += 1
-
-    def _get_valid_actions(
-        self, game_state: GameState, hand: set[Card]
-    ) -> list[Action]:
-        """Get list of valid actions given current game state and hand."""
-        valid_actions: list[Action] = []
-        allowed_cards = find_allowed_cards(game_state)
-
-        for card in hand:
-            if card in allowed_cards:
-                if card.rank == Rank.OBER:
-                    # Ober can change suit to any of the 4 suits
-                    for suit_idx in range(1, 5):
-                        valid_actions.append((CARD_TO_INDEX[card], suit_idx))
-                else:
-                    valid_actions.append(
-                        (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
-                    )
-
-        # Can always draw a card
-        valid_actions.append(DRAW_ACTION)
-
-        return valid_actions
 
     def log(self, episode: int, batch_wins: int) -> None:
         print(

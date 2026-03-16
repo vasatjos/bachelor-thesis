@@ -20,11 +20,12 @@ from agents.utils import (
     SuitIndex,
     ReplayBuffer,
     behave_randomly,
+    get_valid_actions,
 )
 from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
-from prsi.game_state import GameState, find_allowed_cards
+from prsi.game_state import GameState
 
 parser = argparse.ArgumentParser()
 
@@ -201,7 +202,7 @@ class DQNAgent(TrainableAgent):
 
                 next_state_vec = self._process_state(game_state, info, hand)
 
-                next_valid_actions = self._get_valid_actions(game_state, hand)
+                next_valid_actions = get_valid_actions(game_state, hand)
                 next_valid_cards = np.zeros(len(CARD_TO_INDEX), dtype=bool)
                 for c, _ in next_valid_actions:
                     next_valid_cards[c] = True
@@ -313,7 +314,7 @@ class DQNAgent(TrainableAgent):
         if np.random.random() < self.args.epsilon:
             return behave_randomly(state, hand)
 
-        valid_actions = self._get_valid_actions(state, hand)
+        valid_actions = get_valid_actions(state, hand)
         state_vec = self._process_state(state, info, hand)
         state_tensor = torch.tensor(state_vec[np.newaxis], dtype=torch.float32).to(
             QNetwork.device
@@ -355,7 +356,7 @@ class DQNAgent(TrainableAgent):
         ):
             opponent_card_count = self.args.truncated_hand_size
 
-        top_card = CARD_TO_INDEX[state.top_card]
+        top_card = self._handle_top_card(state.top_card)
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
         effect_strength = np.uint8(state.effect_strength)
@@ -370,6 +371,11 @@ class DQNAgent(TrainableAgent):
             effect_strength,
             self.played_cards_subset,
         )
+
+    def _handle_top_card(self, top_card: Card) -> CardIndex:
+        if not self.args.hand_state_option.startswith("full"):
+            return 0  # we only care about suit
+        return CARD_TO_INDEX[top_card]
 
     def _get_hand_state(self, hand: set[Card]) -> list[np.uint8] | np.ndarray:
         match self.args.hand_state_option:
@@ -431,25 +437,6 @@ class DQNAgent(TrainableAgent):
                     self.played_cards_subset[0] = np.uint8(
                         self.played_cards_subset[0] + 1
                     )
-
-    def _get_valid_actions(
-        self, game_state: GameState, hand: set[Card]
-    ) -> list[Action]:
-        valid_actions: list[Action] = []
-        allowed_cards = find_allowed_cards(game_state)
-
-        for card in hand:
-            if card in allowed_cards:
-                if card.rank == Rank.OBER:
-                    for suit_idx in range(1, 5):
-                        valid_actions.append((CARD_TO_INDEX[card], suit_idx))
-                else:
-                    valid_actions.append(
-                        (CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit])
-                    )
-
-        valid_actions.append(DRAW_ACTION)
-        return valid_actions
 
     def save(self, path: str) -> None:
         print(f"Saving model to {path}")

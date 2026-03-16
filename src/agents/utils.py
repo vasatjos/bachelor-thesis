@@ -113,3 +113,19 @@ def behave_randomly(state: GameState, hand: set[Card]) -> Action:
     card = choice(playable)
     suit_idx = SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
     return CARD_TO_INDEX[card], suit_idx
+
+
+def get_valid_actions(game_state: GameState, hand: set[Card]) -> list[Action]:
+    valid_actions: list[Action] = []
+    allowed_cards = find_allowed_cards(game_state)
+
+    for card in hand:
+        if card in allowed_cards:
+            if card.rank == Rank.OBER:
+                for suit_idx in range(1, 5):
+                    valid_actions.append((CARD_TO_INDEX[card], suit_idx))
+            else:
+                valid_actions.append((CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit]))
+
+    valid_actions.append(DRAW_ACTION)
+    return valid_actions
