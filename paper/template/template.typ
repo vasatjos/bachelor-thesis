@@ -103,9 +103,11 @@
         abstract-en
         v(1em)
         [
-            #set par(justify: false)
-            *Keywords:* #h(1em) #keywords-en
+            #set text(weight: "bold")
+            Keywords:
         ]
+        h(1em)
+        keywords-en
 
         if print {
             pagebreak()
@@ -115,9 +117,11 @@
         abstract-cz
         v(1em)
         [
-            #set par(justify: false)
-            *Klíčová slova:* #h(1em) #keywords-cz
+            #set text(weight: "bold")
+            Klíčová slova:
         ]
+        h(1em)
+        keywords-cz
     }
     pagebreak()
 
