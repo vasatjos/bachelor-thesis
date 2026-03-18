@@ -244,31 +244,87 @@
     body
 }
 
-// Renders a two-column borderless table of acronyms.
-// `entries` is an array of (acronym, meaning) pairs, e.g.:
-//   #acronym-table((("API", "Application Programming Interface"), ...))
-#let acronym-table(entries) = {
+#import "@preview/glossarium:0.5.10": count-refs
+
+// Renders a two-column borderless table of acronyms formatted for glossarium.
+// AI generated, hopefully doesn't break
+#let acronym-table(
+    entries,
+    groups,
+    user-print-reference: none,
+    ..args,
+) = {
     set par(first-line-indent: 0pt)
+
+    // Prevent glossarium figures from floating and breaking the table,
+    // while keeping them intact so their <labels> survive for cross-referencing.
+    show figure.where(kind: "glossarium_entry"): set figure(placement: none)
+    show figure.where(kind: "glossarium_entry"): set block(above: 0pt, below: 0pt)
+
+    // Respect glossarium's filtering arguments
+    let named = args.named()
+    let show-all = named.at("show-all", default: false)
+    let min-refs = named.at("minimum-refs", default: 1)
+
+    let visible-entries = entries.filter(e => show-all or count-refs(e.at("key")) >= min-refs)
+
+    // Filter out arguments like `group-heading-level` that `user-print-reference` doesn't accept
+    let valid-ref-args = (
+        "show-all",
+        "disable-back-references",
+        "deduplicate-back-references",
+        "minimum-refs",
+        "description-separator",
+        "shorthands",
+        "user-print-title",
+        "user-print-description",
+        "user-print-back-references",
+    )
+    let ref-args = (:)
+    for (k, v) in named {
+        if k in valid-ref-args {
+            ref-args.insert(k, v)
+        }
+    }
+
     table(
         columns: (auto, 1fr),
         stroke: none,
         inset: (x: 8pt, y: 5pt),
         align: (right, left),
-        ..for (abbr, meaning) in entries {
+        // Sort alphabetically by the "sort" key (or fallback to "key")
+        ..for entry in visible-entries.sorted(key: e => e.at("sort", default: e.at("key"))) {
+            // Fallbacks in case an entry is missing a short or long form
+            let short-form = entry.at("short")
+            if short-form == none { short-form = entry.at("key") }
+
+            let meaning = entry.at("long")
+            if meaning == none { meaning = entry.at("description") }
+            if meaning == none { meaning = [] }
+
+            // Extract glossarium's page-number linking function
+            let back-refs = context {
+                // Only print them if references are enabled and the term is actually used
+                if not named.at("disable-back-references", default: false) and count-refs(entry.at("key")) > 0 {
+                    let print-refs = named.at("user-print-back-references")
+                    let dedup = named.at("deduplicate-back-references", default: false)
+
+                    // Add some spacing and the references in gray brackets
+                    h(0.5em)
+                    text(fill: luma(120))[[#print-refs(entry, deduplicate: dedup)]]
+                }
+            }
+
             (
-                text(weight: "bold")[#abbr],
-                meaning,
+                // Column 1: The abbreviation, wrapped in glossarium's reference generator
+                user-print-reference(
+                    entry,
+                    ..ref-args,
+                    user-print-gloss: (e, ..opts) => text(weight: "bold")[#short-form],
+                ),
+                // Column 2: The meaning + page references
+                [#meaning#back-refs],
             )
         }
     )
-}
-
-#let todo(msg) = {
-    counter("todo").step()
-    [#text(fill: red, weight: "bold")[TODO: #msg]]
-}
-
-#let note(msg) = {
-    counter("note").step()
-    [#block(fill: yellow, width: 100%, inset: 3pt, radius: 3pt)[NOTE: #msg]]
 }

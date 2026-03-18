@@ -1,5 +1,6 @@
 #import "./template/template.typ": *
-
+#import "@preview/glossarium:0.5.10": Gls, Glspl, gls, glspl, make-glossary, print-glossary, register-glossary
+#import "./acronyms.typ": entry-list
 
 #show: template.with(
     meta: (
@@ -68,8 +69,10 @@
     assignment: read("assignment.pdf", encoding: none),
 )
 
-= Introduction
+#show: make-glossary
+#register-glossary(entry-list)
 
+= Introduction
 #lorem(80) @template
 
 #lorem(120)
@@ -115,19 +118,7 @@
 
 = Acronyms
 
-// TODO: use glossary package
-#acronym-table((
-    ("API", "Application Programming Interface"),
-    ("CPU", "Central Processing Unit"),
-    ("CSS", "Cascading Style Sheets"),
-    ("GUI", "Graphical User Interface"),
-    ("HTML", "HyperText Markup Language"),
-    ("HTTP", "HyperText Transfer Protocol"),
-    ("JSON", "JavaScript Object Notation"),
-    ("OS", "Operating System"),
-    ("REST", "Representational State Transfer"),
-    ("URL", "Uniform Resource Locator"),
-))
+#print-glossary(entry-list, show-all: true, user-print-glossary: acronym-table)
 
 = An example appendix
 
