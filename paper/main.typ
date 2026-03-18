@@ -33,10 +33,12 @@
     ],
 
     keywords-en: [
-        #lorem(10)
+        machine learning, reinforcement learning, card games, Q-Learning,
+        DQN, neural networks
     ],
     keywords-cz: [
-        #lorem(10)
+        strojové učení, posilované učení, karetní hry, Q-Learning,
+        DQN, neuronové sítě
     ],
 
     acknowledgement: [
