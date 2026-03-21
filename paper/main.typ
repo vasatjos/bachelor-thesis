@@ -73,21 +73,33 @@
 #register-glossary(entry-list)
 
 = Introduction
-#lorem(80) @template
+
+#Gls("rl") has shown superhuman performance in many board games,
+with AlphaZero famously beating the best go players in the world. However, an area that remains
+much less explored are games where a massive part of the world-state remains unknown
+to the models.
+
+Prší is a popular card game in the Czech Republic, it is one of the many
+variants of the German game Mau-Mau, not dissimilar to Uno. Its rules will be explained
+in a following chapter.
+As a card game where everything but your hand and what has already been played
+is a mistery to the player, it provides a suitable environment for exploring
+#gls("rl") methods in a stochastic setting.
+
 
 #lorem(120)
-
-#lorem(140)
 
 #lorem(40)
 
 #lorem(70)
 
+#heading([Goals], depth: 2, numbering: none, outlined: false)
+
 = Background
 
 == Part 1
 
-#lorem(100)
+#lorem(100) @template
 
 === Subpart 1
 
@@ -118,11 +130,15 @@
 
 = Acronyms
 
-#print-glossary(entry-list, show-all: true, user-print-glossary: acronym-table)
+#print-glossary(entry-list, show-all: false, user-print-glossary: acronym-table)
 
 = An example appendix
 
 #lorem(100)
+
+$
+sum_(i=1)^(infinity) 1 / i
+$
 
 = Code block
 
