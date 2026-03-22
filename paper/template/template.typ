@@ -291,7 +291,6 @@
         columns: (auto, 1fr),
         stroke: none,
         inset: (x: 8pt, y: 5pt),
-        align: (right, left),
         // Sort alphabetically by the "sort" key (or fallback to "key")
         ..for entry in visible-entries.sorted(key: e => e.at("sort", default: e.at("key"))) {
             // Fallbacks in case an entry is missing a short or long form
@@ -320,7 +319,7 @@
                 user-print-reference(
                     entry,
                     ..ref-args,
-                    user-print-gloss: (e, ..opts) => text(weight: "bold")[#short-form],
+                    user-print-gloss: (e, ..opts) => align(right)[#text(weight: "bold")[#short-form]],
                 ),
                 // Column 2: The meaning + page references
                 [#meaning#back-refs],
