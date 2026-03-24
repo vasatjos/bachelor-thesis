@@ -75,26 +75,29 @@
 
 = Introduction
 
-// TODO: AI -> RL paragraph
+The field of #gls("ai") has been gaining popularity in recent years. #Gls("rl") is
+a field of #gls("ai") that aims to teach computers how to behave without being explicitly shown
+how to act, only telling the #gls("ai") agent how good the most recent thing he did was
+by giving him a numerical reward for every action performed.
 
-#Gls("rl") has shown superhuman performance in many board games,
-with AlphaZero famously beating the best go players in the world. However, an area that remains
-much less explored are games where a massive part of the world-state remains unknown
-to the models.
+#Gls("rl") has shown superhuman performance in many board games and video games alike,
+with AlphaZero @alphazero famously beating the best go players in the world and Agent57 @agent57
+achieving superhuman performance in the whole Atari suite of games.
+However, an area that remains much less explored are games where
+a massive part of the world-state remains unknown to the player.
 
-Prší is a popular card game in the Czech Republic, it is one of the many
-variants of the German game Mau-Mau, not dissimilar to Uno. Its rules will be explained
-in a following chapter.
-As a card game where everything but your hand and what has already been played
-is a mistery to the player, it provides a suitable environment for exploring
-#gls("rl") methods in a stochastic setting.
+In this thesis, we will focus on Prší, a popular card game in the Czech Republic.
+It is one of the many variants of the German game Mau-Mau and is not dissimilar to the world famous card game Uno.
+As a card game where everything but your hand and the cards already played
+is a mistery to the agent, it provides a suitable environment for exploring
+#gls("rl") methods in a unique setting.
 
 
-#lorem(120)
-
-#lorem(40)
-
-#lorem(70)
+// #lorem(120)
+//
+// #lorem(40)
+//
+// #lorem(70)
 
 #heading([Goals], depth: 2, numbering: none, outlined: true)
 
@@ -115,7 +118,7 @@ its performance against human players and discuss the results.
 
 == Part 1
 
-#lorem(100) @template
+#lorem(100)
 
 === Subpart 1
 
@@ -153,7 +156,7 @@ its performance against human players and discuss the results.
 #lorem(100)
 
 $
-sum_(i=1)^(infinity) 1 / i
+    sum_(i=1)^(infinity) 1 / i
 $
 
 = Code block
