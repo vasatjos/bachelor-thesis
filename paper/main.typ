@@ -43,8 +43,9 @@
     ],
 
     acknowledgement: [
-        I would like to express my gratitude to my dear friends and family for their support and encouragement
-        during my whole academic journey.
+        I would like to express my gratitude to my dear friends and family for their support, encouragement
+        and -- naturally -- the thousands of hands of Prší played together
+        during my academic journey.
         I would also like to thank my supervisor, Ing. Daniel Vašata, Ph.D.,
         for his help and insight during my time writing this thesis.
     ],
