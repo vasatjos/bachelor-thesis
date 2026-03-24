@@ -75,6 +75,8 @@
 
 = Introduction
 
+// TODO: AI -> RL paragraph
+
 #Gls("rl") has shown superhuman performance in many board games,
 with AlphaZero famously beating the best go players in the world. However, an area that remains
 much less explored are games where a massive part of the world-state remains unknown
@@ -94,7 +96,20 @@ is a mistery to the player, it provides a suitable environment for exploring
 
 #lorem(70)
 
-#heading([Goals], depth: 2, numbering: none, outlined: false)
+#heading([Goals], depth: 2, numbering: none, outlined: true)
+
+The main goal of this thesis is to evaluate different #gls("rl") algorithms on their
+performance in Prší.
+
+To achieve this, we will implement an environment capable of putting various agents against
+each other in a 1v1 setting with 2 baseline opponents available. The environment will also be able to update the opponent
+on the fly for self-play compatibility.
+
+We will use the implemented environment to train agents using both tabular methods, such as Monte Carlo,
+and #gls("dl") based approaches, like #gls("dqn").
+
+Finally, after comparing the agents to a baseline to find the best one, we will test
+its performance against human players and discuss the results.
 
 = Background
 
