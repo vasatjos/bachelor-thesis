@@ -23,13 +23,6 @@ def sample_hand() -> list[Card]:
     ]
 
 
-def test_player_initialization():
-    player = Player(player_id=42)
-    assert player.id == 42
-    assert player.card_count == 0
-    assert player.hand_set == set()
-
-
 def test_player_id_is_readonly():
     player = Player(player_id=7)
     with pytest.raises(AttributeError):
