@@ -279,8 +279,8 @@ class QLearningAgent(TrainableAgent):
     ) -> State:
         """Correctly set played_cards_subset based on the state"""
 
-        if state.top_card is None:
-            raise ValueError("Can't process state without top card.")
+        if state.top_card is None or state.actual_suit is None:
+            raise RuntimeError("Can't process invalid state.")
 
         hand_state = self._get_hand_state(hand)
         opponent_card_count = info.get("opponent_card_count", 0)
@@ -289,8 +289,8 @@ class QLearningAgent(TrainableAgent):
             and opponent_card_count > self.args.truncated_hand_size
         ):
             opponent_card_count = np.uint8(self.args.truncated_hand_size)
-        top_card = self._handle_top_card(state.top_card)
-        active_suit = SUIT_TO_INDEX[state.actual_suit]
+        top_card_idx = self._handle_top_card(state.top_card)
+        active_suit_idx = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
         effect_strength = np.uint8(state.effect_strength)
         self._update_subset(state.top_card, info.get("deck_flipped_over", False))
@@ -298,8 +298,8 @@ class QLearningAgent(TrainableAgent):
         return (
             hand_state,
             opponent_card_count,
-            top_card,
-            active_suit,
+            top_card_idx,
+            active_suit_idx,
             card_effect,
             effect_strength,
             tuple(self.played_cards_subset),
@@ -348,7 +348,7 @@ class QLearningAgent(TrainableAgent):
             case "full":
                 packed = np.uint32(0)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
+                    packed |= np.uint32(1) << (CARD_TO_INDEX[card])
                 return packed
             case "full_simple":
                 if len(hand) > self.args.truncated_hand_size:
@@ -357,7 +357,7 @@ class QLearningAgent(TrainableAgent):
 
                 packed = np.uint32(0)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
+                    packed |= np.uint32(1) << (CARD_TO_INDEX[card])
                 return packed
             case _:
                 raise ValueError("Invalid hand_state_option.")
@@ -367,7 +367,7 @@ class QLearningAgent(TrainableAgent):
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
         match self.args.played_subset:
             case "all":
-                idx = CARD_TO_INDEX[card] - 1  # None is 0, so indexing is 1 based
+                idx = CARD_TO_INDEX[card]
                 self.played_cards_subset[idx] += 1
             case "specials":
                 if (

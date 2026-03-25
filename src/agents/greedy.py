@@ -1,10 +1,10 @@
 from typing import Any
 from agents.base import BaseAgent
-from agents.utils import CARD_TO_INDEX, DRAW_ACTION, SUIT_TO_INDEX, Action
+from agents.utils import DRAW_ACTION, INDEX_TO_SUIT, Action
 from prsi.card import Card
 from prsi.card_utils import Rank
 from prsi.game_state import GameState, find_allowed_cards
-from random import choice, randint
+from random import randrange
 
 
 class GreedyAgent(BaseAgent):
@@ -16,14 +16,14 @@ class GreedyAgent(BaseAgent):
         if not playable:
             return DRAW_ACTION
 
-        card_choice = choice(playable)
-        suit_index = (
-            SUIT_TO_INDEX[card_choice.suit]
-            if card_choice.rank != Rank.OBER
-            else randint(1, 4)
+        chosen_card = playable[randrange(len(playable))]
+        chosen_suit = (
+            chosen_card.suit
+            if chosen_card.rank != Rank.OBER
+            else INDEX_TO_SUIT[randrange(4)]
         )
 
-        return (CARD_TO_INDEX[card_choice], suit_index)
+        return chosen_card, chosen_suit
 
     def evaluate(self) -> None:
         raise NotImplementedError("TODO: should be simple though")

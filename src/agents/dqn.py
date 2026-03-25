@@ -1,3 +1,4 @@
+# TODO: refactor!!
 import argparse
 from typing import Any
 import collections
@@ -136,8 +137,6 @@ Transition = collections.namedtuple(
 )
 
 
-# TODO: rewards - UNO inspiration
-# TODO: make sure Q prediction is correct: understand Bellman equations (try a single head predicting an Action)
 # TODO: variable network depth
 class DQNAgent(TrainableAgent):
     def __init__(

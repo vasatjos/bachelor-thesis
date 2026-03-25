@@ -5,7 +5,7 @@ from prsi.deck import Deck, DeckEmptyError
 from prsi.card import Card
 from prsi.player import Player
 from prsi.game_state import GameState, find_allowed_cards
-from agents.utils import Action, INDEX_TO_SUIT, INDEX_TO_CARD
+from agents.utils import Action
 from agents.greedy import GreedyAgent
 from agents.base import BaseAgent
 
@@ -91,7 +91,7 @@ class PrsiEnv:
         Execute one step in the environment.
 
         Args:
-            action: The action to take (card_index, suit_index)
+            action: The action to take, either (Card, Suit) or None when drawing
 
         Returns:
             Tuple of (state, reward, done, info) where info contains the player's hand.
@@ -117,8 +117,7 @@ class PrsiEnv:
             )
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
-        player_card = INDEX_TO_CARD[action[0]]
-        if not self._opponent_player_info.card_count and player_card != seven_of_hearts:
+        if not self._opponent_player_info.card_count and (action is None or action[0] != seven_of_hearts):
             self._done = True
             self._player_won_last = False
             return (
@@ -141,8 +140,6 @@ class PrsiEnv:
         opponent_action = self._opponent.choose_action(
             self._state, self._opponent_player_info.hand_set, player_info
         )
-        opponent_card = INDEX_TO_CARD[opponent_action[0]]
-
         try:
             flipped_opponent = self._execute_action(
                 self._opponent_player_info, opponent_action
@@ -161,7 +158,7 @@ class PrsiEnv:
                 },
             )
 
-        if not self._player_info.card_count and opponent_card != seven_of_hearts:
+        if not self._player_info.card_count and (opponent_action is None or opponent_action[0] != seven_of_hearts):
             self._done = True
             self._player_won_last = True
             return (
@@ -190,21 +187,20 @@ class PrsiEnv:
         """
         Returns whether the deck was flipped over.
         """
-        card_idx, suit_idx = action
-        card = INDEX_TO_CARD.get(card_idx)
-        suit = INDEX_TO_SUIT.get(suit_idx)
-
-        flipped = False
-        if card is not None:
-            if card not in find_allowed_cards(self.state):
-                raise ValueError("Selected card not allowed!")
-            player.play_card(card)
-            self._deck.play_card(card)
-            self._update_state(card, suit)
-        else:
+        if action is None:
             drawn, flipped = self._draw_cards()
             player.take_drawn_cards(drawn)
             self._update_state(None)
+            return flipped
+
+        card, suit = action
+
+        flipped = False
+        if card not in find_allowed_cards(self.state):
+            raise ValueError("Selected card not allowed!")
+        player.play_card(card)
+        self._deck.play_card(card)
+        self._update_state(card, suit)
 
         return flipped
 

@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from random import randint, choice
+from random import randint
 from prsi.card import Card
 from prsi.card_utils import Rank, Suit
 
@@ -10,34 +10,32 @@ from prsi.game_state import GameState, find_allowed_cards
 
 CardIndex = int
 SuitIndex = int
-Action = tuple[CardIndex, SuitIndex]
-DRAW_ACTION = 0, 0
+Action = (tuple[Card, Suit] | None)
+DRAW_ACTION = None
 
-INDEX_TO_CARD: dict[CardIndex, Card | None] = {
-    i: card
-    for i, card in enumerate(
-        (Card(suit, rank) for rank in Rank for suit in Suit), start=1
-    )
-}
-INDEX_TO_CARD[0] = None  # Draw a card
+INDEX_TO_CARD: list[Card] = [card for card in (Card(suit, rank) for rank in Rank for suit in Suit)]
 
-CARD_TO_INDEX: dict[Card | None, CardIndex] = {
+CARD_TO_INDEX: dict[Card, CardIndex] = {
     card: i
     for i, card in enumerate(
-        (Card(suit, rank) for rank in Rank for suit in Suit), start=1
+        (Card(suit, rank) for rank in Rank for suit in Suit)
     )
 }
-CARD_TO_INDEX[None] = 0  # Draw a card
 
-INDEX_TO_SUIT: dict[SuitIndex, Suit | None] = {
-    i: suit for i, suit in enumerate(Suit, start=1)
-}
-INDEX_TO_SUIT[0] = None
+INDEX_TO_SUIT: list[Suit] = [suit for suit in Suit]
 
-SUIT_TO_INDEX: dict[Suit | None, SuitIndex] = {
-    suit: i for i, suit in enumerate(Suit, start=1)
+SUIT_TO_INDEX: dict[Suit, SuitIndex] = {
+    suit: i for i, suit in enumerate(Suit)
 }
-SUIT_TO_INDEX[None] = 0
+
+INDEX_TO_ACTION: list[Action] = [DRAW_ACTION]
+for card in INDEX_TO_CARD:
+    if card.rank != Rank.OBER:
+        INDEX_TO_ACTION.append((card, card.suit))
+        continue
+
+    for suit in Suit:
+        INDEX_TO_ACTION.append((card, suit))
 
 
 class ReplayBuffer:
@@ -114,12 +112,14 @@ def behave_randomly(state: GameState, hand: set[Card]) -> Action:
     playable = tuple(find_allowed_cards(state) & hand)
 
     playable_length = len(playable)
-    if playable_length == 0 or randint(0, playable_length) == playable_length:
+    random_idx = randint(0, playable_length)
+    if playable_length == 0 or random_idx == playable_length:
         return DRAW_ACTION
 
-    card = choice(playable)
-    suit_idx = SUIT_TO_INDEX[card.suit] if card.rank != Rank.OBER else randint(1, 4)
-    return CARD_TO_INDEX[card], suit_idx
+    # using randint as index instead of random.choice for micro optimalization
+    card = playable[random_idx]
+    suit = card.suit if card.rank != Rank.OBER else INDEX_TO_SUIT[randint(0, 3)]
+    return card, suit
 
 
 def get_valid_actions(game_state: GameState, hand: set[Card]) -> list[Action]:
@@ -129,10 +129,10 @@ def get_valid_actions(game_state: GameState, hand: set[Card]) -> list[Action]:
     for card in hand:
         if card in allowed_cards:
             if card.rank == Rank.OBER:
-                for suit_idx in range(1, 5):
-                    valid_actions.append((CARD_TO_INDEX[card], suit_idx))
+                for suit in Suit:
+                    valid_actions.append((card, suit))
             else:
-                valid_actions.append((CARD_TO_INDEX[card], SUIT_TO_INDEX[card.suit]))
+                valid_actions.append((card, card.suit))
 
     valid_actions.append(DRAW_ACTION)
     return valid_actions

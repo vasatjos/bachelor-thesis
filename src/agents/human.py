@@ -6,7 +6,7 @@ from agents.monte_carlo import MonteCarloAgent
 from agents.q_learning import QLearningAgent
 from agents.dqn import DQNAgent
 from agents.random import RandomAgent
-from agents.utils import CARD_TO_INDEX, SUIT_TO_INDEX, Action
+from agents.utils import Action
 from prsi.card import Card, ICONS, USE_ICONS
 from prsi.card_utils import Rank, Suit, COLOR_RESET
 import argparse
@@ -52,8 +52,7 @@ class HumanAgent(BaseAgent):
             print(f"Suit: {active_suit.value}{icon}{active_suit.name}{COLOR_RESET}")
         print(f"Opponent card count: {info.get('opponent_card_count', 0)}")
 
-        card, suit = self._select_card_to_play(allowed, hand)
-        return CARD_TO_INDEX[card], SUIT_TO_INDEX[suit]
+        return self._select_action(allowed, hand)
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         wins = 0
@@ -92,9 +91,9 @@ class HumanAgent(BaseAgent):
             index = f"{i:>3}. " if show_numbers else ""
             print(f"{index}{card}")
 
-    def _select_card_to_play(
+    def _select_action(
         self, allowed: set[Card], hand: set[Card]
-    ) -> tuple[Card | None, Suit | None]:
+    ) -> Action:
         """
         Select a card from the players hand which he will play.
 
@@ -104,8 +103,7 @@ class HumanAgent(BaseAgent):
           hand: The player's current hand.
 
         Returns:
-          None if player chose to draw a card.
-          Otherwise simply the card the player chose to play.
+          The action player chose to perform.
         """
 
         print("\nHand:")
@@ -114,7 +112,7 @@ class HumanAgent(BaseAgent):
         playable = sorted(hand & allowed)
         if len(playable) == 0:
             input("No cards available, press enter to draw/skip.")
-            return None, None
+            return None
         self._print_hand(playable)
 
         while True:
@@ -123,7 +121,7 @@ class HumanAgent(BaseAgent):
                 + "don't enter anything to draw a card: "
             )
             if choice_input == "":
-                return None, None
+                return None
 
             try:
                 choice = int(choice_input)
