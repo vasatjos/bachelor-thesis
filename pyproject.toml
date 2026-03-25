@@ -1,14 +1,22 @@
 [project]
 name = "thesis"
 version = "0.1.0"
-description = "Add your description here"
+description = "RL agents for the Prší card game"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "numpy>=2.3.5",
+    "torch>=2.10.0",
 ]
 
-[tool.uv.workspace]
-members = [
-    "src",
+[dependency-groups]
+dev = [
+    "markupsafe==2.1.5",
+    "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "ruff>=0.14.10",
 ]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cpu"
