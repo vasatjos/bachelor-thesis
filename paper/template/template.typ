@@ -40,10 +40,6 @@
     )
 
 
-    if assignment.len() == 0 {
-        page[Replace this page with Assignment]
-    }
-
     if print {
         page[]
     }
