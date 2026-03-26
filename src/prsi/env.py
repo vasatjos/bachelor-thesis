@@ -117,7 +117,9 @@ class PrsiEnv:
             )
 
         seven_of_hearts = Card(Suit.HEARTS, Rank.SEVEN)
-        if not self._opponent_player_info.card_count and (action is None or action[0] != seven_of_hearts):
+        if not self._opponent_player_info.card_count and (
+            action is None or action[0] != seven_of_hearts
+        ):
             self._done = True
             self._player_won_last = False
             return (
@@ -158,7 +160,9 @@ class PrsiEnv:
                 },
             )
 
-        if not self._player_info.card_count and (opponent_action is None or opponent_action[0] != seven_of_hearts):
+        if not self._player_info.card_count and (
+            opponent_action is None or opponent_action[0] != seven_of_hearts
+        ):
             self._done = True
             self._player_won_last = True
             return (

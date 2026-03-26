@@ -91,9 +91,7 @@ class HumanAgent(BaseAgent):
             index = f"{i:>3}. " if show_numbers else ""
             print(f"{index}{card}")
 
-    def _select_action(
-        self, allowed: set[Card], hand: set[Card]
-    ) -> Action:
+    def _select_action(self, allowed: set[Card], hand: set[Card]) -> Action:
         """
         Select a card from the players hand which he will play.
 

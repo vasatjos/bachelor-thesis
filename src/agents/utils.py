@@ -10,23 +10,21 @@ from prsi.game_state import GameState, find_allowed_cards
 
 CardIndex = int
 SuitIndex = int
-Action = (tuple[Card, Suit] | None)
+Action = tuple[Card, Suit] | None
 DRAW_ACTION = None
 
-INDEX_TO_CARD: list[Card] = [card for card in (Card(suit, rank) for rank in Rank for suit in Suit)]
+INDEX_TO_CARD: list[Card] = [
+    card for card in (Card(suit, rank) for rank in Rank for suit in Suit)
+]
 
 CARD_TO_INDEX: dict[Card, CardIndex] = {
     card: i
-    for i, card in enumerate(
-        (Card(suit, rank) for rank in Rank for suit in Suit)
-    )
+    for i, card in enumerate((Card(suit, rank) for rank in Rank for suit in Suit))
 }
 
 INDEX_TO_SUIT: list[Suit] = [suit for suit in Suit]
 
-SUIT_TO_INDEX: dict[Suit, SuitIndex] = {
-    suit: i for i, suit in enumerate(Suit)
-}
+SUIT_TO_INDEX: dict[Suit, SuitIndex] = {suit: i for i, suit in enumerate(Suit)}
 
 INDEX_TO_ACTION: list[Action] = [DRAW_ACTION]
 for card in INDEX_TO_CARD:
