@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from random import randint
+from random import randrange
 from prsi.card import Card
 from prsi.card_utils import Rank, Suit
 
@@ -110,13 +110,13 @@ def behave_randomly(state: GameState, hand: set[Card]) -> Action:
     playable = tuple(find_allowed_cards(state) & hand)
 
     playable_length = len(playable)
-    random_idx = randint(0, playable_length)
+    random_idx = randrange(playable_length + 1)
     if playable_length == 0 or random_idx == playable_length:
         return DRAW_ACTION
 
-    # using randint as index instead of random.choice for micro optimalization
+    # using random index instead of random.choice for micro optimalization
     card = playable[random_idx]
-    suit = card.suit if card.rank != Rank.OBER else INDEX_TO_SUIT[randint(0, 3)]
+    suit = card.suit if card.rank != Rank.OBER else INDEX_TO_SUIT[randrange(len(Suit))]
     return card, suit
 
 

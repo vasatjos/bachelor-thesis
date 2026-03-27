@@ -1,12 +1,17 @@
 from typing import Any  # TODO: maybe state should be Hashable instead of Any
 from abc import ABC, abstractmethod
-from agents.utils import Action
+from prsi.rl_utils import Action
 from copy import deepcopy
 from prsi.card import Card
 
 
-class BaseAgent(ABC):
-    def clone(self) -> "BaseAgent":
+class Agent(ABC):
+    """
+    Abstract base class for agent implementation. Every Prsi agent must implement
+    the abstract methods `choose_action` and `evaluate`.
+    """
+
+    def clone(self) -> "Agent":
         return deepcopy(self)
 
     @abstractmethod

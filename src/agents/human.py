@@ -1,12 +1,11 @@
 import os
 from typing import Any
-from agents.base import BaseAgent
-from agents.greedy import GreedyAgent
+from prsi.agents.agent import Agent
+from prsi.agents.baselines import GreedyAgent, RandomAgent
 from agents.monte_carlo import MonteCarloAgent
 from agents.q_learning import QLearningAgent
 from agents.dqn import DQNAgent
-from agents.random import RandomAgent
-from agents.utils import Action
+from prsi.rl_utils import Action
 from prsi.card import Card, ICONS, USE_ICONS
 from prsi.card_utils import Rank, Suit, COLOR_RESET
 import argparse
@@ -21,7 +20,7 @@ parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument("--evaluate_for", default=1, type=int, help="Evaluation episodes.")
 parser.add_argument(
     "--model_path",
-    default="agent_strategies/mc_agent.pkl",
+    default="",
     type=str,
     help="Path to load model.",
 )
@@ -33,7 +32,7 @@ parser.add_argument(
 )
 
 
-class HumanAgent(BaseAgent):
+class HumanAgent(Agent):
     def choose_action(
         self, state: GameState, hand: set[Card], info: dict[str, Any]
     ) -> Action:
@@ -166,7 +165,7 @@ class HumanAgent(BaseAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    opponent: BaseAgent
+    opponent: Agent
     match args.opponent:
         case "random":
             opponent = RandomAgent()

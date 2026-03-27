@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from agents.base import BaseAgent
+from prsi.agents.agent import Agent
 
 
-class TrainableAgent(BaseAgent):
+class TrainableAgent(Agent):
     @abstractmethod
     def train(self, *args, **kwargs) -> None:
         raise NotImplementedError("Base class cannot be trained.")

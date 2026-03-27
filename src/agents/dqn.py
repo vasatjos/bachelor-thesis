@@ -7,11 +7,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from agents.base import BaseAgent
-from agents.greedy import GreedyAgent
-from agents.random import RandomAgent
+from prsi.agents.agent import Agent
+from prsi.agents.baselines import GreedyAgent, RandomAgent
 from agents.trainable import TrainableAgent
-from agents.utils import (
+from prsi.rl_utils import (
     CARD_TO_INDEX,
     INDEX_TO_CARD,
     DRAW_ACTION,
@@ -475,7 +474,7 @@ class DQNAgent(TrainableAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    opponent: BaseAgent
+    opponent: Agent
     match args.opponent:
         case "random":
             opponent = RandomAgent()

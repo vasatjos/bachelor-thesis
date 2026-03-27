@@ -5,18 +5,19 @@ from prsi.deck import Deck, DeckEmptyError
 from prsi.card import Card
 from prsi.player import Player
 from prsi.game_state import GameState, find_allowed_cards
-from agents.utils import Action
-from agents.greedy import GreedyAgent
-from agents.base import BaseAgent
+from prsi.rl_utils import Action, INDEX_TO_ACTION
+from prsi.agents.baselines import GreedyAgent
+from prsi.agents.agent import Agent
 
 
 class PrsiEnv:
     STARTING_HAND_SIZE = 4
     PLAYER_COUNT = 2
+    ACTION_SPACE_SIZE = len(INDEX_TO_ACTION)
 
-    def __init__(self, opponent: BaseAgent = GreedyAgent()) -> None:
+    def __init__(self, opponent: Agent = GreedyAgent()) -> None:
         self._player_info: Player = Player(0)
-        self._opponent: BaseAgent = opponent
+        self._opponent: Agent = opponent
         self._opponent_player_info = Player(1)
         self._deck: Deck = Deck()
         self._state: GameState = GameState()
@@ -29,7 +30,7 @@ class PrsiEnv:
         return self._state
 
     def reset(
-        self, full: bool = False, opponent: BaseAgent | None = None
+        self, full: bool = False, opponent: Agent | None = None
     ) -> tuple[GameState, dict]:
         """
         Reset the environment to initial state and return the starting state.
