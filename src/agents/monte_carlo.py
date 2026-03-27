@@ -3,7 +3,6 @@ from typing import Any
 import argparse
 from prsi.agents.agent import Agent
 from prsi.agents.baselines import GreedyAgent, RandomAgent
-from agents.trainable import TrainableAgent
 from prsi.rl_utils import (
     CARD_TO_INDEX,
     SUIT_TO_INDEX,
@@ -18,6 +17,7 @@ from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState
 import numpy as np
+from agents.trainable import TrainableAgent
 
 parser = argparse.ArgumentParser()
 

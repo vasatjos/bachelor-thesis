@@ -1,14 +1,11 @@
 import argparse
 from typing import Any
 import collections
-
 import numpy as np
 import torch
 import torch.nn as nn
-
 from prsi.agents.agent import Agent
 from prsi.agents.baselines import GreedyAgent, RandomAgent
-from agents.trainable import TrainableAgent
 from prsi.rl_utils import (
     CARD_TO_INDEX,
     DRAW_ACTION,
@@ -26,6 +23,7 @@ from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState
+from agents.trainable import TrainableAgent
 
 parser = argparse.ArgumentParser()
 

@@ -113,7 +113,7 @@ class PrsiEnv:
             print(e)
             return (
                 self._state,
-                -1.0,
+                0.0,
                 True,
                 {
                     "hand": self._player_info.hand_set,
@@ -157,7 +157,7 @@ class PrsiEnv:
             self._player_won_last = True
             return (
                 self._state,
-                1.0,
+                0.0,
                 True,
                 {
                     "hand": self._player_info.hand_set,
