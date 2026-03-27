@@ -1,4 +1,3 @@
-# TODO: refactor!!
 import argparse
 from typing import Any
 import collections
@@ -12,15 +11,16 @@ from prsi.agents.baselines import GreedyAgent, RandomAgent
 from agents.trainable import TrainableAgent
 from prsi.rl_utils import (
     CARD_TO_INDEX,
-    INDEX_TO_CARD,
     DRAW_ACTION,
     SUIT_TO_INDEX,
+    INDEX_TO_ACTION,
+    ACTION_TO_INDEX,
     Action,
     CardIndex,
     SuitIndex,
     ReplayBuffer,
     behave_randomly,
-    get_valid_actions,
+    get_valid_action_mask,
 )
 from prsi.card import Card
 from prsi.card_utils import CardEffect, Rank, Suit
@@ -47,10 +47,11 @@ parser.add_argument("--epsilon_decay", default=1, type=float)
 parser.add_argument("--min_epsilon", default=0.05, type=float)
 parser.add_argument("--gamma", default=0.99, type=float)
 parser.add_argument("--learning_rate", default=1e-3, type=float)
-parser.add_argument("--batch_size", default=16, type=int)
+parser.add_argument("--batch_size", default=32, type=int)
 parser.add_argument("--replay_buffer_size", default=100_000, type=int)
 parser.add_argument("--target_update_freq", default=1_000, type=int)
-parser.add_argument("--hidden_layer_size", default=1024, type=int)
+parser.add_argument("--hidden_layer_size", default=512, type=int)
+parser.add_argument("--hidden_layer_count", default=2, type=int)
 parser.add_argument(
     "--hand_state_option",
     default="full",
@@ -104,39 +105,31 @@ def _state_to_vector(
 class QNetwork(nn.Module):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def __init__(self, hidden: int) -> None:
+    def __init__(self, hidden_size: int, hidden_count: int = 1) -> None:
+        if hidden_count < 1 or hidden_size < 1:
+            raise ValueError("Invalid network parameters!")
+
         super().__init__()
-        self.trunk = nn.Sequential(
-            nn.LazyLinear(hidden),
-            nn.ReLU(),
-            nn.Linear(hidden, hidden),
+        self.net = nn.Sequential(
+            nn.LazyLinear(hidden_size),
             nn.ReLU(),
         )
-        self.card_head = nn.Linear(hidden, len(CARD_TO_INDEX))  # 0 = draw, 1-32 = cards
-        self.suit_head = nn.Linear(hidden, len(SUIT_TO_INDEX))  # 0 = draw, 1-4 = suits
+        for _ in range(hidden_count):
+            self.net.append(nn.Linear(hidden_size, hidden_size))
+            self.net.append(nn.ReLU())
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        features = self.trunk(x)
-        return self.card_head(features), self.suit_head(features)
+        self.net.append(nn.Linear(hidden_size, PrsiEnv.ACTION_SPACE_SIZE))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
 
 
-# card_idx: 0 = draw, 1-32 = card
-# suit_idx: 0 = draw, 1-4 = suit
 Transition = collections.namedtuple(
     "Transition",
-    [
-        "state",
-        "card_idx",
-        "suit_idx",
-        "reward",
-        "done",
-        "next_state",
-        "next_valid_cards",
-    ],
+    ["state", "action_idx", "reward", "done", "next_state", "next_valid_actions"],
 )
 
 
-# TODO: variable network depth
 class DQNAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
@@ -155,8 +148,12 @@ class DQNAgent(TrainableAgent):
         self._build_networks()
 
     def _build_networks(self) -> None:
-        self.online_net = QNetwork(self.args.hidden_layer_size).to(QNetwork.device)
-        self.target_net = QNetwork(self.args.hidden_layer_size).to(QNetwork.device)
+        self.online_net = QNetwork(
+            self.args.hidden_layer_size, self.args.hidden_layer_count
+        ).to(QNetwork.device)
+        self.target_net = QNetwork(
+            self.args.hidden_layer_size, self.args.hidden_layer_count
+        ).to(QNetwork.device)
         self.target_net.load_state_dict(self.online_net.state_dict())
         self.target_net.eval()
 
@@ -177,7 +174,9 @@ class DQNAgent(TrainableAgent):
                 raise ValueError("Invalid played_subset argument.")
 
     def train(self, env: PrsiEnv) -> None:
-        replay_buffer = ReplayBuffer(max_length=self.args.replay_buffer_size)
+        replay_buffer: ReplayBuffer[Transition] = ReplayBuffer(
+            max_length=self.args.replay_buffer_size
+        )
         total_steps = 0
         batch_wins = 0
         draw_actions = 0
@@ -192,29 +191,24 @@ class DQNAgent(TrainableAgent):
             while not done:
                 state_vec = self._process_state(game_state, info, hand)
                 action = self.choose_action(game_state, hand, info)
-                card_index, suit_idx = action
                 if action == DRAW_ACTION:
                     draw_actions += 1
+                action_idx = ACTION_TO_INDEX[action]
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
 
                 next_state_vec = self._process_state(game_state, info, hand)
-
-                next_valid_actions = get_valid_actions(game_state, hand)
-                next_valid_cards = np.zeros(len(CARD_TO_INDEX), dtype=bool)
-                for c, _ in next_valid_actions:
-                    next_valid_cards[c] = True
+                next_valid_mask = get_valid_action_mask(game_state, hand)
 
                 replay_buffer.append(
                     Transition(
                         state_vec,
-                        card_index,
-                        suit_idx,
+                        action_idx,
                         reward,
                         done,
                         next_state_vec,
-                        next_valid_cards,
+                        next_valid_mask,
                     )
                 )
                 total_steps += 1
@@ -236,46 +230,52 @@ class DQNAgent(TrainableAgent):
                 batch_wins = 0
 
     def _learn(self, replay_buffer: ReplayBuffer) -> None:
-        batch: list[Transition] = replay_buffer.sample(self.args.batch_size)  # type: ignore
+        batch = replay_buffer.sample(self.args.batch_size)
 
         states = torch.tensor(
-            np.array([t.state for t in batch]), dtype=torch.float32
-        ).to(QNetwork.device)
-        card_idxs = torch.tensor(
-            np.array([t.card_idx for t in batch]), dtype=torch.long
-        ).to(QNetwork.device)
-        suit_idxs = torch.tensor(
-            np.array([t.suit_idx for t in batch]), dtype=torch.long
-        ).to(QNetwork.device)
+            np.array([t.state for t in batch]),
+            dtype=torch.float32,
+            device=QNetwork.device,
+        )
+        action_idxs = torch.tensor(
+            np.array([t.action_idx for t in batch]),
+            dtype=torch.long,
+            device=QNetwork.device,
+        )
         rewards = torch.tensor(
-            np.array([t.reward for t in batch]), dtype=torch.float32
-        ).to(QNetwork.device)
-        dones = torch.tensor(np.array([t.done for t in batch]), dtype=torch.float32).to(
-            QNetwork.device
+            np.array([t.reward for t in batch]),
+            dtype=torch.float32,
+            device=QNetwork.device,
+        )
+        dones = torch.tensor(
+            np.array([t.done for t in batch]),
+            dtype=torch.float32,
+            device=QNetwork.device,
         )
         next_states = torch.tensor(
-            np.array([t.next_state for t in batch]), dtype=torch.float32
-        ).to(QNetwork.device)
-        next_valid_cards = torch.tensor(
-            np.array([t.next_valid_cards for t in batch]), dtype=torch.bool
-        ).to(QNetwork.device)
+            np.array([t.next_state for t in batch]),
+            dtype=torch.float32,
+            device=QNetwork.device,
+        )
+        next_valid_masks = torch.tensor(
+            np.array([t.next_valid_actions for t in batch]),
+            dtype=torch.bool,
+            device=QNetwork.device,
+        )
 
+        # Q(s,a)
         self.online_net.train()
-        card_q, suit_q = self.online_net(states)
+        q_values = self.online_net(states)
+        current_q = q_values.gather(1, action_idxs.unsqueeze(1)).squeeze(1)
 
-        current_card_q = card_q.gather(1, card_idxs.unsqueeze(1)).squeeze(1)
-        current_suit_q = suit_q.gather(1, suit_idxs.unsqueeze(1)).squeeze(1)
-
+        # Target: r + gamma * max_{a' valid} Q_target(s', a')
         with torch.no_grad():
-            next_card_q, _ = self.target_net(next_states)
-            next_card_q[~next_valid_cards] = -torch.inf
-            target_q = rewards + self.args.gamma * next_card_q.max(dim=1).values * (
-                1.0 - dones
-            )
+            next_q = self.target_net(next_states)
+            next_q[~next_valid_masks] = -torch.inf
+            max_next_q = next_q.max(dim=1).values
+            target_q = rewards + self.args.gamma * max_next_q * (1.0 - dones)
 
-        card_loss = self.loss(current_card_q, target_q)
-        suit_loss = self.loss(current_suit_q, target_q)
-        loss = card_loss + suit_loss
+        loss = self.loss(current_q, target_q)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -313,38 +313,27 @@ class DQNAgent(TrainableAgent):
         if np.random.random() < self.args.epsilon:
             return behave_randomly(state, hand)
 
-        valid_actions = get_valid_actions(state, hand)
         state_vec = self._process_state(state, info, hand)
         state_tensor = torch.tensor(state_vec[np.newaxis], dtype=torch.float32).to(
             QNetwork.device
         )
+
         self.online_net.eval()
         with torch.no_grad():
-            card_q, suit_q = self.online_net(state_tensor)
-            card_q = card_q[0].cpu().numpy()
-            suit_q = suit_q[0].cpu().numpy()
+            q_values = self.online_net(state_tensor).squeeze(0).cpu().numpy()
+        self.online_net.train()
 
-        valid_card_indices = list({a[0] for a in valid_actions})
-        card_mask = np.full(len(CARD_TO_INDEX), -np.inf)
-        card_mask[valid_card_indices] = card_q[valid_card_indices]
-        best_card_idx = int(np.argmax(card_mask))
+        action_mask = get_valid_action_mask(state, hand)
+        masked_q = np.full_like(q_values, -np.inf)
+        masked_q[action_mask] = q_values[action_mask]
 
-        if best_card_idx == 0:
-            return DRAW_ACTION
-
-        if INDEX_TO_CARD[best_card_idx].rank == Rank.OBER:  # type: ignore
-            # Mask out suit index 0 (draw) and pick best among 1-4
-            suit_q[0] = -np.inf
-            best_suit_idx = int(np.argmax(suit_q))
-        else:
-            best_suit_idx = SUIT_TO_INDEX[INDEX_TO_CARD[best_card_idx].suit]  # type: ignore
-
-        return best_card_idx, best_suit_idx
+        best_action_idx = int(masked_q.argmax())
+        return INDEX_TO_ACTION[best_action_idx]
 
     def _process_state(
         self, state: GameState, info: dict[str, Any], hand: set[Card]
     ) -> np.ndarray:
-        if state.top_card is None:
+        if state.top_card is None or state.actual_suit is None:
             raise ValueError("Can't process state without a top card.")
 
         hand_state = self._get_hand_state(hand)

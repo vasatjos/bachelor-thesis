@@ -11,6 +11,11 @@ from prsi.agents.agent import Agent
 
 
 class PrsiEnv:
+    """
+    A reinforcement learning environment for the card game Prší
+    in a 1 vs 1 setting.
+    """
+
     STARTING_HAND_SIZE = 4
     PLAYER_COUNT = 2
     ACTION_SPACE_SIZE = len(INDEX_TO_ACTION)
