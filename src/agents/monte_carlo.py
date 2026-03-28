@@ -77,7 +77,7 @@ parser.add_argument(
     default="greedy",
     type=str,
     choices=["random", "greedy"],
-    help="Opponent the agent is learning against.",
+    help="Opponent the agent is learning against. Only used for evaluation if training via self-play.",
 )
 parser.add_argument("--self_play", action="store_true", help="Train using self-play.")
 parser.add_argument(
@@ -213,7 +213,14 @@ class MonteCarloAgent(TrainableAgent):
         original_epsilon = self.args.epsilon
         self.args.epsilon = 0.0
 
-        env.reset(full=True)  # Agent starts first evaluation game
+        opponent: Agent | None = None
+        match args.opponent:
+            case "random":
+                opponent = RandomAgent()
+            case "greedy":
+                opponent = GreedyAgent()
+
+        env.reset(full=True, opponent=opponent)  # Agent starts first evaluation game
         wins = 0
         for _ in range(episodes):
             game_state, info = env.reset()
