@@ -25,6 +25,7 @@ parser = argparse.ArgumentParser()
 
 # OPTIONS
 # ------------------------------
+parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument(
     "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
 )
@@ -35,8 +36,10 @@ parser.add_argument(
     type=str,
     help="Path to save/load model.",
 )
+parser.add_argument(
+    "--save_each", default=None, type=int, help="Periodic saving frequency."
+)
 parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
-parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 
 # HYPERPARAMETERS
 # ------------------------------
@@ -54,6 +57,7 @@ parser.add_argument(
     default="count_truncated",
     type=str,
     choices=["count", "count_truncated", "simple", "full", "full_simple"],
+    help="Representation of cards on hand in the state.",
 )
 parser.add_argument(
     "--truncated_hand_size",
@@ -66,9 +70,21 @@ parser.add_argument(
     default="specials",
     type=str,
     choices=["sevens", "specials", "all"],
+    help="Representation of already played cards in the state.",
 )
 parser.add_argument(
-    "--opponent", default="greedy", type=str, choices=["random", "greedy"]
+    "--opponent",
+    default="greedy",
+    type=str,
+    choices=["random", "greedy"],
+    help="Opponent the agent is learning against.",
+)
+parser.add_argument("--self_play", action="store_true", help="Train using self-play.")
+parser.add_argument(
+    "--self_play_update_freq",
+    default=1,
+    type=int,
+    help="Frequency of self-play opponent update.",
 )
 
 
@@ -121,8 +137,11 @@ class MonteCarloAgent(TrainableAgent):
     def train(self, env: PrsiEnv) -> None:
         batch_wins = 0
         for episode in range(self.args.episodes):
-            # Reset environment and played cards tracking
-            game_state, info = env.reset()
+            if self.args.self_play and episode % self.args.self_play_update_freq == 0:
+                game_state, info = env.reset(opponent=self.clone())
+            else:
+                game_state, info = env.reset()
+            hand = info["hand"]
             hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
             done = False
@@ -177,12 +196,18 @@ class MonteCarloAgent(TrainableAgent):
                         returns[t] - self.action_value_fn[state][action]
                     ) / self.num_visits[state][action]
 
+            if self.args.epsilon > self.args.min_epsilon:
+                self.args.epsilon *= self.args.epsilon_decay
+
             if (episode + 1) % self.args.log_each == 0:
                 self.log(episode, batch_wins)
                 batch_wins = 0
 
-            if self.args.epsilon > self.args.min_epsilon:
-                self.args.epsilon *= self.args.epsilon_decay
+            if (
+                self.args.save_each is not None
+                and episode + 1 % self.args.save_each == 0
+            ):
+                self.save(self.args.model_path)
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon

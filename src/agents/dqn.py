@@ -31,40 +31,83 @@ parser = argparse.ArgumentParser()
 
 # OPTIONS
 # ------------------------------
-parser.add_argument("--seed", default=None, type=int)
-parser.add_argument("--evaluate_for", default=10_000, type=int)
-parser.add_argument("--load_model", action="store_true")
-parser.add_argument("--model_path", default="agent_strategies/dqn/model.pth", type=str)
-parser.add_argument("--log_each", default=10_000, type=int)
+parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+parser.add_argument(
+    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
+)
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
+parser.add_argument(
+    "--model_path",
+    default="agent_strategies/dqn/model.pth",
+    type=str,
+    help="Path to save/load model.",
+)
+parser.add_argument("--log_each", default=10_000, type=int, help="Log frequency.")
+parser.add_argument(
+    "--save_each", default=None, type=int, help="Periodic saving frequency."
+)
 
 # HYPERPARAMETERS
 # ------------------------------
-parser.add_argument("--episodes", default=1_000_000, type=int)
-parser.add_argument("--epsilon", default=0.1, type=float)
-parser.add_argument("--epsilon_decay", default=1, type=float)
-parser.add_argument("--min_epsilon", default=0.05, type=float)
-parser.add_argument("--gamma", default=0.99, type=float)
-parser.add_argument("--learning_rate", default=1e-3, type=float)
-parser.add_argument("--batch_size", default=32, type=int)
-parser.add_argument("--replay_buffer_size", default=100_000, type=int)
-parser.add_argument("--target_update_freq", default=1_000, type=int)
-parser.add_argument("--hidden_layer_size", default=512, type=int)
-parser.add_argument("--hidden_layer_count", default=2, type=int)
+parser.add_argument(
+    "--episodes", default=1_000_000, type=int, help="Training episodes."
+)
+parser.add_argument("--epsilon", default=0.1, type=float, help="Exploration factor.")
+parser.add_argument(
+    "--epsilon_decay", default=1, type=float, help="Epsilon decay factor."
+)
+parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
+parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
+parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate.")
+parser.add_argument("--batch_size", default=32, type=int, help="Mini batch size.")
+parser.add_argument(
+    "--replay_buffer_size", default=100_000, type=int, help="Size of the replay buffer."
+)
+parser.add_argument(
+    "--target_update_freq",
+    default=100,
+    type=int,
+    help="Frequency of target network weight copying.",
+)
+parser.add_argument(
+    "--hidden_layer_size", default=512, type=int, help="Size of hidden NN layers."
+)
+parser.add_argument(
+    "--hidden_layer_count", default=2, type=int, help="The amount of hidden NN layers."
+)
 parser.add_argument(
     "--hand_state_option",
     default="full",
     type=str,
     choices=["count", "count_truncated", "simple", "full", "full_simple"],
+    help="Representation of cards on hand in the state.",
 )
-parser.add_argument("--truncated_hand_size", default=4, type=int)
+parser.add_argument(
+    "--truncated_hand_size",
+    default=4,
+    type=int,
+    help="Max hand size for truncated count.",
+)
 parser.add_argument(
     "--played_subset",
     default="all",
     type=str,
     choices=["sevens", "specials", "all"],
+    help="Representation of already played cards in the state.",
 )
 parser.add_argument(
-    "--opponent", default="greedy", type=str, choices=["random", "greedy"]
+    "--opponent",
+    default="greedy",
+    type=str,
+    choices=["random", "greedy"],
+    help="Opponent the agent is learning against.",
+)
+parser.add_argument("--self_play", action="store_true", help="Train using self-play.")
+parser.add_argument(
+    "--self_play_update_freq",
+    default=1,
+    type=int,
+    help="Frequency of self-play opponent update.",
 )
 
 
@@ -180,7 +223,10 @@ class DQNAgent(TrainableAgent):
         draw_actions = 0
 
         for episode in range(self.args.episodes):
-            game_state, info = env.reset()
+            if self.args.self_play and episode % self.args.self_play_update_freq == 0:
+                game_state, info = env.reset(opponent=self.clone())
+            else:
+                game_state, info = env.reset()
             hand: set[Card] = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
             done = False
