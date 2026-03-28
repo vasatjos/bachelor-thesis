@@ -35,7 +35,7 @@ parser.add_argument(
     type=str,
     help="Path to save/load model.",
 )
-parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
+parser.add_argument("--log_each", default=2_000_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--save_each", default=None, type=int, help="Periodic saving frequency."
 )
