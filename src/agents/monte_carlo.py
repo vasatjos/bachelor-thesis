@@ -214,7 +214,7 @@ class MonteCarloAgent(TrainableAgent):
         self.args.epsilon = 0.0
 
         opponent: Agent | None = None
-        match args.opponent:
+        match self.args.opponent:
             case "random":
                 opponent = RandomAgent()
             case "greedy":

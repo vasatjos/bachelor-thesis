@@ -103,7 +103,7 @@ class Deck:
         self.discard_pile = [playing_pile_top_card]
 
         if len(self.drawing_pile) == 0:  # no cards even after flip, deck is empty
-            msg = "Warning, no cards available to draw!"
+            msg = "No cards available to draw."
             raise DeckEmptyError(msg)
 
         return self.drawing_pile.pop(), True

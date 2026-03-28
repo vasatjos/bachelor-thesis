@@ -332,7 +332,7 @@ class DQNAgent(TrainableAgent):
         self.target_net.eval()
 
         opponent: Agent | None = None
-        match args.opponent:
+        match self.args.opponent:
             case "random":
                 opponent = RandomAgent()
             case "greedy":
@@ -437,14 +437,14 @@ class DQNAgent(TrainableAgent):
             case "full":
                 state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
-                    state_array[CARD_TO_INDEX[card] - 1] = 1
+                    state_array[CARD_TO_INDEX[card]] = 1
                 return state_array
             case "full_simple":
                 if len(hand) > self.args.truncated_hand_size:
                     return [np.uint8(0xFF)]
                 state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
-                    state_array[CARD_TO_INDEX[card] - 1] = 1
+                    state_array[CARD_TO_INDEX[card]] = 1
                 return state_array
             case _:
                 raise ValueError("Invalid hand_state_option.")
@@ -454,7 +454,7 @@ class DQNAgent(TrainableAgent):
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
         match self.args.played_subset:
             case "all":
-                idx = CARD_TO_INDEX[card] - 1
+                idx = CARD_TO_INDEX[card]
                 self.played_cards_subset[idx] = np.uint8(
                     self.played_cards_subset[idx] + 1
                 )
@@ -509,6 +509,15 @@ class DQNAgent(TrainableAgent):
             f"Draw-action rate: {draw_actions / total_actions:.2%}, "
             f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
+
+    def clone(self) -> "DQNAgent":
+        cloned = DQNAgent.__new__(DQNAgent)
+        cloned.args = self.args
+        cloned._init_played_subset()
+        cloned._build_networks()
+        cloned.online_net.load_state_dict(self.online_net.state_dict())
+        cloned.online_net.eval()
+        return cloned
 
 
 if __name__ == "__main__":

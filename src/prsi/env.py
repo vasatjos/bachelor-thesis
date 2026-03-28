@@ -5,7 +5,7 @@ from prsi.deck import Deck, DeckEmptyError
 from prsi.card import Card
 from prsi.player import Player
 from prsi.game_state import GameState, find_allowed_cards
-from prsi.rl_utils import Action, INDEX_TO_ACTION
+from prsi.rl_utils import DRAW_ACTION, Action, INDEX_TO_ACTION
 from prsi.agents.baselines import GreedyAgent
 from prsi.agents.agent import Agent
 
@@ -20,6 +20,8 @@ class PrsiEnv:
     PLAYER_COUNT = 2
     ACTION_SPACE_SIZE = len(INDEX_TO_ACTION)
 
+    MAX_STEPS = 1000
+
     def __init__(self, opponent: Agent = GreedyAgent()) -> None:
         self._player_info: Player = Player(0)
         self._opponent: Agent = opponent
@@ -29,6 +31,7 @@ class PrsiEnv:
         self._done: bool = False
         self._player_won_last: bool = True  # winning player starts game
         self._ran_out_of_cards: bool = False
+        self._steps: int = 0
 
     @property
     def state(self) -> GameState:
@@ -43,10 +46,12 @@ class PrsiEnv:
         Args:
             full: Controls whether who starts will be reset. If `True`, player starts.
                   If `False`, whoever won the last game starts.
+            opponent: Change the opponent the environment uses. Useful for self-play.
 
         Returns:
             Tuple of (state, info) where info contains the player's hand.
         """
+        self._steps = 0
         self._deck.reset()
         self._player_info = Player(0)
         self._opponent_player_info = Player(1)
@@ -104,6 +109,8 @@ class PrsiEnv:
         """
         if self._done:
             raise RuntimeError("Game is over. Call reset() to start a new game.")
+
+        self._steps += 1
 
         try:
             flipped_player = self._execute_action(self._player_info, action)
@@ -182,10 +189,12 @@ class PrsiEnv:
                 },
             )
 
+        self._done = self._steps > self.MAX_STEPS  # truncate episode after max steps
+
         return (
             self._state,
             0.0,
-            False,
+            self._done,
             {
                 "hand": self._player_info.hand_set,
                 "opponent_card_count": self._opponent_player_info.card_count,
@@ -197,16 +206,16 @@ class PrsiEnv:
         """
         Returns whether the deck was flipped over.
         """
-        if action is None:
+        if action == DRAW_ACTION:
             drawn, flipped = self._draw_cards()
             player.take_drawn_cards(drawn)
             self._update_state(None)
             return flipped
 
-        card, suit = action
+        card, suit = action  # type: ignore
 
         flipped = False
-        if card not in find_allowed_cards(self.state):
+        if card not in (find_allowed_cards(self.state) & player.hand_set):
             raise ValueError("Selected card not allowed!")
         player.play_card(card)
         self._deck.play_card(card)
