@@ -93,12 +93,6 @@ is a mistery to the agent, it provides a suitable environment for exploring
 #gls("rl") methods in a unique setting.
 
 
-// #lorem(120)
-//
-// #lorem(40)
-//
-// #lorem(70)
-
 #heading([Goals], depth: 2, numbering: none, outlined: true)
 
 The main goal of this thesis is to evaluate different #gls("rl") algorithms on their
@@ -114,27 +108,67 @@ and #gls("dl") based approaches, like #gls("dqn").
 Finally, after comparing the agents to a baseline to find the best one, we will test
 its performance against human players and discuss the results.
 
-= Background
 
-== Part 1
+= Reinforcement Learning
+
+== Introduction to Reinforcement Learning
 
 #lorem(100)
 
-=== Subpart 1
+== Value-Based Methods
 
 #lorem(40)
 
-=== Subpart 2
+=== Monte Carlo
 
 #lorem(70)
 
-== Part 2
+=== Q-Learning
+
+#lorem(70)
+
+=== DQN // brief intro to neural networks, maybe RNNs as well
+
+#lorem(70)
+
+== Policy Gradient Methods
+
+=== PPO
+
+#lorem(70)
 
 #lorem(100)
+
+
+= Implementing an Environment for Prší
+
+== The Rules of Prší
+
+#lorem(100)
+
+== Designing a Reinforcement Learning Environment
+
+#lorem(100)
+
+= Experiments
+
+== Evaluating Agent Performance
+
+#lorem(100)
+
+== Comparison of Implemented Agents
+
+#lorem(100)
+
+== Performance Against Human Players
+
+#lorem(100)
+
 
 = Future work
 
 #lorem(100)
+
 
 = Conclusion
 
@@ -151,6 +185,7 @@ its performance against human players and discuss the results.
 
 #print-glossary(entry-list, show-all: false, user-print-glossary: acronym-table)
 
+
 = An example appendix
 
 #lorem(100)
@@ -158,8 +193,6 @@ its performance against human players and discuss the results.
 $
     sum_(i=1)^(infinity) 1 / i
 $
-
-= Code block
 
 ```cpp
 #include <iostream>
