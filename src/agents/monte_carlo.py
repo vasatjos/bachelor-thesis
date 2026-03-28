@@ -82,7 +82,7 @@ parser.add_argument(
 parser.add_argument("--self_play", action="store_true", help="Train using self-play.")
 parser.add_argument(
     "--self_play_update_freq",
-    default=1,
+    default=50_000,
     type=int,
     help="Frequency of self-play opponent update.",
 )
