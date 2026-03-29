@@ -119,30 +119,6 @@ SIMPLE_HAND_INDICES = {
 }
 
 
-def _state_to_vector(
-    hand_state: list[np.uint8] | np.ndarray,
-    opponent_card_count: int,
-    top_card: CardIndex,
-    active_suit: SuitIndex,
-    card_effect: CardEffect,
-    effect_strength: np.uint8,
-    played_subset: list[np.uint8],
-) -> np.ndarray:
-    """Pack everything into a 1-D float32 array."""
-    return np.array(
-        [
-            *[x for x in hand_state],
-            opponent_card_count,
-            top_card,
-            active_suit,
-            card_effect.value,
-            effect_strength,
-            *[x for x in played_subset],
-        ],
-        dtype=np.float32,
-    )
-
-
 class QNetwork(nn.Module):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -178,7 +154,7 @@ class DQNAgent(TrainableAgent):
         if args is None and path is None:
             raise ValueError("Agent needs either args or a path to load them from.")
 
-        self.played_cards_subset: list[np.uint8]
+        self.played_cards_subset: np.ndarray
 
         if args is None:
             self.load(path)  # type: ignore
@@ -206,13 +182,55 @@ class DQNAgent(TrainableAgent):
     def _init_played_subset(self) -> None:
         match self.args.played_subset:
             case "specials":
-                self.played_cards_subset = [np.uint8(0)] * 3
+                self.played_cards_subset = np.zeros(3, dtype=np.uint8)
             case "sevens":
-                self.played_cards_subset = [np.uint8(0)]
+                self.played_cards_subset = np.zeros(1, dtype=np.uint8)
             case "all":
-                self.played_cards_subset = [np.uint8(0)] * 32
+                self.played_cards_subset = np.zeros(32, dtype=np.uint8)
             case _:
                 raise ValueError("Invalid played_subset argument.")
+
+    def _state_to_vector(
+        self,
+        hand_state: list[np.uint8] | np.ndarray,
+        opponent_card_count: int,
+        top_card: CardIndex,
+        active_suit: SuitIndex,
+        card_effect: CardEffect,
+        effect_strength: np.uint8,
+        played_subset: np.ndarray,
+    ) -> np.ndarray:
+        """Pack everything into a 1-D float32 array, normalized into 0-1."""
+        hand: list[np.uint8] | list[float] | np.ndarray
+
+        card_count_denominator = 31
+        if self.args.hand_state_option == "count_truncated":
+            card_count_denominator = self.args.truncated_hand_size
+            hand = [hand_state[0] / self.args.truncated_hand_size]
+        elif self.args.hand_state_option == "count":
+            hand = [hand_state[0] / 31]
+        elif self.args.hand_state_option == "simple":  # always numpy array here
+            hand = hand_state / 4  # type: ignore
+        else:  # one-hot, no normalization
+            hand = hand_state
+
+        if self.args.played_subset == "all":
+            played = np.asarray(played_subset, dtype=np.float32)  # one-hot, already 0-1
+        else:
+            played = np.asarray(played_subset, dtype=np.float32) / 4.0
+
+        return np.array(
+            [
+                *hand,
+                opponent_card_count / card_count_denominator,
+                top_card / 31,  # values 0-31
+                active_suit / 3,  # values 0-3
+                card_effect.value / 2,  # values 0-2
+                effect_strength / 4,  # values 0-4
+                *played,
+            ],
+            dtype=np.float32,
+        )
 
     def train(self, env: PrsiEnv) -> None:
         replay_buffer: ReplayBuffer[Transition] = ReplayBuffer(
@@ -228,7 +246,9 @@ class DQNAgent(TrainableAgent):
             else:
                 game_state, info = env.reset()
             hand: set[Card] = info["hand"]
-            self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
+            self.played_cards_subset = np.zeros(
+                len(self.played_cards_subset), dtype=np.uint8
+            )
             done = False
             reward = 0.0
 
@@ -346,7 +366,9 @@ class DQNAgent(TrainableAgent):
         for _ in range(episodes):
             game_state, info = env.reset()
             hand: set[Card] = info["hand"]
-            self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
+            self.played_cards_subset = np.zeros(
+                len(self.played_cards_subset), dtype=np.uint8
+            )
             done = False
             reward = 0.0
 
@@ -404,7 +426,7 @@ class DQNAgent(TrainableAgent):
         effect_strength = np.uint8(state.effect_strength)
         self._update_subset(state.top_card, info.get("deck_flipped_over", False))
 
-        return _state_to_vector(
+        return self._state_to_vector(
             hand_state,
             opponent_card_count,
             top_card,
@@ -447,7 +469,9 @@ class DQNAgent(TrainableAgent):
 
     def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
         if deck_flipped_over:
-            self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
+            self.played_cards_subset = np.zeros(
+                len(self.played_cards_subset), dtype=np.uint8
+            )
         match self.args.played_subset:
             case "all":
                 idx = CARD_TO_INDEX[card]
