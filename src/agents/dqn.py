@@ -79,7 +79,7 @@ parser.add_argument(
     "--hand_state_option",
     default="full",
     type=str,
-    choices=["count", "count_truncated", "simple", "full", "full_simple"],
+    choices=["count", "count_truncated", "simple", "full"],
     help="Representation of cards on hand in the state.",
 )
 parser.add_argument(
@@ -438,13 +438,6 @@ class DQNAgent(TrainableAgent):
                             state_array[6] += 1
                 return state_array
             case "full":
-                state_array = np.zeros(32, dtype=np.uint8)
-                for card in hand:
-                    state_array[CARD_TO_INDEX[card]] = 1
-                return state_array
-            case "full_simple":
-                if len(hand) > self.args.truncated_hand_size:
-                    return [np.uint8(0xFF)]
                 state_array = np.zeros(32, dtype=np.uint8)
                 for card in hand:
                     state_array[CARD_TO_INDEX[card]] = 1

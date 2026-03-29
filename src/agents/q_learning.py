@@ -56,7 +56,7 @@ parser.add_argument(
     "--hand_state_option",
     default="count_truncated",
     type=str,
-    choices=["count", "count_truncated", "simple", "full", "full_simple"],
+    choices=["count", "count_truncated", "simple", "full"],
 )
 parser.add_argument(
     "--truncated_hand_size",
@@ -372,15 +372,6 @@ class QLearningAgent(TrainableAgent):
                 return packed
 
             case "full":
-                packed = np.uint32(0)
-                for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card])
-                return packed
-            case "full_simple":
-                if len(hand) > self.args.truncated_hand_size:
-                    # ignore hand state when many cards are available
-                    return np.uint32(-1)
-
                 packed = np.uint32(0)
                 for card in hand:
                     packed |= np.uint32(1) << (CARD_TO_INDEX[card])

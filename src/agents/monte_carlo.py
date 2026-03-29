@@ -56,7 +56,7 @@ parser.add_argument(
     "--hand_state_option",
     default="count_truncated",
     type=str,
-    choices=["count", "count_truncated", "simple", "full", "full_simple"],
+    choices=["count", "count_truncated", "simple", "full"],
     help="Representation of cards on hand in the state.",
 )
 parser.add_argument(
@@ -370,15 +370,6 @@ class MonteCarloAgent(TrainableAgent):
                 return packed
 
             case "full":
-                packed = np.uint32(0)
-                for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
-                return packed
-            case "full_simple":
-                if len(hand) > self.args.truncated_hand_size:
-                    # ignore hand state when many cards are available
-                    return np.uint32(-1)
-
                 packed = np.uint32(0)
                 for card in hand:
                     packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
