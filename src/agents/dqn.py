@@ -219,13 +219,20 @@ class DQNAgent(TrainableAgent):
         else:
             played = np.asarray(played_subset, dtype=np.float32) / 4.0
 
+        top_card_1hot = np.zeros(32)
+        top_card_1hot[top_card] = 1
+        active_suit_1hot = np.zeros(4)
+        active_suit_1hot[active_suit] = 1
+        card_effect_1hot = np.zeros(3)
+        card_effect_1hot[card_effect.value] = 1
+
         return np.array(
             [
                 *hand,
                 opponent_card_count / card_count_denominator,
-                top_card / 31,  # values 0-31
-                active_suit / 3,  # values 0-3
-                card_effect.value / 2,  # values 0-2
+                *top_card_1hot,
+                *active_suit_1hot,
+                *card_effect_1hot,
                 effect_strength / 4,  # values 0-4
                 *played,
             ],
