@@ -42,7 +42,7 @@ class HumanAgent(Agent):
 
         allowed = find_allowed_cards(state)
 
-        os.system("clear")
+        os.system("clear -x")
         print(f"Episode: {info['episode'] + 1}/{info['episodes']}")
         print(f"\nTop card: {top_card}")
         if top_card.rank is Rank.OBER:
