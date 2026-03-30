@@ -1,3 +1,3 @@
 Thesis attachments -- all models? best?
 
-Add periodic saving while still training.
+Split model_path for saving into dir and agent name, update scripts
