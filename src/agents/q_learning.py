@@ -194,7 +194,10 @@ class QLearningAgent(TrainableAgent):
                 self.log(episode, batch_wins)
                 batch_wins = 0
 
-            if self.args.save_each is not None and episode % self.args.save_each == 0:
+            if (
+                self.args.save_each is not None
+                and episode + 1 % self.args.save_each == 0
+            ):
                 self.save(self.args.model_path)
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:

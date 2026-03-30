@@ -300,7 +300,10 @@ class DQNAgent(TrainableAgent):
                 self.log(episode, batch_wins, draw_actions, total_steps)
                 batch_wins = 0
 
-            if self.args.save_each is not None and episode % self.args.save_each == 0:
+            if (
+                self.args.save_each is not None
+                and episode + 1 % self.args.save_each == 0
+            ):
                 self.save(self.args.model_path)
 
     def _learn(self, replay_buffer: ReplayBuffer) -> None:
