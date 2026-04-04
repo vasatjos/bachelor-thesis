@@ -73,7 +73,7 @@
 #show: make-glossary
 #register-glossary(entry-list)
 
-= Introduction
+#heading([Introduction], numbering: none)
 
 The field of #gls("ai") has been gaining popularity in recent years. #Gls("rl") is
 a field of #gls("ai") that aims to teach computers how to behave without being explicitly shown
