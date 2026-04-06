@@ -56,7 +56,7 @@ parser.add_argument("--epsilon", default=0.1, type=float, help="Exploration fact
 parser.add_argument(
     "--epsilon_decay", default=1, type=float, help="Epsilon decay factor."
 )
-parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
+parser.add_argument("--min_epsilon", default=0.001, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate.")
 parser.add_argument("--batch_size", default=32, type=int, help="Mini batch size.")
