@@ -109,13 +109,38 @@ Finally, after comparing the agents to a baseline to find the best one, we will 
 its performance against human players and discuss the results.
 
 
-= Reinforcement Learning
+= Reinforcement Learning <chapter:rl>
 
-== Introduction to Reinforcement Learning
+In this chapter, we introduce #gls("rl") and its formalisms -- starting with #glspl("mdp", first: false) in
+@chapter:rl-intro -- and then detail value-based methods (@chapter:value-methods) and
+policy gradient methods (@chapter:policy-methods). These algorithms will
+form the foundation for our Prší agents in @chapter:experiments.
 
-#lorem(100)
+== Introduction to Reinforcement Learning <chapter:rl-intro>
 
-== Value-Based Methods
+The main advantage of #gls("rl") over
+#gls("sl") is its ability to perform well in tasks where #gls("sl") would simply
+be too impractical, as gathering enough labeled data to train a competent model
+isn't always feasible (e.g., manually labeling the "best" action in _every_ chess board state).
+To circumvent this issue, #gls("rl") methods essentially create
+their own training data by interacting with an environment.
+
+Interactions with an environment give the agent feedback in the form
+of numerical rewards, which the agents then try to maximize. These
+rewards remove the need for labeled data by replacing the _"act as I was told"_
+train of thought with _"act in a way that gets me as high of a reward
+as possible"_.
+Formally, we'll model these environments as #glspl("mdp", first: true).
+
+=== #Gls("mdp", first: true)
+
+#lorem(50)
+
+#lorem(50)
+
+=== (Action-)Value function
+
+== Value-Based Methods <chapter:value-methods>
 
 #lorem(40)
 
@@ -131,7 +156,7 @@ its performance against human players and discuss the results.
 
 #lorem(70)
 
-== Policy Gradient Methods
+== Policy Gradient Methods <chapter:policy-methods>
 
 === PPO
 
@@ -140,7 +165,7 @@ its performance against human players and discuss the results.
 #lorem(100)
 
 
-= Implementing an Environment for Prší
+= Implementing an Environment for Prší <chapter:environment>
 
 == The Rules of Prší
 
@@ -150,7 +175,7 @@ its performance against human players and discuss the results.
 
 #lorem(100)
 
-= Experiments
+= Experiments <chapter:experiments>
 
 == Evaluating Agent Performance
 
