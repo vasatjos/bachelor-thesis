@@ -133,6 +133,9 @@ as possible"_.
 Formally, we'll model these environments as #glspl("mdp", first: true).
 
 === #Gls("mdp", first: true)
+// Markov property of state - independence on the past, from intro to RL book
+
+// MDP image - CUNI, DRL presentations
 
 #lorem(50)
 
