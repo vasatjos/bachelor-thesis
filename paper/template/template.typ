@@ -177,6 +177,11 @@
 
     set heading(supplement: "Chapter", numbering: "1.1")
     show heading.where(level: 1): it => {
+        // Reset the figure counters at each new chapter
+        counter(figure.where(kind: image)).update(0)
+        counter(figure.where(kind: table)).update(0)
+        counter(figure.where(kind: raw)).update(0)
+
         pagebreak(weak: true)
 
         show: block
@@ -228,6 +233,18 @@
     set page(numbering: "1")
     counter(heading).update(0)
     counter(page).update(1)
+
+    // Make images inherit the chapter number (e.g., 2.1)
+    show figure.where(kind: image): set figure(numbering: n => {
+        let h-counter = counter(heading).at(here())
+        if h-counter.len() > 0 {
+            // h-counter.at(0) is the current Chapter (Level 1) number
+            numbering("1.1", h-counter.at(0), n)
+        } else {
+            // Fallback for images appearing before the first chapter
+            numbering("1", n)
+        }
+    })
 
     body
 }
