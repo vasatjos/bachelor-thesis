@@ -1,6 +1,9 @@
 import argparse
 import os
+import random
 from typing import Any
+
+import numpy as np
 from prsi.agents.agent import Agent
 from prsi.agents.baselines import GreedyAgent, RandomAgent
 from prsi.rl_utils import Action
@@ -14,7 +17,6 @@ from agents.dqn import DQNAgent
 
 parser = argparse.ArgumentParser()
 
-# TODO: fix seeding, doesn't work properly currently
 parser.add_argument("--seed", default=None, type=int, help="Random seed.")
 parser.add_argument("--evaluate_for", default=1, type=int, help="Evaluation episodes.")
 parser.add_argument(
@@ -33,7 +35,7 @@ parser.add_argument(
 
 class HumanAgent(Agent):
     def choose_action(
-        self, state: GameState, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         top_card = state.top_card
         active_suit = state.actual_suit
@@ -84,12 +86,11 @@ class HumanAgent(Agent):
         Print given cards in a sorted order.
         """
         cards = list(cards)
-        cards.sort()
         for i, card in enumerate(cards, start=1):
             index = f"{i:>3}. " if show_numbers else ""
             print(f"{index}{card}")
 
-    def _select_action(self, allowed: set[Card], hand: set[Card]) -> Action:
+    def _select_action(self, allowed: set[Card], hand: list[Card]) -> Action:
         """
         Select a card from the players hand which he will play.
 
@@ -105,7 +106,7 @@ class HumanAgent(Agent):
         print("\nHand:")
         self._print_hand(hand, show_numbers=False)
         print("\nAvailable cards:")
-        playable = sorted(hand & allowed)
+        playable = [c for c in hand if c in allowed]
         if len(playable) == 0:
             input("No cards available, press enter to draw/skip.")
             return None
@@ -163,6 +164,10 @@ class HumanAgent(Agent):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        random.seed(args.seed)
 
     opponent: Agent
     match args.opponent:

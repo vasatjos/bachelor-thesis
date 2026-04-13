@@ -1,4 +1,5 @@
 import pickle
+import random
 from typing import Any
 import argparse
 import numpy as np
@@ -234,7 +235,7 @@ class QLearningAgent(TrainableAgent):
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
     def choose_action(
-        self, state: GameState, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         # Epsilon-greedy
         if np.random.random() < self.epsilon:
@@ -256,7 +257,7 @@ class QLearningAgent(TrainableAgent):
         return best_action
 
     def _get_max_q_value(
-        self, game_state: GameState, hand: set[Card], state: State
+        self, game_state: GameState, hand: list[Card], state: State
     ) -> float:
         """Get the maximum Q-value for the given state over all valid actions."""
         valid_actions = get_valid_actions(game_state, hand)
@@ -304,7 +305,7 @@ class QLearningAgent(TrainableAgent):
                 raise ValueError("Invalid argument.")
 
     def _process_state(
-        self, state: GameState, info: dict[str, Any], hand: set[Card]
+        self, state: GameState, info: dict[str, Any], hand: list[Card]
     ) -> State:
         """Correctly set played_cards_subset based on the state"""
 
@@ -339,7 +340,7 @@ class QLearningAgent(TrainableAgent):
             return 0  # we only care about suit
         return CARD_TO_INDEX[top_card]
 
-    def _get_hand_state(self, hand: set[Card]) -> np.uint32:
+    def _get_hand_state(self, hand: list[Card]) -> np.uint32:
         match self.args.hand_state_option:
             case "count_truncated":
                 hand_size = len(hand)
@@ -417,6 +418,10 @@ class QLearningAgent(TrainableAgent):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        random.seed(args.seed)
 
     opponent: Agent
     match args.opponent:

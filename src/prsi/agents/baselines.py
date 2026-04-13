@@ -21,7 +21,7 @@ class RandomAgent(Agent):
     """
 
     def choose_action(
-        self, state: GameState, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         return behave_randomly(state, hand)
 
@@ -37,10 +37,10 @@ class GreedyAgent(Agent):
     """
 
     def choose_action(
-        self, state: GameState, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
-        playable = tuple(find_allowed_cards(state) & hand)
-
+        allowed = find_allowed_cards(state)
+        playable = [c for c in hand if c in allowed]
         if not playable:
             return DRAW_ACTION
 

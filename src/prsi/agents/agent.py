@@ -16,7 +16,7 @@ class Agent(ABC):
 
     @abstractmethod
     def choose_action(
-        self, state: Any, hand: set[Card], info: dict[str, Any]
+        self, state: Any, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         raise NotImplementedError("Base class cannot choose action.")
 

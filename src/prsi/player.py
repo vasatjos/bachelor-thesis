@@ -1,9 +1,10 @@
+import bisect
 from prsi.card import Card
 
 
 class Player:
     def __init__(self, player_id: int) -> None:
-        self.hand_set: set[Card] = set()
+        self.hand: list[Card] = []
         self._id = player_id
 
     @property
@@ -17,12 +18,14 @@ class Player:
 
     @property
     def card_count(self) -> int:
-        return len(self.hand_set)
+        return len(self.hand)
 
     def take_drawn_cards(self, drawn_cards: list[Card | None]) -> None:
-        self.hand_set.update((c for c in drawn_cards if c is not None))
+        for card in drawn_cards:
+            if card is not None:
+                bisect.insort(self.hand, card)
 
     def play_card(self, card: Card) -> None:
-        if card not in self.hand_set:
+        if card not in self.hand:
             raise KeyError("Selected card not found in player's hand.")
-        self.hand_set.remove(card)
+        self.hand.remove(card)

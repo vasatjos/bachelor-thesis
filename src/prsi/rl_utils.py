@@ -97,7 +97,7 @@ class ReplayBuffer(Generic[T]):
             ]
 
 
-def behave_randomly(state: GameState, hand: set[Card]) -> Action:
+def behave_randomly(state: GameState, hand: list[Card]) -> Action:
     """
     Select a random card to play from the ones available on hand.
 
@@ -105,7 +105,8 @@ def behave_randomly(state: GameState, hand: set[Card]) -> Action:
     playing an ober 4x more likely than other cards. Instead, selects a random
     card and if the card is on ober, selects a random suit as well.
     """
-    playable = tuple(find_allowed_cards(state) & hand)
+    allowed = find_allowed_cards(state)
+    playable = [c for c in hand if c in allowed]
 
     playable_length = len(playable)
     random_idx = randrange(playable_length + 1)
@@ -118,7 +119,7 @@ def behave_randomly(state: GameState, hand: set[Card]) -> Action:
     return card, suit
 
 
-def get_valid_actions(game_state: GameState, hand: set[Card]) -> list[Action]:
+def get_valid_actions(game_state: GameState, hand: list[Card]) -> list[Action]:
     valid_actions: list[Action] = []
     allowed_cards = find_allowed_cards(game_state)
 
@@ -134,7 +135,7 @@ def get_valid_actions(game_state: GameState, hand: set[Card]) -> list[Action]:
     return valid_actions
 
 
-def get_valid_action_mask(game_state: GameState, hand: set[Card]) -> np.ndarray:
+def get_valid_action_mask(game_state: GameState, hand: list[Card]) -> np.ndarray:
     """
     Return a boolean mask of valid actions, useful for neural network agents.
     """

@@ -1,4 +1,5 @@
 import pickle
+import random
 from typing import Any
 import argparse
 from prsi.agents.agent import Agent
@@ -20,8 +21,6 @@ import numpy as np
 from agents.trainable import TrainableAgent
 
 parser = argparse.ArgumentParser()
-
-# TODO: fix seeding, doesn't work properly currently
 
 # OPTIONS
 # ------------------------------
@@ -243,7 +242,7 @@ class MonteCarloAgent(TrainableAgent):
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
     def choose_action(
-        self, state: GameState, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         # Epsilon-greedy
         if np.random.random() < self.args.epsilon:
@@ -299,7 +298,7 @@ class MonteCarloAgent(TrainableAgent):
                 raise ValueError("Invalid argument.")
 
     def _process_state(
-        self, state: GameState, info: dict[str, Any], hand: set[Card]
+        self, state: GameState, info: dict[str, Any], hand: list[Card]
     ) -> State:
         """Correctly set played_cards_subset based on the state"""
 
@@ -334,7 +333,7 @@ class MonteCarloAgent(TrainableAgent):
             return 0  # we only care about suit
         return CARD_TO_INDEX[top_card]
 
-    def _get_hand_state(self, hand: set[Card]) -> np.uint32:
+    def _get_hand_state(self, hand: list[Card]) -> np.uint32:
         match self.args.hand_state_option:
             case "count_truncated":
                 hand_size = len(hand)
@@ -412,6 +411,10 @@ class MonteCarloAgent(TrainableAgent):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        random.seed(args.seed)
 
     opponent: Agent
     match args.opponent:

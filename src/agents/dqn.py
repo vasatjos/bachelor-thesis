@@ -1,4 +1,5 @@
 import argparse
+import random
 from typing import Any
 import collections
 import numpy as np
@@ -26,8 +27,6 @@ from prsi.game_state import GameState
 from agents.trainable import TrainableAgent
 
 parser = argparse.ArgumentParser()
-
-# TODO: fix seeding, doesn't work properly currently
 
 # OPTIONS
 # ------------------------------
@@ -252,7 +251,7 @@ class DQNAgent(TrainableAgent):
                 game_state, info = env.reset(opponent=self.clone())
             else:
                 game_state, info = env.reset()
-            hand: set[Card] = info["hand"]
+            hand: list[Card] = info["hand"]
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
             )
@@ -375,7 +374,7 @@ class DQNAgent(TrainableAgent):
         wins = 0
         for _ in range(episodes):
             game_state, info = env.reset()
-            hand: set[Card] = info["hand"]
+            hand: list[Card] = info["hand"]
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
             )
@@ -394,7 +393,7 @@ class DQNAgent(TrainableAgent):
         print(f"Evaluation: {wins}/{episodes} wins ({wins / episodes:.2%})")
 
     def choose_action(
-        self, state: GameState, hand: set[Card], info: dict[str, Any]
+        self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         if np.random.random() < self.args.epsilon:
             return behave_randomly(state, hand)
@@ -417,7 +416,7 @@ class DQNAgent(TrainableAgent):
         return INDEX_TO_ACTION[best_action_idx]
 
     def _process_state(
-        self, state: GameState, info: dict[str, Any], hand: set[Card]
+        self, state: GameState, info: dict[str, Any], hand: list[Card]
     ) -> np.ndarray:
         if state.top_card is None or state.actual_suit is None:
             raise ValueError("Can't process state without a top card.")
@@ -451,7 +450,7 @@ class DQNAgent(TrainableAgent):
             return 0  # we only care about suit
         return CARD_TO_INDEX[top_card]
 
-    def _get_hand_state(self, hand: set[Card]) -> list[np.uint8] | np.ndarray:
+    def _get_hand_state(self, hand: list[Card]) -> list[np.uint8] | np.ndarray:
         match self.args.hand_state_option:
             case "count_truncated":
                 return [np.uint8(min(len(hand), self.args.truncated_hand_size))]
@@ -552,6 +551,12 @@ class DQNAgent(TrainableAgent):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
 
     opponent: Agent
     match args.opponent:

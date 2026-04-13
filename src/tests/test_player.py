@@ -65,7 +65,7 @@ def test_card_count_after_playing_card(player: Player, sample_card: Card):
 
 def test_take_drawn_cards_adds_to_hand(player: Player, sample_hand: list[Card]):
     player.take_drawn_cards(sample_hand)  # type: ignore
-    assert player.hand_set == set(sample_hand)
+    assert player.hand == sorted(sample_hand)
 
 
 def test_take_drawn_cards_all_none(player: Player):
@@ -84,13 +84,13 @@ def test_take_drawn_cards_accumulates(player: Player):
     player.take_drawn_cards([card1])
     player.take_drawn_cards([card2])
     assert player.card_count == 2
-    assert {card1, card2} == player.hand_set
+    assert sorted([card1, card2]) == player.hand
 
 
 def test_play_card_removes_from_hand(player: Player, sample_card: Card):
     player.take_drawn_cards([sample_card])
     player.play_card(sample_card)
-    assert sample_card not in player.hand_set
+    assert sample_card not in player.hand
 
 
 def test_play_card_raises_if_card_not_in_hand(player: Player, sample_card: Card):

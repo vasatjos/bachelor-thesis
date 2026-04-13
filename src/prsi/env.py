@@ -75,24 +75,24 @@ class PrsiEnv:
 
         if self._player_won_last:  # player makes first move
             return self._state, {
-                "hand": self._player_info.hand_set,
+                "hand": self._player_info.hand,
                 "opponent_card_count": (self._opponent_player_info.card_count),
                 "deck_flipped_over": False,
             }
 
         # Opponent makes first move
         player_info = {
-            "hand": self._opponent_player_info.hand_set,
+            "hand": self._opponent_player_info.hand,
             "opponent_card_count": self._player_info.card_count,
             "deck_flipped_over": False,
         }
         opponent_action = self._opponent.choose_action(
-            self._state, self._opponent_player_info.hand_set, player_info
+            self._state, self._opponent_player_info.hand, player_info
         )
         flipped = self._execute_action(self._opponent_player_info, opponent_action)
 
         return self._state, {
-            "hand": self._player_info.hand_set,
+            "hand": self._player_info.hand,
             "opponent_card_count": self._opponent_player_info.card_count,
             "deck_flipped_over": flipped,
         }
@@ -123,7 +123,7 @@ class PrsiEnv:
                 0.0,
                 True,
                 {
-                    "hand": self._player_info.hand_set,
+                    "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": True,
                 },
@@ -140,7 +140,7 @@ class PrsiEnv:
                 -1.0,
                 True,
                 {
-                    "hand": self._player_info.hand_set,
+                    "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_player,
                 },
@@ -148,12 +148,12 @@ class PrsiEnv:
             # else: simply fall through to opponent's turn
 
         player_info = {  # player here meaning opponent's opponent
-            "hand": self._opponent_player_info.hand_set,
+            "hand": self._opponent_player_info.hand,
             "opponent_card_count": self._player_info.card_count,
             "deck_flipped_over": flipped_player,
         }
         opponent_action = self._opponent.choose_action(
-            self._state, self._opponent_player_info.hand_set, player_info
+            self._state, self._opponent_player_info.hand, player_info
         )
         try:
             flipped_opponent = self._execute_action(
@@ -167,7 +167,7 @@ class PrsiEnv:
                 0.0,
                 True,
                 {
-                    "hand": self._player_info.hand_set,
+                    "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": True,
                 },
@@ -183,7 +183,7 @@ class PrsiEnv:
                 1.0,
                 True,
                 {
-                    "hand": self._player_info.hand_set,
+                    "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_opponent,
                 },
@@ -196,7 +196,7 @@ class PrsiEnv:
             0.0,
             self._done,
             {
-                "hand": self._player_info.hand_set,
+                "hand": self._player_info.hand,
                 "opponent_card_count": self._opponent_player_info.card_count,
                 "deck_flipped_over": flipped_player or flipped_opponent,
             },
@@ -215,7 +215,7 @@ class PrsiEnv:
         card, suit = action  # type: ignore
 
         flipped = False
-        if card not in (find_allowed_cards(self.state) & player.hand_set):
+        if card not in find_allowed_cards(self.state) or card not in player.hand:
             raise ValueError("Selected card not allowed!")
         player.play_card(card)
         self._deck.play_card(card)
