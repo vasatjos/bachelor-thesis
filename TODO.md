@@ -4,8 +4,6 @@
 
 Try some small reward every episode
 
-Make seeds work
-
-DDQN agent
+REINFORCE agent
 
 PPO agent
