@@ -14,6 +14,7 @@ from prsi.game_state import GameState, find_allowed_cards
 from agents.monte_carlo import MonteCarloAgent
 from agents.q_learning import QLearningAgent
 from agents.dqn import DQNAgent
+from agents.ddqn import DoubleDQNAgent
 
 parser = argparse.ArgumentParser()
 
@@ -29,7 +30,7 @@ parser.add_argument(
     "--opponent",
     default="greedy",
     type=str,
-    choices=["random", "greedy", "monte_carlo", "q_learning", "dqn"],
+    choices=["random", "greedy", "monte_carlo", "q_learning", "dqn", "ddqn"],
 )
 
 
@@ -181,6 +182,8 @@ if __name__ == "__main__":
             opponent = QLearningAgent(path=args.model_path)
         case "dqn":
             opponent = DQNAgent(path=args.model_path)
+        case "ddqn":
+            opponent = DoubleDQNAgent(path=args.model_path)
         case _:
             raise ValueError("Invalid opponent")
 
