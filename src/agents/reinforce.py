@@ -1,0 +1,591 @@
+import argparse
+import random
+from typing import Any
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.distributions import Categorical
+
+from prsi.agents.agent import Agent
+from prsi.agents.baselines import GreedyAgent, RandomAgent
+from prsi.rl_utils import (
+    CARD_TO_INDEX,
+    DRAW_ACTION,
+    SUIT_TO_INDEX,
+    INDEX_TO_ACTION,
+    Action,
+    CardIndex,
+    SuitIndex,
+    get_valid_action_mask,
+)
+from prsi.card import Card
+from prsi.card_utils import CardEffect, Rank, Suit
+from prsi.env import PrsiEnv
+from prsi.game_state import GameState
+from agents.trainable import TrainableAgent
+
+parser = argparse.ArgumentParser()
+
+# OPTIONS
+# ------------------------------
+parser.add_argument("--seed", default=None, type=int, help="Random seed.")
+parser.add_argument(
+    "--evaluate_for", default=10_000, type=int, help="Evaluation episodes."
+)
+parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
+parser.add_argument(
+    "--model_path",
+    default="agent_strategies/reinforce/model.pth",
+    type=str,
+    help="Path to save/load model.",
+)
+parser.add_argument("--log_each", default=10_000, type=int, help="Log frequency.")
+parser.add_argument(
+    "--save_each", default=None, type=int, help="Periodic saving frequency."
+)
+
+# HYPERPARAMETERS
+# ------------------------------
+parser.add_argument(
+    "--episodes", default=1_000_000, type=int, help="Training episodes."
+)
+parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
+parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate.")
+parser.add_argument(
+    "--hidden_layer_size", default=512, type=int, help="Size of hidden NN layers."
+)
+parser.add_argument(
+    "--hidden_layer_count", default=2, type=int, help="The amount of hidden NN layers."
+)
+parser.add_argument(
+    "--use_baseline", action="store_true", help="Use a value network as a baseline."
+)
+parser.add_argument(
+    "--hand_state_option",
+    default="full",
+    type=str,
+    choices=["count", "count_truncated", "simple", "full"],
+    help="Representation of cards on hand in the state.",
+)
+parser.add_argument(
+    "--truncated_hand_size",
+    default=4,
+    type=int,
+    help="Max hand size for truncated count.",
+)
+parser.add_argument(
+    "--played_subset",
+    default="all",
+    type=str,
+    choices=["sevens", "specials", "all"],
+    help="Representation of already played cards in the state.",
+)
+parser.add_argument(
+    "--opponent",
+    default="greedy",
+    type=str,
+    choices=["random", "greedy"],
+    help="Opponent the agent is learning against. Only used for evaluation if training via self-play.",
+)
+parser.add_argument("--self_play", action="store_true", help="Train using self-play.")
+parser.add_argument(
+    "--self_play_update_freq",
+    default=1_000,
+    type=int,
+    help="Frequency of self-play opponent update.",
+)
+
+
+SIMPLE_HAND_INDICES = {
+    Suit.BELLS: 0,
+    Suit.HEARTS: 1,
+    Suit.LEAVES: 2,
+    Suit.ACORNS: 3,
+}
+
+
+class PolicyNetwork(nn.Module):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def __init__(self, hidden_size: int, hidden_count: int = 1) -> None:
+        if hidden_count < 1 or hidden_size < 1:
+            raise ValueError("Invalid network parameters!")
+
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.LazyLinear(hidden_size),
+            nn.ReLU(),
+        )
+        for _ in range(hidden_count):
+            self.net.append(nn.Linear(hidden_size, hidden_size))
+            self.net.append(nn.ReLU())
+
+        self.net.append(nn.Linear(hidden_size, PrsiEnv.ACTION_SPACE_SIZE))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+
+class ValueNetwork(nn.Module):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def __init__(self, hidden_size: int, hidden_count: int = 1) -> None:
+        if hidden_count < 1 or hidden_size < 1:
+            raise ValueError("Invalid network parameters!")
+
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.LazyLinear(hidden_size),
+            nn.ReLU(),
+        )
+        for _ in range(hidden_count):
+            self.net.append(nn.Linear(hidden_size, hidden_size))
+            self.net.append(nn.ReLU())
+
+        self.net.append(nn.Linear(hidden_size, 1))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+
+class REINFORCEAgent(TrainableAgent):
+    def __init__(
+        self, args: argparse.Namespace | None = None, path: str | None = None
+    ) -> None:
+        if args is None and path is None:
+            raise ValueError("Agent needs either args or a path to load them from.")
+
+        self.played_cards_subset: np.ndarray
+
+        # Episode memory
+        self.saved_log_probs: list[torch.Tensor] = []
+        self.rewards: list[float] = []
+        self.saved_state_values: list[torch.Tensor] = []
+
+        if args is None:
+            self.load(path)  # type: ignore
+            return
+
+        self.args = args
+        self._init_played_subset()
+        self._build_networks()
+
+    def _build_networks(self) -> None:
+        self.policy_net = PolicyNetwork(
+            self.args.hidden_layer_size, self.args.hidden_layer_count
+        ).to(PolicyNetwork.device)
+
+        self.optimizer = torch.optim.Adam(
+            self.policy_net.parameters(), lr=self.args.learning_rate
+        )
+
+        if self.args.use_baseline:
+            self.value_net = ValueNetwork(
+                self.args.hidden_layer_size, self.args.hidden_layer_count
+            ).to(ValueNetwork.device)
+            self.value_optimizer = torch.optim.Adam(
+                self.value_net.parameters(), lr=self.args.learning_rate
+            )
+            self.value_loss_fn = nn.MSELoss()
+
+    def _init_played_subset(self) -> None:
+        match self.args.played_subset:
+            case "specials":
+                self.played_cards_subset = np.zeros(3, dtype=np.uint8)
+            case "sevens":
+                self.played_cards_subset = np.zeros(1, dtype=np.uint8)
+            case "all":
+                self.played_cards_subset = np.zeros(32, dtype=np.uint8)
+            case _:
+                raise ValueError("Invalid played_subset argument.")
+
+    def _state_to_vector(
+        self,
+        hand_state: list[np.uint8] | np.ndarray,
+        opponent_card_count: int,
+        top_card: CardIndex,
+        active_suit: SuitIndex,
+        card_effect: CardEffect,
+        effect_strength: np.uint8,
+        played_subset: np.ndarray,
+    ) -> np.ndarray:
+        hand: list[np.uint8] | list[float] | np.ndarray
+
+        card_count_denominator = 31
+        if self.args.hand_state_option == "count_truncated":
+            card_count_denominator = self.args.truncated_hand_size
+            hand = [hand_state[0] / self.args.truncated_hand_size]
+        elif self.args.hand_state_option == "count":
+            hand = [hand_state[0] / 31]
+        elif self.args.hand_state_option == "simple":
+            hand = hand_state / 4  # type: ignore
+        else:
+            hand = hand_state
+
+        if self.args.played_subset == "all":
+            played = np.asarray(played_subset, dtype=np.float32)
+        else:
+            played = np.asarray(played_subset, dtype=np.float32) / 4.0
+
+        top_card_1hot = np.zeros(32)
+        top_card_1hot[top_card] = 1
+        active_suit_1hot = np.zeros(4)
+        active_suit_1hot[active_suit] = 1
+        card_effect_1hot = np.zeros(3)
+        card_effect_1hot[card_effect.value] = 1
+
+        return np.array(
+            [
+                *hand,
+                opponent_card_count / card_count_denominator,
+                *top_card_1hot,
+                *active_suit_1hot,
+                *card_effect_1hot,
+                effect_strength / 4,
+                *played,
+            ],
+            dtype=np.float32,
+        )
+
+    def train(self, env: PrsiEnv) -> None:
+        total_steps = 0
+        batch_wins = 0
+        draw_actions = 0
+
+        for episode in range(self.args.episodes):
+            if self.args.self_play and episode % self.args.self_play_update_freq == 0:
+                game_state, info = env.reset(opponent=self.clone())
+            else:
+                game_state, info = env.reset()
+
+            hand: list[Card] = info["hand"]
+            self.played_cards_subset = np.zeros(
+                len(self.played_cards_subset), dtype=np.uint8
+            )
+
+            done = False
+            reward = 0.0
+
+            self.saved_log_probs.clear()
+            self.rewards.clear()
+            self.saved_state_values.clear()
+
+            while not done:
+                action = self.choose_action(game_state, hand, info)
+                if action == DRAW_ACTION:
+                    draw_actions += 1
+
+                game_state, reward, done, info = env.step(action)
+                hand = info["hand"]
+
+                self.rewards.append(reward)
+                total_steps += 1
+
+            if reward > 0:
+                batch_wins += 1
+
+            self._learn()
+
+            if (episode + 1) % self.args.log_each == 0:
+                self.log(episode, batch_wins, draw_actions, total_steps)
+                batch_wins = 0
+
+            if (
+                self.args.save_each is not None
+                and (episode + 1) % self.args.save_each == 0
+            ):
+                self.save(self.args.model_path)
+
+    def _learn(self) -> None:
+        # Calculate discounted returns
+        returns: list[float] = []
+        G = 0.0
+        for r in reversed(self.rewards):
+            G = r + self.args.gamma * G
+            returns.insert(0, G)
+
+        returns_tensor = torch.tensor(returns, dtype=torch.float32).to(
+            PolicyNetwork.device
+        )
+
+        # Standardize returns to help training stability
+        if len(returns_tensor) > 1:
+            returns_tensor = (returns_tensor - returns_tensor.mean()) / (
+                returns_tensor.std() + 1e-8
+            )
+
+        policy_loss = []
+        value_loss = 0.0
+
+        if self.args.use_baseline:
+            state_values_tensor = torch.cat(self.saved_state_values).squeeze(-1)
+            advantages = returns_tensor - state_values_tensor.detach()
+
+            for log_prob, advantage in zip(self.saved_log_probs, advantages):
+                policy_loss.append(-log_prob * advantage)
+
+            # Value loss is MSE of predicted value vs actual return
+            value_loss = self.value_loss_fn(state_values_tensor, returns_tensor)
+
+            self.value_optimizer.zero_grad()
+            value_loss.backward()
+            self.value_optimizer.step()
+        else:
+            # Standard REINFORCE
+            for log_prob, Gt in zip(self.saved_log_probs, returns_tensor):
+                policy_loss.append(-log_prob * Gt)
+
+        self.optimizer.zero_grad()
+        policy_loss_sum = torch.stack(policy_loss).sum()
+        policy_loss_sum.backward()
+        self.optimizer.step()
+
+    def evaluate(self, env: PrsiEnv, episodes: int) -> None:
+        self.policy_net.eval()
+
+        opponent: Agent | None = None
+        match self.args.opponent:
+            case "random":
+                opponent = RandomAgent()
+            case "greedy":
+                opponent = GreedyAgent()
+
+        env.reset(full=True, opponent=opponent)
+        wins = 0
+        for _ in range(episodes):
+            game_state, info = env.reset()
+            hand: list[Card] = info["hand"]
+            self.played_cards_subset = np.zeros(
+                len(self.played_cards_subset), dtype=np.uint8
+            )
+            done = False
+            reward = 0.0
+
+            while not done:
+                action = self.choose_action(game_state, hand, info, is_eval=True)
+                game_state, reward, done, info = env.step(action)
+                hand = info["hand"]
+
+            if reward > 0:
+                wins += 1
+
+        print(f"Evaluation: {wins}/{episodes} wins ({wins / episodes:.2%})")
+
+    def choose_action(
+        self,
+        state: GameState,
+        hand: list[Card],
+        info: dict[str, Any],
+        is_eval: bool = False,
+    ) -> Action:
+        state_vec = self._process_state(state, info, hand)
+        state_tensor = torch.tensor(state_vec[np.newaxis], dtype=torch.float32).to(
+            PolicyNetwork.device
+        )
+
+        valid_action_mask = get_valid_action_mask(state, hand)
+        valid_mask_tensor = torch.tensor(valid_action_mask, dtype=torch.bool).to(
+            PolicyNetwork.device
+        )
+
+        if is_eval:
+            self.policy_net.eval()
+            with torch.no_grad():
+                logits = self.policy_net(state_tensor).squeeze(0)
+                logits[~valid_mask_tensor] = -float("inf")
+                best_action_idx = int(logits.argmax())
+            self.policy_net.train()
+            return INDEX_TO_ACTION[best_action_idx]
+
+        # Training
+        self.policy_net.train()
+        logits = self.policy_net(state_tensor).squeeze(0)
+
+        # Mask invalid actions
+        logits[~valid_mask_tensor] = -float("inf")
+
+        # Softmax to get probabilities
+        probs = torch.softmax(logits, dim=-1)
+
+        # Sample action from probability distribution
+        m = Categorical(probs)
+        action_idx = m.sample()
+
+        # Save log prob for update
+        self.saved_log_probs.append(m.log_prob(action_idx))
+
+        if self.args.use_baseline:
+            state_value = self.value_net(state_tensor)
+            self.saved_state_values.append(state_value)
+
+        return INDEX_TO_ACTION[int(action_idx.item())]
+
+    def _process_state(
+        self, state: GameState, info: dict[str, Any], hand: list[Card]
+    ) -> np.ndarray:
+        if state.top_card is None or state.actual_suit is None:
+            raise ValueError("Can't process state without a top card.")
+
+        hand_state = self._get_hand_state(hand)
+        opponent_card_count = info.get("opponent_card_count", 0)
+        if (
+            self.args.hand_state_option == "count_truncated"
+            and opponent_card_count > self.args.truncated_hand_size
+        ):
+            opponent_card_count = self.args.truncated_hand_size
+
+        top_card = self._handle_top_card(state.top_card)
+        active_suit = SUIT_TO_INDEX[state.actual_suit]
+        card_effect = state.current_effect
+        effect_strength = np.uint8(state.effect_strength)
+        self._update_subset(state.top_card, info.get("deck_flipped_over", False))
+
+        return self._state_to_vector(
+            hand_state,
+            opponent_card_count,
+            top_card,
+            active_suit,
+            card_effect,
+            effect_strength,
+            self.played_cards_subset,
+        )
+
+    def _handle_top_card(self, top_card: Card) -> CardIndex:
+        if not self.args.hand_state_option.startswith("full"):
+            return 0
+        return CARD_TO_INDEX[top_card]
+
+    def _get_hand_state(self, hand: list[Card]) -> list[np.uint8] | np.ndarray:
+        match self.args.hand_state_option:
+            case "count_truncated":
+                return [np.uint8(min(len(hand), self.args.truncated_hand_size))]
+            case "count":
+                return [np.uint8(len(hand))]
+            case "simple":
+                state_array = np.zeros(7, dtype=np.uint8)
+                for card in hand:
+                    state_array[SIMPLE_HAND_INDICES[card.suit]] += 1
+                    match card.rank:
+                        case Rank.SEVEN:
+                            state_array[4] += 1
+                        case Rank.OBER:
+                            state_array[5] += 1
+                        case Rank.ACE:
+                            state_array[6] += 1
+                return state_array
+            case "full":
+                state_array = np.zeros(32, dtype=np.uint8)
+                for card in hand:
+                    state_array[CARD_TO_INDEX[card]] = 1
+                return state_array
+            case _:
+                raise ValueError("Invalid hand_state_option.")
+
+    def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
+        if deck_flipped_over:
+            self.played_cards_subset = np.zeros(
+                len(self.played_cards_subset), dtype=np.uint8
+            )
+        match self.args.played_subset:
+            case "all":
+                idx = CARD_TO_INDEX[card]
+                self.played_cards_subset[idx] = np.uint8(
+                    self.played_cards_subset[idx] + 1
+                )
+            case "specials":
+                if card.rank == Rank.SEVEN:
+                    self.played_cards_subset[0] = np.uint8(
+                        self.played_cards_subset[0] + 1
+                    )
+                elif card.rank == Rank.OBER:
+                    self.played_cards_subset[1] = np.uint8(
+                        self.played_cards_subset[1] + 1
+                    )
+                elif card.rank == Rank.ACE:
+                    self.played_cards_subset[2] = np.uint8(
+                        self.played_cards_subset[2] + 1
+                    )
+            case "sevens":
+                if card.rank == Rank.SEVEN:
+                    self.played_cards_subset[0] = np.uint8(
+                        self.played_cards_subset[0] + 1
+                    )
+
+    def save(self, path: str) -> None:
+        print(f"Saving model to {path}")
+        save_dict = {
+            "policy_net": self.policy_net.state_dict(),
+            "args": vars(self.args),
+        }
+        if self.args.use_baseline:
+            save_dict["value_net"] = self.value_net.state_dict()
+
+        torch.save(save_dict, path)
+        print("Model saved successfully!")
+
+    def load(self, path: str) -> None:
+        print(f"Loading model from {path}")
+        data = torch.load(path, map_location=PolicyNetwork.device)
+
+        args_dict = data.get("args", {})
+        self.args = argparse.Namespace(**args_dict)
+
+        self._init_played_subset()
+        self._build_networks()
+
+        self.policy_net.load_state_dict(data["policy_net"])
+        if self.args.use_baseline and "value_net" in data:
+            self.value_net.load_state_dict(data["value_net"])
+
+        print("Model loaded successfully!")
+
+    def log(
+        self, episode: int, batch_wins: int, draw_actions: int, total_actions: int
+    ) -> None:
+        print(
+            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+            f"Draw-action rate: {draw_actions / total_actions:.2%}, "
+            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
+        )
+
+    def clone(self) -> "REINFORCEAgent":
+        cloned = REINFORCEAgent.__new__(REINFORCEAgent)
+        cloned.args = self.args
+        cloned._init_played_subset()
+        cloned._build_networks()
+        cloned.policy_net.load_state_dict(self.policy_net.state_dict())
+        cloned.policy_net.eval()
+        if self.args.use_baseline:
+            cloned.value_net.load_state_dict(self.value_net.state_dict())
+            cloned.value_net.eval()
+        return cloned
+
+
+if __name__ == "__main__":
+    args = parser.parse_args([] if "__file__" not in globals() else None)
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+
+    opponent: Agent
+    match args.opponent:
+        case "random":
+            opponent = RandomAgent()
+        case "greedy":
+            opponent = GreedyAgent()
+        case _:
+            raise ValueError("Invalid opponent")
+
+    env = PrsiEnv(opponent)
+    agent = REINFORCEAgent(args=args)
+
+    if args.load_model:
+        agent.load(args.model_path)
+    else:
+        agent.train(env)
+        agent.save(args.model_path)
+
+    agent.evaluate(env, episodes=args.evaluate_for)
