@@ -73,12 +73,14 @@
 #show: make-glossary
 #register-glossary(entry-list)
 
+
 #heading([Introduction], numbering: none)
 
-The field of #gls("ai") has been gaining popularity in recent years. #Gls("rl") is
-a field of #gls("ai") that aims to teach computers how to behave without being explicitly shown
-how to act, only telling the #gls("ai") agent how good the most recent thing he did was
-by giving him a numerical reward for every action performed.
+The field of #gls("ai") has been gaining popularity in recent years, driven in
+part by advances in #gls("ml"). #Gls("rl") is a subfield of #gls("ml") that aims to
+teach computers how to behave without being explicitly shown
+how to act, only telling the #gls("ai") agent how good the most recent thing
+the agent did was by handing out a numerical reward for every action performed.
 
 #Gls("rl") has shown superhuman performance in many board games and video games alike,
 with AlphaZero @alphazero famously beating the best go players in the world and Agent57 @agent57
@@ -87,9 +89,9 @@ However, an area that remains much less explored are games where
 a massive part of the world-state remains unknown to the player.
 
 In this thesis, we will focus on Prší, a popular card game in the Czech Republic.
-It is one of the many variants of the German game Mau-Mau and is not dissimilar to the world famous card game Uno.
+It is one of the many variants of the German game Mau-Mau and is not dissimilar to the world-famous card game Uno.
 As a card game where everything but your hand and the cards already played
-is a mistery to the agent, it provides a suitable environment for exploring
+is a mystery to the agent, it provides a suitable environment for exploring
 #gls("rl") methods in a unique setting.
 
 
@@ -103,7 +105,7 @@ each other in a 1v1 setting with 2 baseline opponents available. The environment
 on the fly for self-play compatibility.
 
 We will use the implemented environment to train agents using both tabular methods, such as Monte Carlo,
-and #gls("dl") based approaches, like #gls("dqn").
+and #gls("dl") based approaches, like #gls("dqn", first: false).
 
 Finally, after comparing the agents to a baseline to find the best one, we will test
 its performance against human players and discuss the results.
@@ -111,8 +113,9 @@ its performance against human players and discuss the results.
 
 = Reinforcement Learning <chapter:rl>
 
-In this chapter, we introduce #gls("rl") and its formalisms -- starting with #glspl("mdp", first: false) in
-@chapter:rl-intro -- and then detail value-based methods (@chapter:value-methods) and
+In this chapter, we introduce #gls("rl") and some of its formalisms and key concepts
+in @chapter:rl-intro -- such as #glspl("mdp", first: false) and value functions.
+Then we'll detail value-based methods (@chapter:value-methods) and
 policy gradient methods (@chapter:policy-methods). These algorithms will
 form the foundation for our Prší agents in @chapter:experiments.
 
@@ -130,14 +133,43 @@ of numerical rewards, which the agents then try to maximize. These
 rewards remove the need for labeled data by replacing the _"act as I was told"_
 train of thought with _"act in a way that gets me as high of a reward
 as possible"_.
-Formally, we'll model these environments as #glspl("mdp", first: true).
 
-=== #Gls("mdp", first: true)
+The general idea of the environment is that the agent finds himself in some state,
+from which the agent takes an action. The action will result in a reward and
+move the agent into a different state, where the loop begins anew.
+Formally, we'll model these environments as #glspl("mdp", display: "Markov Decision Processes").
+
+=== Markov Decision Process
+
+To formalize any reinforcement learning problems, we model the environment as
+a #gls("mdp", first: true). This model captures the interaction between
+an agent and its environment through states, actions, transition probabilities,
+and rewards. It is widely used because it allows learning algorithms to reason
+about long-term consequences of decisions rather than only immediate outcomes.
+An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
+
+// A formal paragraph introducing dynamics p, states, actions, rewards, etc. 
+// should go here. Cite either @rl-an-introduction or @npfl139-lec01
+
 // Markov property of state - independence on the past, from intro to RL book
 
-// MDP image - CUNI, DRL presentations
+#figure(
+    image("images/mdp.png", width: 80%),
+    caption: flex-caption(
+        [MDP illustration],
+        [MDP illustration @npfl139-lec01],
+    ),
+) <fig:mdp-loop>
 
 #lorem(50)
+
+#figure(
+    image("images/mdp.png", width: 80%),
+    caption: flex-caption(
+        [POMDP illustration],
+        [POMDP illustration @npfl139-lec01],
+    ),
+) <fig:pomdp-loop>
 
 #lorem(50)
 
@@ -155,17 +187,19 @@ Formally, we'll model these environments as #glspl("mdp", first: true).
 
 #lorem(70)
 
-=== DQN // brief intro to neural networks, maybe RNNs as well
+=== #Gls("dqn", first: true)
 
 #lorem(70)
 
 == Policy Gradient Methods <chapter:policy-methods>
 
-=== PPO
+=== REINFORCE
 
 #lorem(70)
 
 #lorem(100)
+
+// Maybe PPO as well
 
 
 = Implementing an Environment for Prší <chapter:environment>
@@ -211,7 +245,12 @@ Formally, we'll model these environments as #glspl("mdp", first: true).
 
 = Acronyms
 
-#print-glossary(entry-list, show-all: false, user-print-glossary: acronym-table)
+#print-glossary(
+    entry-list,
+    show-all: false,
+    user-print-glossary: acronym-table,
+    disable-back-references: true,
+)
 
 
 = An example appendix

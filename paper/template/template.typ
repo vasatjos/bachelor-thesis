@@ -1,5 +1,8 @@
 #import "./front.typ": *
 
+#let in-outline = state("in-outline", false)
+#let flex-caption(long, short) = context if in-outline.get() { short } else { long }
+
 #let template(
     meta: (),
     font: "Libertinus Serif",
@@ -174,6 +177,13 @@
             body
         },
     )
+
+    // alongside flex-caption allows for short and long figure captions
+    show outline: it => {
+        in-outline.update(true)
+        it
+        in-outline.update(false)
+    }
 
     set heading(supplement: "Chapter", numbering: "1.1")
     show heading.where(level: 1): it => {
