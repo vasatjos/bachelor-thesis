@@ -2,8 +2,6 @@ name: Compile Thesis
 
 on:
   push:
-    branches:
-      - main
     paths:
       - 'paper/**'
       - '.github/workflows/compile-thesis.yml'
@@ -11,18 +9,25 @@ on:
 jobs:
   compile:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       
-      - name: Compile Typst
-        uses: tinybear/typst-action@v1
-        with:
-          source_file: paper/main.typ
-          output_file: main.pdf
+      - name: Install Typst
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+          cargo install --locked typst-cli
       
-      - name: Upload PDF
-        uses: actions/upload-artifact@v4
+      - name: Compile Thesis
+        run: typst compile paper/main.typ paper/main.pdf
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: thesis-pdf
-          path: main.pdf
-          retention-days: 90
+          files: paper/main.pdf
+          tag_name: thesis-${{ github.sha }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
