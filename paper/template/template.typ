@@ -1,7 +1,8 @@
 #import "./front.typ": *
 
 #let in-outline = state("in-outline", false)
-#let flex-caption(long, short) = context if in-outline.get() { short } else { long }
+
+#let flex-caption(short, long) = context if in-outline.get() { short } else { long }
 
 #let template(
     meta: (),
@@ -124,13 +125,19 @@
     }
     pagebreak()
 
+
+    // alongside flex-caption allows for short and long figure captions
+    // must be before any call to `outline`
+    show outline: it => {
+        in-outline.update(true)
+        it
+        in-outline.update(false)
+    }
+
     outline(depth: 2, indent: auto)
     pagebreak()
-    // [ = List of Figures]
     outline(title: "List of Figures", target: figure.where(kind: image))
-    // [ = List of Tables]
     outline(title: "List of Tables", target: figure.where(kind: table))
-    // [ = List of Code Listings]
     outline(title: "List of Code Listings", target: figure.where(kind: raw))
 
 
@@ -177,13 +184,6 @@
             body
         },
     )
-
-    // alongside flex-caption allows for short and long figure captions
-    show outline: it => {
-        in-outline.update(true)
-        it
-        in-outline.update(false)
-    }
 
     set heading(supplement: "Chapter", numbering: "1.1")
     show heading.where(level: 1): it => {

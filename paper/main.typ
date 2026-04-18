@@ -148,7 +148,7 @@ and rewards. It is widely used because it allows learning algorithms to reason
 about long-term consequences of decisions rather than only immediate outcomes.
 An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
-// A formal paragraph introducing dynamics p, states, actions, rewards, etc. 
+// A formal paragraph introducing dynamics p, states, actions, rewards, etc.
 // should go here. Cite either @rl-an-introduction or @npfl139-lec01
 
 // Markov property of state - independence on the past, from intro to RL book
