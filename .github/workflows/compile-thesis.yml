@@ -1,0 +1,28 @@
+name: Compile Thesis
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'paper/**'
+      - '.github/workflows/compile-thesis.yml'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Compile Typst
+        uses: tinybear/typst-action@v1
+        with:
+          source_file: paper/main.typ
+          output_file: main.pdf
+      
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis-pdf
+          path: main.pdf
+          retention-days: 90
