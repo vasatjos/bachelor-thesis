@@ -14,7 +14,7 @@ from prsi.rl_utils import (
     get_valid_actions,
 )
 from prsi.card import Card
-from prsi.card_utils import CardEffect, Rank, Suit
+from prsi.card_utils import CardEffect, Rank
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState
 import numpy as np
@@ -105,13 +105,6 @@ State = tuple[
     np.uint8,
     tuple[np.uint8, ...],
 ]
-
-SIMPLE_HAND_INDICES = {
-    Suit.BELLS: 0,
-    Suit.HEARTS: 1,
-    Suit.LEAVES: 2,
-    Suit.ACORNS: 3,
-}
 
 
 class MonteCarloAgent(TrainableAgent):
@@ -345,7 +338,7 @@ class MonteCarloAgent(TrainableAgent):
             case "simple":
                 state_array = np.zeros(7, dtype=np.uint8)
                 for card in hand:
-                    state_array[SIMPLE_HAND_INDICES[card.suit]] += 1
+                    state_array[self.SIMPLE_HAND_INDICES[card.suit]] += 1
                     match card.rank:
                         case Rank.SEVEN:
                             state_array[4] += 1
