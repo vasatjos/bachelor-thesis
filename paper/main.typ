@@ -193,12 +193,12 @@ Formally, we'll model these environments as #glspl("mdp", first: true).
 #lorem(100)
 
 
-= Future work
+#heading([Future work], numbering: none)
 
 #lorem(100)
 
 
-= Conclusion
+#heading([Conclusion], numbering: none)
 
 #lorem(100)
 
