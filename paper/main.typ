@@ -187,7 +187,7 @@ An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
 #lorem(70)
 
-=== #Gls("dqn", first: true)
+=== Deep Q-Network
 
 #lorem(70)
 
