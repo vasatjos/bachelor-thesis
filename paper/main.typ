@@ -114,7 +114,7 @@ its performance against human players and discuss the results.
 = Reinforcement Learning <chapter:rl>
 
 In this chapter, we introduce #gls("rl") and some of its formalisms and key concepts
-in @chapter:rl-intro -- such as #glspl("mdp", first: false) and value functions.
+-- such as #glspl("mdp", first: false) and value functions in @chapter:rl-intro.
 Then we'll detail value-based methods (@chapter:value-methods) and
 policy gradient methods (@chapter:policy-methods). These algorithms will
 form the foundation for our Prší agents in @chapter:experiments.
@@ -135,9 +135,10 @@ train of thought with _"act in a way that gets me as high of a reward
 as possible"_.
 
 The general idea of the environment is that the agent finds himself in some state,
-from which the agent takes an action. The action will result in a reward and
-move the agent into a different state, where the loop begins anew.
-Formally, we'll model these environments as #glspl("mdp", display: "Markov Decision Processes").
+from which the agent takes an action. Performing this action is what
+will result in a reward and will also move the agent into a different state,
+where the loop begins anew. Formally, we'll model these environments as
+#glspl("mdp", display: "Markov Decision Processes").
 
 === Markov Decision Process
 
@@ -198,7 +199,7 @@ illustration can be seen in @fig:pomdp-loop. @Spaan2012 @Sutton2018 @npfl139-lec
     ),
 ) <fig:pomdp-loop>
 
-=== Return vs. Reward
+=== Reward vs. Return
 
 While we have said that the goal of any agent is to maximize the reward they get,
 it wasn't entirely accurate. The goal of an agent is to maximize the _cumulative_
@@ -225,14 +226,14 @@ $
     G_t = R_(t+1) + gamma R_(t+2) + gamma^2 R_(t+3) + ...
     = sum_(k=0)^infinity gamma^k R_(t+1+k).
 $
-If we introduce an absorbing state for episodic tasks which can't be transitioned
+In episodic tasks, if we introduce an absorbing state tasks which can't be transitioned
 out of and gives a reward of 0, we can use this formula for both episodic and continuing tasks.
 We can also use $G_t = sum_(k=0)^(T-t-1) gamma^k R_(t+1+k)$
 and allow for $T = infinity$ or $gamma = 1$ (never both).
 
 // TODO: maybe explain that gamma makes the agent prefer winning sooner
 
-With this definition of the return $G_t$, we can now finally specify the goal
+With this definition of the return $G_t$, we can now finally formalize the goal
 of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
