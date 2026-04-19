@@ -141,6 +141,15 @@ Formally, we'll model these environments as #glspl("mdp", display: "Markov Decis
 
 === Markov Decision Process
 
+#figure(
+    image("images/mdp.png", width: 80%),
+    caption: flex-caption(
+        [MDP illustration],
+        [Markov Decision Process @npfl139-lec01],
+    ),
+    placement: none, // place where written
+) <fig:mdp-loop>
+
 To formalize any reinforcement learning problems, we model the environment as
 a #gls("mdp", first: true). This model captures the interaction between
 an agent and its environment through states, actions, transition probabilities,
@@ -150,30 +159,87 @@ An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
 // A formal paragraph introducing dynamics p, states, actions, rewards, etc.
 // should go here. Cite either @rl-an-introduction or @npfl139-lec01
+A particular #gls("mdp") is defined as a quadruple $(cal(S), cal(A), p, gamma)$,
+where $cal(S)$ is a set of states, $cal(A)$ a set of actions, $p$
+the environment dynamics and $gamma in [0, 1]$ the discount factor.
+Given a state $s$ and action $a$, the environment dynamics model
+the probability of a next state $s'$ and reward $r$, formally denoted
+$
+    p(s', r mid(bar) s, a) = upright(P)(S_(t+1) = s', R_(t+1) = r mid(bar) S_t = s, A_t = a).
+$
+Sometimes, #glspl("mdp") can also be defined as a quintuple with a reward probability $r$,
+leaving us with the following transition and reward probabilities:
+$
+    p(S_(t+1) = s' mid(bar) S_t = s, A_t = a),
+    #linebreak()
+    r(R_(t+1) = r mid(bar) S_(t+1) = s', S_t = s, A_t = a).
+$
+What both these equivalent definitions tell us is that the reward is always dependent
+on the next state.
 
-// Markov property of state - independence on the past, from intro to RL book
+While the definition above certainly is useful, there are many tasks (such as mazes
+or, fittingly, card games)
+where even though the environment does have a state internally,
+the agent doesn't know what the state looks like. In Prší for example, no player
+knows what cards the opponent has, even though a "full state" exists.
+To model environments like these, we define the #gls("pomdp").
+
+#Glspl("pomdp") are inherently similar to #glspl("mdp"), but they are
+defined as a sextuple $(cal(S), cal(A), p, gamma, cal(O), o)$,
+where $cal(O)$ is a set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is an
+observation model. We then give agents $O_t$ as input instead of $S_t$. An
+illustration can be seen in @fig:pomdp-loop. @Spaan2012 @Sutton2018 @npfl139-lec01
 
 #figure(
-    image("images/mdp.png", width: 80%),
-    caption: flex-caption(
-        [MDP illustration],
-        [MDP illustration @npfl139-lec01],
-    ),
-) <fig:mdp-loop>
-
-#lorem(50)
-
-#figure(
-    image("images/mdp.png", width: 80%),
+    image("images/pomdp.png", width: 80%),
     caption: flex-caption(
         [POMDP illustration],
-        [POMDP illustration @npfl139-lec01],
+        [Partially Observable Markov Decision Process @npfl139-lec01],
     ),
 ) <fig:pomdp-loop>
 
-#lorem(50)
+=== Return vs. Reward
+
+While we have said that the goal of any agent is to maximize the reward they get,
+it wasn't entirely accurate. The goal of an agent is to maximize the _cumulative_
+reward over the whole interaction or many interactions. Let's imagine
+a sequence of rewards after timestep $t$: $R_(t+1), R_(t+2), R_(t+3), ...$
+
+Our goal will be to maximize the *return* $G_t$, which can in its
+simplest form be defined as
+$
+    G_t = R_(t+1) + R_(t+2) + R_(t+3) + ... + R_T
+$
+where $T$ is the final timestep. This approach works well for tasks where such
+a final timestep can be found, resulting in many subsequences of interactions,
+which we call episodes. Tasks that can be split into episodes are called episodic.
+Episodes always end when a _terminal state_ is reached. The interaction is
+then restarted from a starting state. Environments can have multiple starting
+and terminal states.
+
+The alternative are continuing tasks, where an interaction can theoretically go
+on forever. In this case, $G_t$ as we defined before could potentially be unbounded
+and grow to infinity. To prevent this, a discount factor $gamma < 1$ can be used.
+We then define $G_t$ as follows:
+$
+    G_t = R_(t+1) + gamma R_(t+2) + gamma^2 R_(t+3) + ...
+    = sum_(k=0)^infinity gamma^k R_(t+1+k).
+$
+If we introduce an absorbing state for episodic tasks which can't be transitioned
+out of and gives a reward of 0, we can use this formula for both episodic and continuing tasks.
+We can also use $G_t = sum_(k=0)^(T-t-1) gamma^k R_(t+1+k)$
+and allow for $T = infinity$ or $gamma = 1$ (never both).
+
+// TODO: maybe explain that gamma makes the agent prefer winning sooner
+
+With this definition of the return $G_t$, we can now finally specify the goal
+of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
+
+// Define policy here
+
+#lorem(50)
 
 == Value-Based Methods <chapter:value-methods>
 
