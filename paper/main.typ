@@ -154,9 +154,7 @@ where the loop begins anew. Formally, we'll model these environments as
 To formalize any reinforcement learning problems, we model the environment as
 a #gls("mdp", first: true). This model captures the interaction between
 an agent and its environment through states, actions, transition probabilities,
-and rewards. It is widely used because it allows learning algorithms to reason
-about long-term consequences of decisions rather than only immediate outcomes.
-An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
+and rewards. An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
 // A formal paragraph introducing dynamics p, states, actions, rewards, etc.
 // should go here. Cite either @rl-an-introduction or @npfl139-lec01
@@ -168,6 +166,9 @@ the probability of a next state $s'$ and reward $r$, formally denoted
 $
     p(s', r mid(bar) s, a) = upright(P)(S_(t+1) = s', R_(t+1) = r mid(bar) S_t = s, A_t = a).
 $
+The reliance of dynamics only on $S_t$ and independence from $S_0, ..., S_(t-1)$
+is called the Markov property.
+
 Sometimes, #glspl("mdp") can also be defined as a quintuple with a reward probability $r$,
 leaving us with the following transition and reward probabilities:
 $
@@ -226,12 +227,13 @@ $
     G_t = R_(t+1) + gamma R_(t+2) + gamma^2 R_(t+3) + ...
     = sum_(k=0)^infinity gamma^k R_(t+1+k).
 $
-In episodic tasks, if we introduce an absorbing state tasks which can't be transitioned
+In episodic tasks, if we introduce an absorbing state which can't be transitioned
 out of and gives a reward of 0, we can use this formula for both episodic and continuing tasks.
 We can also use $G_t = sum_(k=0)^(T-t-1) gamma^k R_(t+1+k)$
 and allow for $T = infinity$ or $gamma = 1$ (never both).
-
-// TODO: maybe explain that gamma makes the agent prefer winning sooner
+Beyond ensuring convergence in continuing tasks, fixing
+$gamma < 1$ also serves to weight immediate rewards more heavily than distant ones.
+This encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
 of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
@@ -294,7 +296,7 @@ of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
 #lorem(100)
 
 
-#heading([Future work], numbering: none)
+= Future Work
 
 #lorem(100)
 
@@ -318,21 +320,3 @@ of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
     user-print-glossary: acronym-table,
     disable-back-references: true,
 )
-
-
-= An example appendix
-
-#lorem(100)
-
-$
-    sum_(i=1)^(infinity) 1 / i
-$
-
-```cpp
-#include <iostream>
-
-int main() {
-  std::cout << "Hello, World!" << std::endl;
-  return 0;
-}
-```
