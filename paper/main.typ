@@ -114,7 +114,7 @@ its performance against human players and discuss the results.
 = Reinforcement Learning <chapter:rl>
 
 In this chapter, we introduce #gls("rl") and some of its formalisms and key concepts
-in @chapter:rl-intro -- such as #glspl("mdp", first: false) and value functions.
+-- such as #glspl("mdp", first: false) and value functions in @chapter:rl-intro.
 Then we'll detail value-based methods (@chapter:value-methods) and
 policy gradient methods (@chapter:policy-methods). These algorithms will
 form the foundation for our Prší agents in @chapter:experiments.
@@ -135,9 +135,10 @@ train of thought with _"act in a way that gets me as high of a reward
 as possible"_.
 
 The general idea of the environment is that the agent finds himself in some state,
-from which the agent takes an action. The action will result in a reward and
-move the agent into a different state, where the loop begins anew.
-Formally, we'll model these environments as #glspl("mdp", display: "Markov Decision Processes").
+from which the agent takes an action. Performing this action is what
+will result in a reward and will also move the agent into a different state,
+where the loop begins anew. Formally, we'll model these environments as
+#glspl("mdp", display: "Markov Decision Processes").
 
 === Markov Decision Process
 
@@ -232,7 +233,7 @@ and allow for $T = infinity$ or $gamma = 1$ (never both).
 
 // TODO: maybe explain that gamma makes the agent prefer winning sooner
 
-With this definition of the return $G_t$, we can now finally specify the goal
+With this definition of the return $G_t$, we can now finally formalize the goal
 of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
