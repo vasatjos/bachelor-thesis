@@ -153,7 +153,7 @@ where the loop begins anew. Formally, we'll model these environments as
 
 To formalize any reinforcement learning problems, we model the environment as
 a #gls("mdp", first: true). This model captures the interaction between
-an agent and its environment through states, actions, transition probabilities,
+the agent and its environment through states, actions, transition probabilities,
 and rewards. An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
 // A formal paragraph introducing dynamics p, states, actions, rewards, etc.
@@ -203,9 +203,10 @@ illustration can be seen in @fig:pomdp-loop. @Spaan2012 @Sutton2018 @npfl139-lec
 
 === Reward vs. Return
 
-While we have said that the goal of any agent is to maximize the reward they get,
-it wasn't entirely accurate. The goal of an agent is to maximize the _cumulative_
-reward over the whole interaction or many interactions. Let's imagine
+While we have said that the goal of the agent is to maximize the reward it gets,
+it wasn't an entirely accurate formulation.
+The goal of the agent is to maximize the _cumulative_
+reward over the whole interaction. Let's imagine
 a sequence of rewards after timestep $t$: $R_(t+1), R_(t+2), R_(t+3), ...$
 
 Our goal will be to maximize the *return* $G_t$, which can in its
@@ -239,12 +240,12 @@ serves to weight immediate rewards more heavily than distant ones. This
 encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
-of an agent, that being maximization of $EE[G_0]$. @Sutton2018 @npfl139-lec01
+of the agent, that being maximization of $EE[G_0]$. @Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
 
 Value functions are used to evaluate policies.
-An agent's policy $pi$ defines the behaviour of the agent by determining
+The agent's policy $pi$ defines the behaviour of the agent by determining
 which action the agent will select in a given state. For a deterministic
 policy, the action is chosen directly as $a = pi(s)$. In case of
 stochastic policies, $pi(a mid(bar) s)$ denotes the probability of
