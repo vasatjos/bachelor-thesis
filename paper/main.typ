@@ -159,8 +159,9 @@ and rewards. An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 // A formal paragraph introducing dynamics p, states, actions, rewards, etc.
 // should go here. Cite either @rl-an-introduction or @npfl139-lec01
 A particular #gls("mdp") is defined as a quadruple $(cal(S), cal(A), p, gamma)$,
-where $cal(S)$ is a set of states, $cal(A)$ a set of actions, $p$
-the environment dynamics and $gamma in [0, 1]$ the discount factor.
+where $cal(S)$ is a set of states, $cal(A)(s)$ a set of actions that can be taken
+in state $s$, $p$ the environment dynamics and $gamma in [0, 1]$
+the discount factor.
 Given a state $s$ and action $a$, the environment dynamics model
 the probability of a next state $s'$ and reward $r$, formally denoted
 $
@@ -218,6 +219,8 @@ which we call episodes. Tasks that can be split into episodes are called episodi
 Episodes always end when a _terminal state_ is reached. The interaction is
 then restarted from a starting state. Environments can have multiple starting
 and terminal states.
+#footnote([$cal(S)^+$ is sometimes used to signify episodic tasks as
+    "$cal(S)$ with terminal states".])
 
 The alternative are continuing tasks, where an interaction can theoretically go
 on forever. In this case, $G_t$ as we defined before could potentially be unbounded
@@ -231,16 +234,56 @@ In episodic tasks, if we introduce an absorbing state which can't be transitione
 out of and gives a reward of 0, we can use this formula for both episodic and continuing tasks.
 We can also use $G_t = sum_(k=0)^(T-t-1) gamma^k R_(t+1+k)$
 and allow for $T = infinity$ or $gamma = 1$ (never both).
-Beyond ensuring convergence in continuing tasks, fixing
-$gamma < 1$ also serves to weight immediate rewards more heavily than distant ones.
-This encourages the agent to seek the fastest path to victory.
+Fixing $gamma < 1$ can however be useful even in episodic tasks, as it
+serves to weight immediate rewards more heavily than distant ones. This
+encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
-of an agent, that being maximization of $EE[G_t]$. @Sutton2018 @npfl139-lec01
+of an agent, that being maximization of $EE[G_0]$. @Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
 
-// Define policy here
+Value functions are used to evaluate policies.
+An agent's policy $pi$ defines the behaviour of the agent by determining
+which action the agent will select in a given state. For a deterministic
+policy, the action is chosen directly as $a = pi(s)$. In case of
+stochastic policies, $pi(a mid(bar) s)$ denotes the probability of
+selecting action $a$ given a state $s$.
+
+The value function $v_pi (s)$ (sometimes also called the state-value function)
+for a policy $pi$ gives us the expected
+return if the agent starts in state $s$ and then follows $pi$ in each step.
+Formally, we can define it for #glspl("mdp") as
+$
+    v_pi (s) = EE_pi [G_t mid(bar) S_t = s]
+    = EE_pi lr([sum_(k=0)^infinity gamma^k R_(t+1+k) mid(bar) S_t = s])
+$
+where $EE_pi [dot]$ denotes the expected value given that the agent follows
+policy $pi$ to select actions, and $t$ can be any timestep.
+
+We will also define the action-value function $q_pi (s, a)$, which denotes
+the expected return after taking action $a$ in state $s$ and following $pi$
+afterwards:
+$
+    q_pi (s, a) = EE_pi [G_t mid(bar) S_t = s, A_t = a]
+    = EE_pi lr([sum_(k=0)^infinity gamma^k R_(t+1+k) mid(bar) S_t = s, A_t = a]).
+$\
+
+Finally, we define the optimal value function $v_*$ and the optimal 
+action-value function $q_*$ as those which have the highest values across
+all possible policies. Formally:
+$
+    v_* = max_pi v_pi (s)\
+    q_* = max_pi q_pi (s, a)
+$
+for all $s in cal(S)$ and $a in cal(A)(s)$. Any policy $pi_*$ with
+$v_pi_* = v_*$ is called the optimal policy, as there can be more than one.
+@Sutton2018
+
+// TODO: Maybe add Bellman Equation here as well
+
+
+=== Exploration vs. Exploitation
 
 #lorem(50)
 

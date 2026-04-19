@@ -148,6 +148,8 @@
 
     set line(length: 100%, stroke: 1pt + luma(200))
 
+    show math.equation.where(block: false): box // don't break inline math
+
     set figure(placement: auto)
     show figure.caption: set text(0.9em)
     show figure.caption: box.with(width: 92%)
