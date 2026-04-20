@@ -85,30 +85,35 @@ the agent did was by handing out a numerical reward for every action performed.
 #Gls("rl") has shown superhuman performance in many board games and video games alike,
 with AlphaZero @alphazero famously beating the best go players in the world and Agent57 @agent57
 achieving superhuman performance in the whole Atari suite of games.
-However, an area that remains much less explored are games where
-a massive part of the world-state remains unknown to the player.
+However, a less explored frontier remains: games with imperfect information.
+In these settings, the "truth" of the game is hidden behind the back
+of a card or the mind of an opponent, forcing an agent to reason under
+deep uncertainty rather than just calculating a path through a known state.
 
-In this thesis, we will focus on Prší, a popular card game in the Czech Republic.
-It is one of the many variants of the German game Mau-Mau and is not dissimilar to the world-famous card game Uno.
-As a card game where everything but your hand and the cards already played
-is a mystery to the agent, it provides a suitable environment for exploring
-#gls("rl") methods in a unique setting.
+In this thesis, we will focus on Prší, a cultural staple in the Czech Republic.
+It is one of the many variants of the German card game Mau-Mau and is
+not dissimilar to the world-famous card game Uno.
+We'll use this unique setting to explore how both traditional and modern
+#gls("rl") methods handle the hidden variables inherent to stochastic
+environments like card games.
 
 
 #heading([Goals], depth: 2, numbering: none, outlined: true)
 
 The main goal of this thesis is to evaluate different #gls("rl") algorithms on their
-performance in Prší.
+performance in Prší and to create an agent that can defeat human opponents.
 
-To achieve this, we will implement an environment capable of putting various agents against
-each other in a 1v1 setting with 2 baseline opponents available. The environment will also be able to update the opponent
+To achieve this, we will implement an environment capable of putting various
+agents against each other in a 1v1 setting with 2 baseline opponents available.
+The environment will also be able to update the opponent
 on the fly for self-play compatibility.
 
-We will use the implemented environment to train agents using both tabular methods, such as Monte Carlo,
-and #gls("dl") based approaches, like #gls("dqn", first: false).
+We will use the implemented environment to train agents using both tabular
+methods, such as Monte Carlo, and #gls("dl") based approaches, like
+#gls("dqn", first: false).
 
-Finally, after comparing the agents to a baseline to find the best one, we will test
-its performance against human players and discuss the results.
+Finally, after comparing the agents to a baseline to find the best one,
+we will test its performance against human players and discuss the results.
 
 
 = Reinforcement Learning <chapter:rl>
