@@ -347,7 +347,23 @@ a more greedy policy.~@Sutton2018
 
 == Value-Based Methods <chapter:value-methods>
 
-#lorem(40)
+With the theoretical foundation established, we can now examine the concrete
+#gls("rl") algorithms that we'll be implementing in @chapter:experiments.
+We begin with *value-based methods*,
+which, as the name implies, focus on estimating the optimal
+action-value function $q_*$.
+
+The core idea of these approaches is that if we can accurately predict
+the long-term value of every action in every state, the task of finding
+an optimal policy becomes trivial. By simply selecting the action with
+the highest estimated value -- the greedy approach with respect
+to the value function -- the agent can derive its behavior without ever having
+to explicitly learn a separate policy function. Once we have estimated $q_*$
+during training, we'll simply select actions deterministically
+by using the policy
+$
+    pi (s) = argmax_a q_* (s, a).
+$
 
 === Monte Carlo
 

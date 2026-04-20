@@ -5,7 +5,7 @@
 #let flex-caption(short, long) = context if in-outline.get() { short } else { long }
 
 // Custom math definitions
-#let argmax = math.op("argmax", limits: true)
+#let argmax = math.op([arg#h(1.5pt)max], limits: true)
 
 #let template(
     meta: (),
