@@ -134,7 +134,7 @@ rewards remove the need for labeled data by replacing the _"act as I was told"_
 train of thought with _"act in a way that gets me as high of a reward
 as possible"_.
 
-The general idea of the environment is that the agent finds himself in some state,
+The general idea of the environment is that the agent observes some state,
 from which the agent takes an action. Performing this action is what
 will result in a reward and will also move the agent into a different state,
 where the loop begins anew. Formally, we'll model these environments as
@@ -148,7 +148,6 @@ where the loop begins anew. Formally, we'll model these environments as
         [MDP illustration],
         [Markov Decision Process @npfl139-lec01],
     ),
-    placement: none, // place where written
 ) <fig:mdp-loop>
 
 To formalize any reinforcement learning problems, we model the environment as
@@ -156,11 +155,9 @@ a #gls("mdp", first: true). This model captures the interaction between
 the agent and its environment through states, actions, transition probabilities,
 and rewards. An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
-// A formal paragraph introducing dynamics p, states, actions, rewards, etc.
-// should go here. Cite either @rl-an-introduction or @npfl139-lec01
 A particular #gls("mdp") is defined as a quadruple $(cal(S), cal(A), p, gamma)$,
 where $cal(S)$ is a set of states, $cal(A)(s)$ a set of actions that can be taken
-in state $s$, $p$ the environment dynamics and $gamma in [0, 1]$
+in state $s in cal(S)$, $p$ the environment dynamics and $gamma in [0, 1]$
 the discount factor.
 Given a state $s$ and action $a$, the environment dynamics model
 the probability of a next state $s'$ and reward $r$, formally denoted
@@ -177,13 +174,13 @@ $
     #linebreak()
     r(R_(t+1) = r mid(bar) S_(t+1) = s', S_t = s, A_t = a).
 $
-What both these equivalent definitions tell us is that the reward is always dependent
-on the next state.
+What both these equivalent definitions tell us is that the reward is always tied
+to the next state.
 
 While the definition above certainly is useful, there are many tasks (such as mazes
 or, fittingly, card games)
 where even though the environment does have a state internally,
-the agent doesn't know what the state looks like. In Prší for example, no player
+the agent doesn't know what the state looks like. In Prší, for example, no player
 knows what cards the opponent has, even though a "full state" exists.
 To model environments like these, we define the #gls("pomdp").
 
@@ -191,7 +188,7 @@ To model environments like these, we define the #gls("pomdp").
 defined as a sextuple $(cal(S), cal(A), p, gamma, cal(O), o)$,
 where $cal(O)$ is a set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is an
 observation model. We then give agents $O_t$ as input instead of $S_t$. An
-illustration can be seen in @fig:pomdp-loop. @Spaan2012 @Sutton2018 @npfl139-lec01
+illustration can be seen in @fig:pomdp-loop.~@Spaan2012 @Sutton2018 @npfl139-lec01
 
 #figure(
     image("images/pomdp.png", width: 80%),
@@ -200,6 +197,7 @@ illustration can be seen in @fig:pomdp-loop. @Spaan2012 @Sutton2018 @npfl139-lec
         [Partially Observable Markov Decision Process @npfl139-lec01],
     ),
 ) <fig:pomdp-loop>
+
 
 === Reward vs. Return
 
@@ -240,7 +238,7 @@ serves to weight immediate rewards more heavily than distant ones. This
 encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
-of the agent, that being maximization of $EE[G_0]$. @Sutton2018 @npfl139-lec01
+of the agent, that being maximization of $EE[G_0]$.~@Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
 
@@ -270,7 +268,7 @@ $
     = EE_pi lr([sum_(k=0)^infinity gamma^k R_(t+1+k) mid(bar) S_t = s, A_t = a]).
 $\
 
-Finally, we define the optimal value function $v_*$ and the optimal 
+Finally, we define the optimal value function $v_*$ and the optimal
 action-value function $q_*$ as those which have the highest values across
 all possible policies. Formally:
 $
@@ -279,14 +277,68 @@ $
 $
 for all $s in cal(S)$ and $a in cal(A)(s)$. Any policy $pi_*$ with
 $v_pi_* = v_*$ is called the optimal policy, as there can be more than one.
-@Sutton2018
 
-// TODO: Maybe add Bellman Equation here as well
+A fundamental property of value functions is that they satisfy
+recursive relationships. For any policy $pi$, the value of a state
+can be decomposed into the immediate reward plus the discounted
+value of the expected next state. This is known as the *Bellman equation*
+for $v_pi$:
+$
+    v_pi (s) = EE[G_t mid(bar) S_t = s]
+    = sum_a pi(a mid(bar) s) sum_(s', r) p(s', r mid(bar) s, a) [r + gamma v_pi (s')].
+$
+where $a in cal(A)(s)$ and $s, s' in cal(S)$. We also define the *Bellman
+optimality equation* for $v_*$, which expresses the fact that the value of a
+state under an optimal policy must equal the expected return for the best action
+from that state:
+$
+    v_* (s) = max_a q_* (s, a)
+    = max_a sum_(s', r) p(s', r mid(bar) s, a) [r + gamma v_* (s')].
+$
+The Bellman optimality equation represents a system of equations -- one
+for each state -- the solution to which is the optimal value function $v_*$.
+If the environment dynamics $p(s', r mid(bar) s, a)$ are known, this system
+can be solved using classical Dynamic Programming algorithms such as
+*Value Iteration* or *Policy Iteration*.
 
+However, for many complex tasks, including Prší, the
+transition probabilities are either unknown or too complex to compute.
+In these cases, we must rely on model-free reinforcement learning methods.
+These methods allow the agent to learn the optimal policy through direct
+interaction with the environment without requiring explicit knowledge of
+the dynamics.~@Sutton2018 @npfl139-lec02
 
 === Exploration vs. Exploitation
 
-#lorem(50)
+Since the agent will be learning through interactions with the environment,
+a fundamental question arises: which policy should be followed during the
+training process? Behaving in a strictly greedy fashion (_exploitation_) can
+be counterproductive, as our action-value function estimate isn't accurate and
+could leave the agent stuck in local optima.
+On the other hand, behaving completely randomly (_exploration_) isn't
+the solution either, as that would make it impossible for the agent to estimate
+$q_pi$ for strategic policies.
+
+#let eps_soft = $epsilon/(|cal(A)(s)|)$
+
+To solve this dilemma, we will introduce soft policies, that is policies $pi$
+where $pi(a mid(bar) s) > 0$ for all $s in cal(S)$ and all $a in cal(A)(s)$.
+In particular, we will focus on $epsilon$-greedy policies ($epsilon < 1$), which are
+policies where the agent chooses the greedy action with a probability
+$1 - epsilon$ and a random action with a probability $epsilon$. This gives
+all non-greedy actions the probability of #eps_soft and the greedy action
+probability $1 - epsilon + #eps_soft$, as the greedy action can still be
+randomly chosen. It is essentially the greediest of all $epsilon$-soft policies,
+meaning policies where all actions must have at least this
+probability.
+
+There is one more improvement we can make. In early training, the agent
+(probably) has very bad estimates of $q_pi$. Therefore, it doesn't make sense
+to behave greedily too often. We can start with a high $epsilon$ like 0.5 and
+slowly decay it after each step in the environment by multiplying it by a value
+like 0.99 until it reaches some minimum threshold (or even 0). This lets us
+collect a lot of different samples before gradually shifting to
+a more greedy policy.~@Sutton2018
 
 == Value-Based Methods <chapter:value-methods>
 

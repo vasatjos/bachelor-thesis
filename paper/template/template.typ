@@ -1,8 +1,11 @@
 #import "./front.typ": *
 
+// Short captions
 #let in-outline = state("in-outline", false)
-
 #let flex-caption(short, long) = context if in-outline.get() { short } else { long }
+
+// Custom math definitions
+#let argmax = math.op("argmax", limits: true)
 
 #let template(
     meta: (),
