@@ -164,6 +164,12 @@ A particular #gls("mdp") is defined as a quadruple $(cal(S), cal(A), p, gamma)$,
 where $cal(S)$ is a set of states, $cal(A)(s)$ a set of actions that can be taken
 in state $s in cal(S)$, $p$ the environment dynamics and $gamma in [0, 1]$
 the discount factor.
+//
+#footnote(
+    [ If $cal(S) "and" cal(A)$ are finite, we're talking about
+        a finite #gls("mdp").],
+)
+//
 Given a state $s$ and action $a$, the environment dynamics model
 the probability of a next state $s'$ and reward $r$, formally denoted
 $
