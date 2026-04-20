@@ -249,7 +249,8 @@ serves to weight immediate rewards more heavily than distant ones. This
 encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
-of the agent, that being maximization of $EE[G_0]$.~@Sutton2018 @npfl139-lec01
+of the agent, that being maximization of $EE[G_t]$ (or specifically $EE[G_0]$
+for episodic tasks).~@Sutton2018 @npfl139-lec01
 
 === (Action-)Value function
 
@@ -343,7 +344,7 @@ randomly chosen. It is essentially the greediest of all $epsilon$-soft policies,
 meaning policies where all actions must have at least this
 probability.
 
-There is one more improvement we can make. In early training, the agent
+There is one final improvement we can make. In early training, the agent
 (probably) has very bad estimates of $q_pi$. Therefore, it doesn't make sense
 to behave greedily too often. We can start with a high $epsilon$ like 0.5 and
 slowly decay it after each step in the environment by multiplying it by a value
@@ -365,10 +366,10 @@ an optimal policy becomes trivial. By simply selecting the action with
 the highest estimated value -- the greedy approach with respect
 to the value function -- the agent can derive its behavior without ever having
 to explicitly learn a separate policy function. Once we have estimated $q_*$
-during training, we'll simply select actions deterministically
+as $hat(q)_*$ during training, we'll simply select actions deterministically
 by using the policy
 $
-    pi (s) = argmax_a q_* (s, a).
+    pi (s) = argmax_a hat(q)_* (s, a).
 $
 
 === Monte Carlo
