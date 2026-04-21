@@ -165,10 +165,10 @@ where $cal(S)$ is the set of states, $cal(A)(s)$ the set of actions that can
 be taken in state $s in cal(S)$, $p$ the environment dynamics and
 $gamma in [0, 1]$ the discount factor.
 //
-#footnote(
-    [ If $cal(S) "and" cal(A)$ are finite, we're talking about
-        a finite #gls("mdp").],
-)
+#footnote([
+    If $cal(S) "and" cal(A)$ are finite, we're talking about
+    a finite #gls("mdp").
+])
 //
 Given a state $s$ and action $a$, the environment dynamics model
 the probability of a next state $s'$ and reward $r$, formally denoted
@@ -196,9 +196,15 @@ knows what cards the opponent has, even though a "full state" exists.
 To model environments like these, we define the #gls("pomdp").
 
 #Glspl("pomdp") are inherently similar to #glspl("mdp"), but they are
-defined as a sextuple $(cal(S), cal(A), p, gamma, cal(O), o)$,
-where $cal(O)$ is a set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is an
-observation model. We then give agents $O_t$ as input instead of $S_t$. An
+defined as a sextuple
+//
+#footnote([
+    #gls("pomdp") also has a similar alternate definition to #gls("mdp").
+])
+//
+$(cal(S), cal(A), p, gamma, cal(O), o)$,
+where $cal(O)$ is the set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is
+the observation model. We then give agents $O_t$ as input instead of $S_t$. An
 illustration can be seen in @fig:pomdp-loop.~@Spaan2012 @Sutton2018 @npfl139-lec01
 
 #figure(
@@ -229,8 +235,10 @@ which we call episodes. Tasks that can be split into episodes are called episodi
 Episodes always end when a _terminal state_ is reached. The interaction is
 then restarted from a starting state. Environments can have multiple starting
 and terminal states.
-#footnote([$cal(S)^+$ is sometimes used to signify episodic tasks as
-    "$cal(S)$ with terminal states".])
+#footnote([
+    $cal(S)^+$ is sometimes used to signify episodic tasks as
+    "$cal(S)$ with terminal states".
+])
 
 The alternative are continuing tasks, where an interaction can theoretically go
 on forever. In this case, $G_t$ as we defined before could potentially be unbounded
@@ -240,8 +248,8 @@ $
     G_t = R_(t+1) + gamma R_(t+2) + gamma^2 R_(t+3) + ...
     = sum_(k=0)^infinity gamma^k R_(t+1+k).
 $
-In episodic tasks, if we introduce an absorbing state which can't be transitioned
-out of and gives a reward of 0, we can use this formula for both episodic and continuing tasks.
+To use this formula in episodic tasks as well, we can introduce an absorbing
+state which can't be transitioned out of and gives a reward of 0.
 We can also use $G_t = sum_(k=0)^(T-t-1) gamma^k R_(t+1+k)$
 and allow for $T = infinity$ or $gamma = 1$ (never both).
 Fixing $gamma < 1$ can however be useful even in episodic tasks, as it
