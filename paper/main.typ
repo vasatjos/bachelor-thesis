@@ -155,15 +155,15 @@ where the loop begins anew. Formally, we'll model these environments as
     ),
 ) <fig:mdp-loop>
 
-To formalize any reinforcement learning problems, we model the environment as
+To formalize any reinforcement learning problem, we model the environment as
 a #gls("mdp", first: true). This model captures the interaction between
 the agent and its environment through states, actions, transition probabilities,
 and rewards. An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
 
 A particular #gls("mdp") is defined as a quadruple $(cal(S), cal(A), p, gamma)$,
-where $cal(S)$ is a set of states, $cal(A)(s)$ a set of actions that can be taken
-in state $s in cal(S)$, $p$ the environment dynamics and $gamma in [0, 1]$
-the discount factor.
+where $cal(S)$ is the set of states, $cal(A)(s)$ the set of actions that can
+be taken in state $s in cal(S)$, $p$ the environment dynamics and
+$gamma in [0, 1]$ the discount factor.
 //
 #footnote(
     [ If $cal(S) "and" cal(A)$ are finite, we're talking about
