@@ -1,5 +1,6 @@
 import pickle
 import random
+from time import time
 from typing import Any
 import argparse
 from prsi.agents.agent import Agent
@@ -405,9 +406,12 @@ class MonteCarloAgent(TrainableAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        random.seed(args.seed)
+    if args.seed is None:
+        args.seed = int(time())
+        print(f"[seed] Auto-generated seed: {args.seed}")
+
+    np.random.seed(args.seed)
+    random.seed(args.seed)
 
     opponent: Agent
     match args.opponent:
