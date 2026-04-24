@@ -17,3 +17,5 @@ SZZ - Deadlines
 Licence - courses
 
 Rename future work to discussion + FW
+
+Add [this](https://www.youtube.com/playlist?list=PLzvYlJMoZ02Dxtwe-MmH4nOB5jYlMGBjr) to bibliography
