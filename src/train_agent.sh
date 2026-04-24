@@ -15,11 +15,14 @@ STORAGE_DIR="/storage/praha1/home/vasatjos/thesis"
 AGENT_STRATEGIES_DIR="${STORAGE_DIR}/agent_strategies"
 LOGS_DIR="${STORAGE_DIR}/logs"
 
-if [ "${AGENT_NAME}" == "dqn" ]; then
-    MODEL_PATH="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}/${JOB_NAME}.pth"
-else
-    MODEL_PATH="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}/${JOB_NAME}.pkl"
-fi
+case "${AGENT_NAME}" in
+    "dqn" | "ddqn" | "reinforce")
+        MODEL_PATH="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}/${JOB_NAME}.pth"
+        ;;
+    *)
+        MODEL_PATH="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}/${JOB_NAME}.pkl"
+        ;;
+esac
 
 mkdir -p "${AGENT_STRATEGIES_DIR}/${AGENT_NAME}"
 mkdir -p "${LOGS_DIR}"
