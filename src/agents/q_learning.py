@@ -37,7 +37,7 @@ parser.add_argument(
     type=str,
     help="Path to save/load model.",
 )
-parser.add_argument("--log_each", default=2_000_000, type=int, help="Log frequency.")
+parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--save_each", default=None, type=int, help="Periodic saving frequency."
 )
@@ -48,11 +48,11 @@ parser.add_argument(
     "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--alpha", default=0.1, type=float, help="Learning rate.")
-parser.add_argument("--epsilon", default=0.3, type=float, help="Exploration factor.")
+parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
 parser.add_argument(
     "--epsilon_decay", default=1, type=float, help="Epsilon decay factor."
 )
-parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
+parser.add_argument("--min_epsilon", default=0.001, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
@@ -402,8 +402,13 @@ class QLearningAgent(TrainableAgent):
                 self.played_cards_subset[0] += 1
 
     def log(self, episode: int, batch_wins: int) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+            f"{epsilon_string}"
             f"States seen: {len(self.action_value_fn):_}, "
             f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
@@ -414,7 +419,7 @@ if __name__ == "__main__":
 
     if args.seed is None:
         args.seed = int(time())
-        print(f"[seed] Auto-generated seed: {args.seed}")
+        print(f"Auto-generated seed: {args.seed}")
 
     np.random.seed(args.seed)
     random.seed(args.seed)

@@ -525,9 +525,13 @@ class DQNAgent(TrainableAgent):
     def log(
         self, episode: int, batch_wins: int, draw_actions: int, total_actions: int
     ) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
-            f"Epsilon: {self.args.epsilon:.4f}, "
+            f"{epsilon_string}"
             f"Draw-action rate: {draw_actions / total_actions:.2%}, "
             f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
@@ -547,7 +551,7 @@ if __name__ == "__main__":
 
     if args.seed is None:
         args.seed = int(time())
-        print(f"[seed] Auto-generated seed: {args.seed}")
+        print(f"Auto-generated seed: {args.seed}")
 
     np.random.seed(args.seed)
     random.seed(args.seed)

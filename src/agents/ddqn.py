@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
     if args.seed is None:
         args.seed = int(time())
-        print(f"[seed] Auto-generated seed: {args.seed}")
+        print(f"Auto-generated seed: {args.seed}")
 
     np.random.seed(args.seed)
     random.seed(args.seed)
