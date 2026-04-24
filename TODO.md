@@ -2,8 +2,16 @@
 
 ? Split model_path for saving into dir and agent name, update scripts
 
-Try some small reward every episode
-
 REINFORCE agent
 
 PPO agent
+
+Paper - add "Notation from" at start of chapters
+
+Paper - page numbering at sides of page instead middle on 2-sided
+
+SZZ - Deadlines
+
+Licence - courses
+
+Rename future work to discussion + FW
