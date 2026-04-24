@@ -2,7 +2,6 @@ import argparse
 import random
 from time import time
 from typing import Any
-import collections
 import numpy as np
 import torch
 import torch.nn as nn
@@ -26,6 +25,7 @@ from prsi.card_utils import CardEffect, Rank
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState
 from agents.trainable import TrainableAgent
+from agents.utils import Transition, Network
 
 parser = argparse.ArgumentParser()
 
@@ -111,34 +111,6 @@ parser.add_argument(
 )
 
 
-class QNetwork(nn.Module):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    def __init__(self, hidden_size: int, hidden_count: int = 1) -> None:
-        if hidden_count < 1 or hidden_size < 1:
-            raise ValueError("Invalid network parameters!")
-
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.LazyLinear(hidden_size),
-            nn.ReLU(),
-        )
-        for _ in range(hidden_count):
-            self.net.append(nn.Linear(hidden_size, hidden_size))
-            self.net.append(nn.ReLU())
-
-        self.net.append(nn.Linear(hidden_size, PrsiEnv.ACTION_SPACE_SIZE))
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
-
-
-Transition = collections.namedtuple(
-    "Transition",
-    ["state", "action_idx", "reward", "done", "next_state", "next_valid_actions"],
-)
-
-
 class DQNAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
@@ -156,13 +128,21 @@ class DQNAgent(TrainableAgent):
         self._init_played_subset()
         self._build_networks()
 
+    @property
+    def device(self) -> torch.device:
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     def _build_networks(self) -> None:
-        self.online_net = QNetwork(
-            self.args.hidden_layer_size, self.args.hidden_layer_count
-        ).to(QNetwork.device)
-        self.target_net = QNetwork(
-            self.args.hidden_layer_size, self.args.hidden_layer_count
-        ).to(QNetwork.device)
+        self.online_net = Network(
+            self.args.hidden_layer_size,
+            self.args.hidden_layer_count,
+            PrsiEnv.ACTION_SPACE_SIZE,
+        ).to(self.device)
+        self.target_net = Network(
+            self.args.hidden_layer_size,
+            self.args.hidden_layer_count,
+            PrsiEnv.ACTION_SPACE_SIZE,
+        ).to(self.device)
         self.target_net.load_state_dict(self.online_net.state_dict())
         self.target_net.eval()
 
@@ -304,32 +284,32 @@ class DQNAgent(TrainableAgent):
         states = torch.tensor(
             np.array([t.state for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         action_idxs = torch.tensor(
             np.array([t.action_idx for t in batch]),
             dtype=torch.long,
-            device=QNetwork.device,
+            device=self.device,
         )
         rewards = torch.tensor(
             np.array([t.reward for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         dones = torch.tensor(
             np.array([t.done for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         next_states = torch.tensor(
             np.array([t.next_state for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         next_valid_masks = torch.tensor(
             np.array([t.next_valid_actions for t in batch]),
             dtype=torch.bool,
-            device=QNetwork.device,
+            device=self.device,
         )
 
         # Q(s,a)
@@ -393,7 +373,7 @@ class DQNAgent(TrainableAgent):
 
         state_vec = self._process_state(state, info, hand)
         state_tensor = torch.tensor(state_vec[np.newaxis], dtype=torch.float32).to(
-            QNetwork.device
+            self.device
         )
 
         self.online_net.eval()
@@ -513,7 +493,7 @@ class DQNAgent(TrainableAgent):
 
     def load(self, path: str) -> None:
         print(f"Loading model from {path}")
-        data = torch.load(path, map_location=QNetwork.device)
+        data = torch.load(path, map_location=self.device)
         args_dict = data.get("args", {})
         self.args = argparse.Namespace(**args_dict)
         self._init_played_subset()

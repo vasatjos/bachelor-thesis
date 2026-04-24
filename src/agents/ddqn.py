@@ -3,7 +3,7 @@ import random
 from time import time
 import numpy as np
 import torch
-from agents.dqn import DQNAgent, QNetwork
+from agents.dqn import DQNAgent
 from prsi.agents.agent import Agent
 from prsi.agents.baselines import GreedyAgent, RandomAgent
 from prsi.rl_utils import ReplayBuffer
@@ -100,32 +100,32 @@ class DoubleDQNAgent(DQNAgent):
         states = torch.tensor(
             np.array([t.state for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         action_idxs = torch.tensor(
             np.array([t.action_idx for t in batch]),
             dtype=torch.long,
-            device=QNetwork.device,
+            device=self.device,
         )
         rewards = torch.tensor(
             np.array([t.reward for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         dones = torch.tensor(
             np.array([t.done for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         next_states = torch.tensor(
             np.array([t.next_state for t in batch]),
             dtype=torch.float32,
-            device=QNetwork.device,
+            device=self.device,
         )
         next_valid_masks = torch.tensor(
             np.array([t.next_valid_actions for t in batch]),
             dtype=torch.bool,
-            device=QNetwork.device,
+            device=self.device,
         )
 
         # Q(s,a) from online network
