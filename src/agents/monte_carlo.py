@@ -135,7 +135,6 @@ class MonteCarloAgent(TrainableAgent):
             else:
                 game_state, info = env.reset()
             hand = info["hand"]
-            hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
             done = False
 
@@ -280,6 +279,26 @@ class MonteCarloAgent(TrainableAgent):
         self._init_played_subset()
         print("Model loaded successfully!")
 
+    def clone(self) -> "MonteCarloAgent":
+        cloned = MonteCarloAgent.__new__(MonteCarloAgent)
+        cloned.args = self.args
+        cloned.action_value_fn = self.action_value_fn.copy()
+        cloned.num_visits = self.num_visits.copy()
+        cloned._init_played_subset()
+        return cloned
+
+    def log(self, episode: int, batch_wins: int) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
+        print(
+            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+            f"{epsilon_string}"
+            f"States seen: {len(self.action_value_fn):_}, "
+            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
+        )
+
     def _init_played_subset(self) -> None:
         match self.args.played_subset:
             case "specials":  # sevens + obers + aces
@@ -321,11 +340,6 @@ class MonteCarloAgent(TrainableAgent):
             effect_strength,
             tuple(self.played_cards_subset),
         )
-
-    def _handle_top_card(self, top_card: Card) -> CardIndex:
-        if not self.args.hand_state_option.startswith("full"):
-            return 0  # we only care about suit
-        return CARD_TO_INDEX[top_card]
 
     def _get_hand_state(self, hand: list[Card]) -> np.uint32:
         match self.args.hand_state_option:
@@ -370,6 +384,11 @@ class MonteCarloAgent(TrainableAgent):
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
+    def _handle_top_card(self, top_card: Card) -> CardIndex:
+        if not self.args.hand_state_option.startswith("full"):
+            return 0  # we only care about suit
+        return CARD_TO_INDEX[top_card]
+
     def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
         if deck_flipped_over:
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
@@ -394,18 +413,6 @@ class MonteCarloAgent(TrainableAgent):
                 if card.rank != Rank.SEVEN:
                     return
                 self.played_cards_subset[0] += 1
-
-    def log(self, episode: int, batch_wins: int) -> None:
-        epsilon_string = ""
-        if self.args.epsilon_decay < 1:
-            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
-
-        print(
-            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
-            f"{epsilon_string}"
-            f"States seen: {len(self.action_value_fn):_}, "
-            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
-        )
 
 
 if __name__ == "__main__":

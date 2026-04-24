@@ -94,6 +94,15 @@ parser.add_argument(
 
 
 class DoubleDQNAgent(DQNAgent):
+    def clone(self) -> "DoubleDQNAgent":
+        cloned = DoubleDQNAgent.__new__(DoubleDQNAgent)
+        cloned.args = self.args
+        cloned._init_played_subset()
+        cloned._build_networks()
+        cloned.online_net.load_state_dict(self.online_net.state_dict())
+        cloned.online_net.eval()
+        return cloned
+
     def _learn(self, replay_buffer: ReplayBuffer) -> None:
         batch = replay_buffer.sample(self.args.batch_size)
 
@@ -152,15 +161,6 @@ class DoubleDQNAgent(DQNAgent):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
-    def clone(self) -> "DoubleDQNAgent":
-        cloned = DoubleDQNAgent.__new__(DoubleDQNAgent)
-        cloned.args = self.args
-        cloned._init_played_subset()
-        cloned._build_networks()
-        cloned.online_net.load_state_dict(self.online_net.state_dict())
-        cloned.online_net.eval()
-        return cloned
 
 
 if __name__ == "__main__":

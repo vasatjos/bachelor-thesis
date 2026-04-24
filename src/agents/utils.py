@@ -1,6 +1,7 @@
 import collections
 import torch
 
+
 Transition = collections.namedtuple(
     "Transition",
     ["state", "action_idx", "reward", "done", "next_state", "next_valid_actions"],

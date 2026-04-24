@@ -248,20 +248,6 @@ class QLearningAgent(TrainableAgent):
 
         return best_action
 
-    def _get_max_q_value(
-        self, game_state: GameState, hand: list[Card], state: State
-    ) -> float:
-        """Get the maximum Q-value for the given state over all valid actions."""
-        valid_actions = get_valid_actions(game_state, hand)
-
-        max_value = -np.inf
-        for action in valid_actions:
-            value = self.action_value_fn.get(state, {}).get(action, 0.0)
-            if value > max_value:
-                max_value = value
-
-        return max_value if max_value > -np.inf else 0.0
-
     def save(self, path: str) -> None:
         print(f"Saving model to {path}")
         data = {
@@ -283,6 +269,25 @@ class QLearningAgent(TrainableAgent):
         self.args = argparse.Namespace(**args_dict)
         self._init_played_subset()
         print("Model loaded successfully!")
+
+    def clone(self) -> "QLearningAgent":
+        cloned = QLearningAgent.__new__(QLearningAgent)
+        cloned.args = self.args
+        cloned.action_value_fn = self.action_value_fn.copy()
+        cloned._init_played_subset()
+        return cloned
+
+    def log(self, episode: int, batch_wins: int) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
+        print(
+            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+            f"{epsilon_string}"
+            f"States seen: {len(self.action_value_fn):_}, "
+            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
+        )
 
     def _init_played_subset(self) -> None:
         match self.args.played_subset:
@@ -325,11 +330,6 @@ class QLearningAgent(TrainableAgent):
             effect_strength,
             tuple(self.played_cards_subset),
         )
-
-    def _handle_top_card(self, top_card: Card) -> CardIndex:
-        if not self.args.hand_state_option.startswith("full"):
-            return 0  # we only care about suit
-        return CARD_TO_INDEX[top_card]
 
     def _get_hand_state(self, hand: list[Card]) -> np.uint32:
         match self.args.hand_state_option:
@@ -374,6 +374,11 @@ class QLearningAgent(TrainableAgent):
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
+    def _handle_top_card(self, top_card: Card) -> CardIndex:
+        if not self.args.hand_state_option.startswith("full"):
+            return 0  # we only care about suit
+        return CARD_TO_INDEX[top_card]
+
     def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
         if deck_flipped_over:
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
@@ -399,17 +404,19 @@ class QLearningAgent(TrainableAgent):
                     return
                 self.played_cards_subset[0] += 1
 
-    def log(self, episode: int, batch_wins: int) -> None:
-        epsilon_string = ""
-        if self.args.epsilon_decay < 1:
-            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+    def _get_max_q_value(
+        self, game_state: GameState, hand: list[Card], state: State
+    ) -> float:
+        """Get the maximum Q-value for the given state over all valid actions."""
+        valid_actions = get_valid_actions(game_state, hand)
 
-        print(
-            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
-            f"{epsilon_string}"
-            f"States seen: {len(self.action_value_fn):_}, "
-            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
-        )
+        max_value = -np.inf
+        for action in valid_actions:
+            value = self.action_value_fn.get(state, {}).get(action, 0.0)
+            if value > max_value:
+                max_value = value
+
+        return max_value if max_value > -np.inf else 0.0
 
 
 if __name__ == "__main__":

@@ -132,85 +132,6 @@ class DQNAgent(TrainableAgent):
     def device(self) -> torch.device:
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def _build_networks(self) -> None:
-        self.online_net = Network(
-            self.args.hidden_layer_size,
-            self.args.hidden_layer_count,
-            PrsiEnv.ACTION_SPACE_SIZE,
-        ).to(self.device)
-        self.target_net = Network(
-            self.args.hidden_layer_size,
-            self.args.hidden_layer_count,
-            PrsiEnv.ACTION_SPACE_SIZE,
-        ).to(self.device)
-        self.target_net.load_state_dict(self.online_net.state_dict())
-        self.target_net.eval()
-
-        self.optimizer = torch.optim.Adam(
-            self.online_net.parameters(), lr=self.args.learning_rate
-        )
-        self.loss = nn.MSELoss()
-
-    def _init_played_subset(self) -> None:
-        match self.args.played_subset:
-            case "specials":
-                self.played_cards_subset = np.zeros(3, dtype=np.uint8)
-            case "sevens":
-                self.played_cards_subset = np.zeros(1, dtype=np.uint8)
-            case "all":
-                self.played_cards_subset = np.zeros(32, dtype=np.uint8)
-            case _:
-                raise ValueError("Invalid played_subset argument.")
-
-    def _state_to_vector(
-        self,
-        hand_state: list[np.uint8] | np.ndarray,
-        opponent_card_count: int,
-        top_card: CardIndex,
-        active_suit: SuitIndex,
-        card_effect: CardEffect,
-        effect_strength: np.uint8,
-        played_subset: np.ndarray,
-    ) -> np.ndarray:
-        """Pack everything into a 1-D float32 array, normalized into 0-1."""
-        hand: list[np.uint8] | list[float] | np.ndarray
-
-        card_count_denominator = 31
-        if self.args.hand_state_option == "count_truncated":
-            card_count_denominator = self.args.truncated_hand_size
-            hand = [hand_state[0] / self.args.truncated_hand_size]
-        elif self.args.hand_state_option == "count":
-            hand = [hand_state[0] / 31]
-        elif self.args.hand_state_option == "simple":  # always numpy array here
-            hand = hand_state / 4  # type: ignore
-        else:  # one-hot, no normalization
-            hand = hand_state
-
-        if self.args.played_subset == "all":
-            played = np.asarray(played_subset, dtype=np.float32)  # one-hot, already 0-1
-        else:
-            played = np.asarray(played_subset, dtype=np.float32) / 4.0
-
-        top_card_1hot = np.zeros(32)
-        top_card_1hot[top_card] = 1
-        active_suit_1hot = np.zeros(4)
-        active_suit_1hot[active_suit] = 1
-        card_effect_1hot = np.zeros(3)
-        card_effect_1hot[card_effect.value] = 1
-
-        return np.array(
-            [
-                *hand,
-                opponent_card_count / card_count_denominator,
-                *top_card_1hot,
-                *active_suit_1hot,
-                *card_effect_1hot,
-                effect_strength / 4,  # values 0-4
-                *played,
-            ],
-            dtype=np.float32,
-        )
-
     def train(self, env: PrsiEnv) -> None:
         replay_buffer: ReplayBuffer[Transition] = ReplayBuffer(
             max_length=self.args.replay_buffer_size
@@ -224,6 +145,7 @@ class DQNAgent(TrainableAgent):
                 game_state, info = env.reset(opponent=self.clone())
             else:
                 game_state, info = env.reset()
+
             hand: list[Card] = info["hand"]
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
@@ -277,58 +199,6 @@ class DQNAgent(TrainableAgent):
                 and (episode + 1) % self.args.save_each == 0
             ):
                 self.save(self.args.model_path)
-
-    def _learn(self, replay_buffer: ReplayBuffer) -> None:
-        batch = replay_buffer.sample(self.args.batch_size)
-
-        states = torch.tensor(
-            np.array([t.state for t in batch]),
-            dtype=torch.float32,
-            device=self.device,
-        )
-        action_idxs = torch.tensor(
-            np.array([t.action_idx for t in batch]),
-            dtype=torch.long,
-            device=self.device,
-        )
-        rewards = torch.tensor(
-            np.array([t.reward for t in batch]),
-            dtype=torch.float32,
-            device=self.device,
-        )
-        dones = torch.tensor(
-            np.array([t.done for t in batch]),
-            dtype=torch.float32,
-            device=self.device,
-        )
-        next_states = torch.tensor(
-            np.array([t.next_state for t in batch]),
-            dtype=torch.float32,
-            device=self.device,
-        )
-        next_valid_masks = torch.tensor(
-            np.array([t.next_valid_actions for t in batch]),
-            dtype=torch.bool,
-            device=self.device,
-        )
-
-        # Q(s,a)
-        self.online_net.train()
-        q_values = self.online_net(states)
-        current_q = q_values.gather(1, action_idxs.unsqueeze(1)).squeeze(1)
-
-        # Target: r + gamma * max_{a' valid} Q_target(s', a')
-        with torch.no_grad():
-            next_q = self.target_net(next_states)
-            next_q[~next_valid_masks] = -torch.inf
-            max_next_q = next_q.max(dim=1).values
-            target_q = rewards + self.args.gamma * max_next_q * (1.0 - dones)
-
-        loss = self.loss(current_q, target_q)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
         original_epsilon = self.args.epsilon
@@ -388,6 +258,134 @@ class DQNAgent(TrainableAgent):
         best_action_idx = int(masked_q.argmax())
         return INDEX_TO_ACTION[best_action_idx]
 
+    def save(self, path: str) -> None:
+        print(f"Saving model to {path}")
+        torch.save(
+            {
+                "online_net": self.online_net.state_dict(),
+                "target_net": self.target_net.state_dict(),
+                "args": vars(self.args),
+            },
+            path,
+        )
+        print("Model saved successfully!")
+
+    def load(self, path: str) -> None:
+        print(f"Loading model from {path}")
+        data = torch.load(path, map_location=self.device)
+        args_dict = data.get("args", {})
+        self.args = argparse.Namespace(**args_dict)
+        self._init_played_subset()
+        self._build_networks()
+        self.online_net.load_state_dict(data["online_net"])
+        self.target_net.load_state_dict(data["target_net"])
+        print("Model loaded successfully!")
+
+    def clone(self) -> "DQNAgent":
+        cloned = DQNAgent.__new__(DQNAgent)
+        cloned.args = self.args
+        cloned._init_played_subset()
+        cloned._build_networks()
+        cloned.online_net.load_state_dict(self.online_net.state_dict())
+        cloned.online_net.eval()
+        return cloned
+
+    def log(
+        self, episode: int, batch_wins: int, draw_actions: int, total_actions: int
+    ) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
+        print(
+            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+            f"{epsilon_string}"
+            f"Draw-action rate: {draw_actions / total_actions:.2%}, "
+            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
+        )
+
+    def _build_networks(self) -> None:
+        self.online_net = Network(
+            self.args.hidden_layer_size,
+            self.args.hidden_layer_count,
+            PrsiEnv.ACTION_SPACE_SIZE,
+        ).to(self.device)
+        self.target_net = Network(
+            self.args.hidden_layer_size,
+            self.args.hidden_layer_count,
+            PrsiEnv.ACTION_SPACE_SIZE,
+        ).to(self.device)
+        self.target_net.load_state_dict(self.online_net.state_dict())
+        self.target_net.eval()
+
+        self.optimizer = torch.optim.Adam(
+            self.online_net.parameters(), lr=self.args.learning_rate
+        )
+        self.loss = nn.MSELoss()
+
+    def _init_played_subset(self) -> None:
+        match self.args.played_subset:
+            case "specials":
+                self.played_cards_subset = np.zeros(3, dtype=np.uint8)
+            case "sevens":
+                self.played_cards_subset = np.zeros(1, dtype=np.uint8)
+            case "all":
+                self.played_cards_subset = np.zeros(32, dtype=np.uint8)
+            case _:
+                raise ValueError("Invalid played_subset argument.")
+
+    def _learn(self, replay_buffer: ReplayBuffer) -> None:
+        batch = replay_buffer.sample(self.args.batch_size)
+
+        states = torch.tensor(
+            np.array([t.state for t in batch]),
+            dtype=torch.float32,
+            device=self.device,
+        )
+        action_idxs = torch.tensor(
+            np.array([t.action_idx for t in batch]),
+            dtype=torch.long,
+            device=self.device,
+        )
+        rewards = torch.tensor(
+            np.array([t.reward for t in batch]),
+            dtype=torch.float32,
+            device=self.device,
+        )
+        dones = torch.tensor(
+            np.array([t.done for t in batch]),
+            dtype=torch.float32,
+            device=self.device,
+        )
+        next_states = torch.tensor(
+            np.array([t.next_state for t in batch]),
+            dtype=torch.float32,
+            device=self.device,
+        )
+        next_valid_masks = torch.tensor(
+            np.array([t.next_valid_actions for t in batch]),
+            dtype=torch.bool,
+            device=self.device,
+        )
+
+        # Q(s,a)
+        self.online_net.train()
+        q_values = self.online_net(states)
+        current_q = q_values.gather(1, action_idxs.unsqueeze(1)).squeeze(1)
+
+        # Target: r + gamma * max_{a' valid} Q_target(s', a')
+        with torch.no_grad():
+            next_q = self.target_net(next_states)
+            next_q[~next_valid_masks] = -torch.inf
+            max_next_q = next_q.max(dim=1).values
+            target_q = rewards + self.args.gamma * max_next_q * (1.0 - dones)
+
+        loss = self.loss(current_q, target_q)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
     def _process_state(
         self, state: GameState, info: dict[str, Any], hand: list[Card]
     ) -> np.ndarray:
@@ -416,6 +414,55 @@ class DQNAgent(TrainableAgent):
             card_effect,
             effect_strength,
             self.played_cards_subset,
+        )
+
+    def _state_to_vector(
+        self,
+        hand_state: list[np.uint8] | np.ndarray,
+        opponent_card_count: int,
+        top_card: CardIndex,
+        active_suit: SuitIndex,
+        card_effect: CardEffect,
+        effect_strength: np.uint8,
+        played_subset: np.ndarray,
+    ) -> np.ndarray:
+        """Pack everything into a 1-D float32 array, normalized into 0-1."""
+        hand: list[np.uint8] | list[float] | np.ndarray
+
+        card_count_denominator = 31
+        if self.args.hand_state_option == "count_truncated":
+            card_count_denominator = self.args.truncated_hand_size
+            hand = [hand_state[0] / self.args.truncated_hand_size]
+        elif self.args.hand_state_option == "count":
+            hand = [hand_state[0] / 31]
+        elif self.args.hand_state_option == "simple":  # always numpy array here
+            hand = hand_state / 4  # type: ignore
+        else:  # one-hot, no normalization
+            hand = hand_state
+
+        if self.args.played_subset == "all":
+            played = np.asarray(played_subset, dtype=np.float32)  # one-hot, already 0-1
+        else:
+            played = np.asarray(played_subset, dtype=np.float32) / 4.0
+
+        top_card_1hot = np.zeros(32)
+        top_card_1hot[top_card] = 1
+        active_suit_1hot = np.zeros(4)
+        active_suit_1hot[active_suit] = 1
+        card_effect_1hot = np.zeros(3)
+        card_effect_1hot[card_effect.value] = 1
+
+        return np.array(
+            [
+                *hand,
+                opponent_card_count / card_count_denominator,
+                *top_card_1hot,
+                *active_suit_1hot,
+                *card_effect_1hot,
+                effect_strength / 4,  # values 0-4
+                *played,
+            ],
+            dtype=np.float32,
         )
 
     def _handle_top_card(self, top_card: Card) -> CardIndex:
@@ -478,52 +525,6 @@ class DQNAgent(TrainableAgent):
                     self.played_cards_subset[0] = np.uint8(
                         self.played_cards_subset[0] + 1
                     )
-
-    def save(self, path: str) -> None:
-        print(f"Saving model to {path}")
-        torch.save(
-            {
-                "online_net": self.online_net.state_dict(),
-                "target_net": self.target_net.state_dict(),
-                "args": vars(self.args),
-            },
-            path,
-        )
-        print("Model saved successfully!")
-
-    def load(self, path: str) -> None:
-        print(f"Loading model from {path}")
-        data = torch.load(path, map_location=self.device)
-        args_dict = data.get("args", {})
-        self.args = argparse.Namespace(**args_dict)
-        self._init_played_subset()
-        self._build_networks()
-        self.online_net.load_state_dict(data["online_net"])
-        self.target_net.load_state_dict(data["target_net"])
-        print("Model loaded successfully!")
-
-    def log(
-        self, episode: int, batch_wins: int, draw_actions: int, total_actions: int
-    ) -> None:
-        epsilon_string = ""
-        if self.args.epsilon_decay < 1:
-            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
-
-        print(
-            f"Episode {episode + 1:_}/{self.args.episodes:_}, "
-            f"{epsilon_string}"
-            f"Draw-action rate: {draw_actions / total_actions:.2%}, "
-            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
-        )
-
-    def clone(self) -> "DQNAgent":
-        cloned = DQNAgent.__new__(DQNAgent)
-        cloned.args = self.args
-        cloned._init_played_subset()
-        cloned._build_networks()
-        cloned.online_net.load_state_dict(self.online_net.state_dict())
-        cloned.online_net.eval()
-        return cloned
 
 
 if __name__ == "__main__":
