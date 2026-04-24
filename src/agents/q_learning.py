@@ -124,7 +124,6 @@ class QLearningAgent(TrainableAgent):
             return
 
         self.args = args
-        self.epsilon = args.epsilon
 
         self.played_cards_subset: list[np.uint8]
         self._init_played_subset()
@@ -181,8 +180,8 @@ class QLearningAgent(TrainableAgent):
                     batch_wins += 1
 
             # Decay epsilon
-            if self.epsilon > self.args.min_epsilon:
-                self.epsilon *= self.args.epsilon_decay
+            if self.args.epsilon > self.args.min_epsilon:
+                self.args.epsilon *= self.args.epsilon_decay
 
             if (episode + 1) % self.args.log_each == 0:
                 self.log(episode, batch_wins)
@@ -195,8 +194,8 @@ class QLearningAgent(TrainableAgent):
                 self.save(self.args.model_path)
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
-        original_epsilon = self.epsilon
-        self.epsilon = 0.0
+        original_epsilon = self.args.epsilon
+        self.args.epsilon = 0.0
 
         opponent: Agent | None = None
         match args.opponent:
@@ -223,7 +222,7 @@ class QLearningAgent(TrainableAgent):
             if reward > 0:
                 wins += 1
 
-        self.epsilon = original_epsilon
+        self.args.epsilon = original_epsilon
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
@@ -231,7 +230,7 @@ class QLearningAgent(TrainableAgent):
         self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         # Epsilon-greedy
-        if np.random.random() < self.epsilon:
+        if np.random.random() < self.args.epsilon:
             return behave_randomly(state, hand)
 
         processed_state = self._process_state(state, info, hand)
@@ -268,7 +267,7 @@ class QLearningAgent(TrainableAgent):
         data = {
             "action_value_fn": self.action_value_fn,
             "args": vars(self.args),
-            "epsilon": self.epsilon,
+            "epsilon": self.args.epsilon,
         }
         with open(path, "wb") as f:
             pickle.dump(data, f)
@@ -282,7 +281,6 @@ class QLearningAgent(TrainableAgent):
         self.action_value_fn = data["action_value_fn"]
         args_dict = data.get("args", {})
         self.args = argparse.Namespace(**args_dict)
-        self.epsilon = data.get("epsilon", self.args.epsilon)
         self._init_played_subset()
         print("Model loaded successfully!")
 
