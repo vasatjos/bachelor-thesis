@@ -53,6 +53,11 @@ parser.add_argument(
 parser.add_argument("--min_epsilon", default=0.001, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
+    "--every_visit",
+    action="store_true",
+    help="Use every-visit MC instead of first-visit.",
+)
+parser.add_argument(
     "--hand_state_option",
     default="count_truncated",
     type=str,
@@ -164,15 +169,16 @@ class MonteCarloAgent(TrainableAgent):
                 returns.append(return_G)
             returns.reverse()
 
-            # Update Q-values (first-visit MC)
-            visited: set[tuple[State, Action]] = set()
+            # Update Q-values
+            visited: set[tuple[State, Action]] = set()  # only used for first-visit MC
             for t in range(len(states)):
                 state = states[t]
                 action = actions[t]
                 sa_pair = state, action
 
-                if sa_pair not in visited:
-                    visited.add(sa_pair)
+                if sa_pair not in visited or self.args.every_visit:
+                    if not self.args.every_visit:
+                        visited.add(sa_pair)
 
                     # Initialize if not seen before
                     if state not in self.action_value_fn:
