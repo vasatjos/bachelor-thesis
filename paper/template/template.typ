@@ -1,5 +1,12 @@
 #import "./front.typ": *
 
+// Short captions
+#let in-outline = state("in-outline", false)
+#let flex-caption(short, long) = context if in-outline.get() { short } else { long }
+
+// Custom math definitions
+#let argmax = math.op([arg#h(1.5pt)max], limits: true)
+
 #let template(
     meta: (),
     font: "Libertinus Serif",
@@ -121,13 +128,19 @@
     }
     pagebreak()
 
+
+    // alongside flex-caption allows for short and long figure captions
+    // must be before any call to `outline`
+    show outline: it => {
+        in-outline.update(true)
+        it
+        in-outline.update(false)
+    }
+
     outline(depth: 2, indent: auto)
     pagebreak()
-    // [ = List of Figures]
     outline(title: "List of Figures", target: figure.where(kind: image))
-    // [ = List of Tables]
     outline(title: "List of Tables", target: figure.where(kind: table))
-    // [ = List of Code Listings]
     outline(title: "List of Code Listings", target: figure.where(kind: raw))
 
 
@@ -137,6 +150,8 @@
     set par(first-line-indent: 1.5em)
 
     set line(length: 100%, stroke: 1pt + luma(200))
+
+    show math.equation.where(block: false): box // don't break inline math
 
     set figure(placement: auto)
     show figure.caption: set text(0.9em)

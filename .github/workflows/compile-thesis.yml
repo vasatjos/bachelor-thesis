@@ -1,0 +1,42 @@
+name: Compile Thesis
+
+on:
+  push:
+    paths:
+      - 'paper/**'
+      - '.github/workflows/compile-thesis.yml'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Typst
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+          cargo install --locked typst-cli
+
+      - name: Install pdftk
+        run: sudo apt-get update && sudo apt-get install -y pdftk
+
+      - name: Compile Thesis
+        run: typst compile paper/main.typ paper/main.pdf
+
+      - name: Merge assignment + thesis (preserve links better)
+        run: pdftk paper/assignment.pdf paper/main.pdf cat output paper/final.pdf
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            paper/final.pdf
+            paper/main.pdf
+          tag_name: thesis-${{ github.sha }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}

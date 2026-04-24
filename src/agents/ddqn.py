@@ -1,5 +1,6 @@
 import argparse
 import random
+from time import time
 import numpy as np
 import torch
 from agents.dqn import DQNAgent, QNetwork
@@ -165,11 +166,14 @@ class DoubleDQNAgent(DQNAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        torch.cuda.manual_seed_all(args.seed)
+    if args.seed is None:
+        args.seed = int(time())
+        print(f"Auto-generated seed: {args.seed}")
+
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
 
     opponent: Agent
     match args.opponent:

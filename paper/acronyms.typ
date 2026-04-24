@@ -17,6 +17,13 @@
     longplural: "Markov Decision Processes",
   ),
   (
+    key: "pomdp",
+    short: "POMDP",
+    plural: "POMDPs",
+    long: "Partially Observable Markov Decision Process",
+    longplural: "Partially Observable Markov Decision Processes",
+  ),
+  (
     key: "dl",
     short: "DL",
     long: "deep learning",

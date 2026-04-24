@@ -1,5 +1,6 @@
 import argparse
 import random
+from time import time
 from typing import Any
 import collections
 import numpy as np
@@ -21,7 +22,7 @@ from prsi.rl_utils import (
     get_valid_action_mask,
 )
 from prsi.card import Card
-from prsi.card_utils import CardEffect, Rank, Suit
+from prsi.card_utils import CardEffect, Rank
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState
 from agents.trainable import TrainableAgent
@@ -108,14 +109,6 @@ parser.add_argument(
     type=int,
     help="Frequency of self-play opponent update.",
 )
-
-
-SIMPLE_HAND_INDICES = {
-    Suit.BELLS: 0,
-    Suit.HEARTS: 1,
-    Suit.LEAVES: 2,
-    Suit.ACORNS: 3,
-}
 
 
 class QNetwork(nn.Module):
@@ -301,7 +294,7 @@ class DQNAgent(TrainableAgent):
 
             if (
                 self.args.save_each is not None
-                and episode + 1 % self.args.save_each == 0
+                and (episode + 1) % self.args.save_each == 0
             ):
                 self.save(self.args.model_path)
 
@@ -459,7 +452,7 @@ class DQNAgent(TrainableAgent):
             case "simple":
                 state_array = np.zeros(7, dtype=np.uint8)
                 for card in hand:
-                    state_array[SIMPLE_HAND_INDICES[card.suit]] += 1
+                    state_array[self.SIMPLE_HAND_INDICES[card.suit]] += 1
                     match card.rank:
                         case Rank.SEVEN:
                             state_array[4] += 1
@@ -532,9 +525,13 @@ class DQNAgent(TrainableAgent):
     def log(
         self, episode: int, batch_wins: int, draw_actions: int, total_actions: int
     ) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
-            f"Epsilon: {self.args.epsilon:.4f}, "
+            f"{epsilon_string}"
             f"Draw-action rate: {draw_actions / total_actions:.2%}, "
             f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
@@ -552,11 +549,14 @@ class DQNAgent(TrainableAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        torch.cuda.manual_seed_all(args.seed)
+    if args.seed is None:
+        args.seed = int(time())
+        print(f"Auto-generated seed: {args.seed}")
+
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
 
     opponent: Agent
     match args.opponent:

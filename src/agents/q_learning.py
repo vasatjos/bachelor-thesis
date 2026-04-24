@@ -1,5 +1,6 @@
 import pickle
 import random
+from time import time
 from typing import Any
 import argparse
 import numpy as np
@@ -15,7 +16,7 @@ from prsi.rl_utils import (
     get_valid_actions,
 )
 from prsi.card import Card
-from prsi.card_utils import CardEffect, Rank, Suit
+from prsi.card_utils import CardEffect, Rank
 from prsi.env import PrsiEnv
 from prsi.game_state import GameState
 from agents.trainable import TrainableAgent
@@ -36,7 +37,7 @@ parser.add_argument(
     type=str,
     help="Path to save/load model.",
 )
-parser.add_argument("--log_each", default=2_000_000, type=int, help="Log frequency.")
+parser.add_argument("--log_each", default=50_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--save_each", default=None, type=int, help="Periodic saving frequency."
 )
@@ -47,11 +48,11 @@ parser.add_argument(
     "--episodes", default=1_000_000_000, type=int, help="Training episodes."
 )
 parser.add_argument("--alpha", default=0.1, type=float, help="Learning rate.")
-parser.add_argument("--epsilon", default=0.3, type=float, help="Exploration factor.")
+parser.add_argument("--epsilon", default=0.2, type=float, help="Exploration factor.")
 parser.add_argument(
     "--epsilon_decay", default=1, type=float, help="Epsilon decay factor."
 )
-parser.add_argument("--min_epsilon", default=0.05, type=float, help="Minimum epsilon.")
+parser.add_argument("--min_epsilon", default=0.001, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
     "--hand_state_option",
@@ -108,14 +109,6 @@ State = tuple[
 ]
 
 
-SIMPLE_HAND_INDICES = {
-    Suit.BELLS: 0,
-    Suit.HEARTS: 1,
-    Suit.LEAVES: 2,
-    Suit.ACORNS: 3,
-}
-
-
 class QLearningAgent(TrainableAgent):
     def __init__(
         self, args: argparse.Namespace | None = None, path: str | None = None
@@ -131,7 +124,6 @@ class QLearningAgent(TrainableAgent):
             return
 
         self.args = args
-        self.epsilon = args.epsilon
 
         self.played_cards_subset: list[np.uint8]
         self._init_played_subset()
@@ -188,8 +180,8 @@ class QLearningAgent(TrainableAgent):
                     batch_wins += 1
 
             # Decay epsilon
-            if self.epsilon > self.args.min_epsilon:
-                self.epsilon *= self.args.epsilon_decay
+            if self.args.epsilon > self.args.min_epsilon:
+                self.args.epsilon *= self.args.epsilon_decay
 
             if (episode + 1) % self.args.log_each == 0:
                 self.log(episode, batch_wins)
@@ -197,13 +189,13 @@ class QLearningAgent(TrainableAgent):
 
             if (
                 self.args.save_each is not None
-                and episode + 1 % self.args.save_each == 0
+                and (episode + 1) % self.args.save_each == 0
             ):
                 self.save(self.args.model_path)
 
     def evaluate(self, env: PrsiEnv, episodes: int) -> None:
-        original_epsilon = self.epsilon
-        self.epsilon = 0.0
+        original_epsilon = self.args.epsilon
+        self.args.epsilon = 0.0
 
         opponent: Agent | None = None
         match args.opponent:
@@ -230,7 +222,7 @@ class QLearningAgent(TrainableAgent):
             if reward > 0:
                 wins += 1
 
-        self.epsilon = original_epsilon
+        self.args.epsilon = original_epsilon
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
 
@@ -238,7 +230,7 @@ class QLearningAgent(TrainableAgent):
         self, state: GameState, hand: list[Card], info: dict[str, Any]
     ) -> Action:
         # Epsilon-greedy
-        if np.random.random() < self.epsilon:
+        if np.random.random() < self.args.epsilon:
             return behave_randomly(state, hand)
 
         processed_state = self._process_state(state, info, hand)
@@ -275,7 +267,7 @@ class QLearningAgent(TrainableAgent):
         data = {
             "action_value_fn": self.action_value_fn,
             "args": vars(self.args),
-            "epsilon": self.epsilon,
+            "epsilon": self.args.epsilon,
         }
         with open(path, "wb") as f:
             pickle.dump(data, f)
@@ -289,7 +281,6 @@ class QLearningAgent(TrainableAgent):
         self.action_value_fn = data["action_value_fn"]
         args_dict = data.get("args", {})
         self.args = argparse.Namespace(**args_dict)
-        self.epsilon = data.get("epsilon", self.args.epsilon)
         self._init_played_subset()
         print("Model loaded successfully!")
 
@@ -352,7 +343,7 @@ class QLearningAgent(TrainableAgent):
             case "simple":
                 state_array = np.zeros(7, dtype=np.uint8)
                 for card in hand:
-                    state_array[SIMPLE_HAND_INDICES[card.suit]] += 1
+                    state_array[self.SIMPLE_HAND_INDICES[card.suit]] += 1
                     match card.rank:
                         case Rank.SEVEN:
                             state_array[4] += 1
@@ -409,8 +400,13 @@ class QLearningAgent(TrainableAgent):
                 self.played_cards_subset[0] += 1
 
     def log(self, episode: int, batch_wins: int) -> None:
+        epsilon_string = ""
+        if self.args.epsilon_decay < 1:
+            epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
+
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
+            f"{epsilon_string}"
             f"States seen: {len(self.action_value_fn):_}, "
             f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
         )
@@ -419,9 +415,12 @@ class QLearningAgent(TrainableAgent):
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        random.seed(args.seed)
+    if args.seed is None:
+        args.seed = int(time())
+        print(f"Auto-generated seed: {args.seed}")
+
+    np.random.seed(args.seed)
+    random.seed(args.seed)
 
     opponent: Agent
     match args.opponent:
