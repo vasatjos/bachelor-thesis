@@ -2,6 +2,8 @@
 
 ? Split model_path for saving into dir and agent name, update scripts
 
+Try constant RL in MC agent
+
 REINFORCE agent
 
 PPO agent
