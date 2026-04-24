@@ -190,7 +190,7 @@ class QLearningAgent(TrainableAgent):
 
             if (
                 self.args.save_each is not None
-                and episode + 1 % self.args.save_each == 0
+                and (episode + 1) % self.args.save_each == 0
             ):
                 self.save(self.args.model_path)
 
