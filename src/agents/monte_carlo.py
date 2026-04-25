@@ -53,6 +53,12 @@ parser.add_argument(
 parser.add_argument("--min_epsilon", default=0.001, type=float, help="Minimum epsilon.")
 parser.add_argument("--gamma", default=0.99, type=float, help="Discount factor.")
 parser.add_argument(
+    "--alpha",
+    default=None,
+    type=float,
+    help="Exponention moving average step.",
+)
+parser.add_argument(
     "--every_visit",
     action="store_true",
     help="Use every-visit MC instead of first-visit.",
@@ -189,10 +195,17 @@ class MonteCarloAgent(TrainableAgent):
                         self.num_visits[state][action] = 0
 
                     # Incremental mean update
-                    self.num_visits[state][action] += 1
-                    self.action_value_fn[state][action] += (
-                        returns[t] - self.action_value_fn[state][action]
-                    ) / self.num_visits[state][action]
+                    if self.args.alpha is None:
+                        self.num_visits[state][action] += 1
+                        self.action_value_fn[state][action] += (
+                            returns[t] - self.action_value_fn[state][action]
+                        ) / self.num_visits[state][action]
+                    else:
+                        self.action_value_fn[state][action] += self.args.alpha * (
+                            returns[t] - self.action_value_fn[state][action]
+                        )
+                        # still track visits for diagnostics
+                        self.num_visits[state][action] += 1
 
             if self.args.epsilon > self.args.min_epsilon:
                 self.args.epsilon *= self.args.epsilon_decay
