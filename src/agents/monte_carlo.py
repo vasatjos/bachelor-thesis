@@ -398,7 +398,7 @@ class MonteCarloAgent(TrainableAgent):
             case "full":
                 packed = np.uint32(0)
                 for card in hand:
-                    packed |= np.uint32(1) << (CARD_TO_INDEX[card] - 1)
+                    packed |= np.uint32(1) << (CARD_TO_INDEX[card])
                 return packed
             case _:
                 raise ValueError("Invalid hand_state_option.")
