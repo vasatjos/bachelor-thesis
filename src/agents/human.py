@@ -4,6 +4,7 @@ import random
 from typing import Any
 
 import numpy as np
+from agents.reinforce import REINFORCEAgent
 from prsi.agents.agent import Agent
 from prsi.agents.baselines import GreedyAgent, RandomAgent
 from prsi.rl_utils import Action
@@ -30,7 +31,15 @@ parser.add_argument(
     "--opponent",
     default="greedy",
     type=str,
-    choices=["random", "greedy", "monte_carlo", "q_learning", "dqn", "ddqn"],
+    choices=[
+        "random",
+        "greedy",
+        "monte_carlo",
+        "q_learning",
+        "dqn",
+        "ddqn",
+        "reinforce",
+    ],
 )
 
 
@@ -184,6 +193,8 @@ if __name__ == "__main__":
             opponent = DQNAgent(path=args.model_path)
         case "ddqn":
             opponent = DoubleDQNAgent(path=args.model_path)
+        case "reinforce":
+            opponent = REINFORCEAgent(path=args.model_path)
         case _:
             raise ValueError("Invalid opponent")
 
