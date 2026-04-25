@@ -454,6 +454,7 @@ in @alg:mc-control. @Sutton2018 @npfl139-lec01
     algo(
         title: [Monte Carlo Control],
         parameters: ("episodes", $epsilon$, $gamma$),
+        line-numbers: false,
     )[
         #let StAt = $(S_t, A_t)$
 
@@ -464,7 +465,6 @@ in @alg:mc-control. @Sutton2018 @npfl139-lec01
 
         Loop for $t = T-1$ down to $0$:#i\
         $G <- R_(t+1) + gamma G$\
-
         If #StAt not in $(S_0, A_0), ..., (S_(t-1), A_(t-1))$:#i\
         $Q #StAt <- Q #StAt + alpha [G - Q #StAt]$
     ],
