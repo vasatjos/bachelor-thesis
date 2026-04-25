@@ -385,7 +385,7 @@ $
 
 #Gls("mc") methods are a fundamental class of reinforcement learning algorithms
 that learn value functions directly from raw episodes of experience.
-Unlike dynamic programming approaches, MC methods do not require prior
+Unlike dynamic programming approaches, #gls("mc") methods do not require prior
 knowledge of the environment's transition probabilities or reward dynamics.
 Instead, they estimate the action-value function $q_(pi)(s, a)$ by
 averaging the sample returns observed during actual interactions with the

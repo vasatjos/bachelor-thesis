@@ -99,7 +99,7 @@ class ReplayBuffer(Generic[T]):
 
 def behave_randomly(state: GameState, hand: list[Card]) -> Action:
     """
-    Select a random card to play from the ones available on hand.
+    Select a random card to play from the ones available on hand (or draw).
 
     Note, this does not actually select a random action uniformly, since that would make
     playing an ober 4x more likely than other cards. Instead, selects a random
