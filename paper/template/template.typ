@@ -47,6 +47,7 @@
     )
 
 
+    // TODO: if title page goes first, put this after the title-page call
     if print {
         page[]
     }
@@ -198,7 +199,9 @@
         counter(figure.where(kind: raw)).update(0)
 
         if print {
-            pagebreak(weak: true, to: "odd")
+            // TODO: figure out odd or even, ask during printing process
+            // Probably even makes sense for "even spreads" viewing
+            pagebreak(weak: true, to: "even")
         } else {
             pagebreak(weak: true)
         }
