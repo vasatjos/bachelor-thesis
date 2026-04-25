@@ -174,7 +174,7 @@ $gamma in [0, 1]$ the discount factor.
 Given a state $s$ and action $a$, the environment dynamics model
 the probability of a next state $s'$ and reward $r$, formally denoted
 $
-    p(s', r mid(bar) s, a) = upright(P)(S_(t+1) = s', R_(t+1) = r mid(bar) S_t = s, A_t = a).
+    p(s', r mid(bar) s, a) = upright(Pr){S_(t+1) = s', R_(t+1) = r mid(bar) S_t = s, A_t = a}.
 $
 The reliance of dynamics only on $S_t$ and independence from $S_0, ..., S_(t-1)$
 is called the Markov property.
