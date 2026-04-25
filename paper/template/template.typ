@@ -143,6 +143,7 @@
     outline(title: "List of Figures", target: figure.where(kind: image))
     outline(title: "List of Tables", target: figure.where(kind: table))
     outline(title: "List of Code Listings", target: figure.where(kind: raw))
+    outline(title: "List of Algorithms", target: figure.where(kind: "algo"))
 
 
     set heading(outlined: true)
@@ -197,6 +198,7 @@
         counter(figure.where(kind: image)).update(0)
         counter(figure.where(kind: table)).update(0)
         counter(figure.where(kind: raw)).update(0)
+        counter(figure.where(kind: "algo")).update(0)
 
         if print {
             // TODO: figure out odd or even, ask during printing process
@@ -256,14 +258,14 @@
     counter(heading).update(0)
     counter(page).update(1)
 
-    // Make images inherit the chapter number (e.g., 2.1)
-    show figure.where(kind: image): set figure(numbering: n => {
+    // Make figures inherit the chapter number (e.g., 2.1)
+    show figure: set figure(numbering: n => {
         let h-counter = counter(heading).at(here())
         if h-counter.len() > 0 {
             // h-counter.at(0) is the current Chapter (Level 1) number
             numbering("1.1", h-counter.at(0), n)
         } else {
-            // Fallback for images appearing before the first chapter
+            // Fallback for figures appearing before the first chapter
             numbering("1", n)
         }
     })

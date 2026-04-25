@@ -34,6 +34,11 @@
     long: "Deep Q-Network",
   ),
   (
+    key: "mc",
+    short: "MC",
+    long: "Monte Carlo",
+  ),
+  (
     key: "ppo",
     short: "PPO",
     long: "Proximal Policy Optimization",

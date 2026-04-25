@@ -1,5 +1,6 @@
 #import "./template/template.typ": *
 #import "@preview/glossarium:0.5.10": Gls, Glspl, gls, glspl, make-glossary, print-glossary, register-glossary
+#import "@preview/algo:0.3.6": algo, code, comment, d, i
 #import "./acronyms.typ": entry-list
 
 #show: template.with(
@@ -382,7 +383,98 @@ $
 
 === Monte Carlo
 
-#lorem(70)
+#Gls("mc") methods are a fundamental class of reinforcement learning algorithms
+that learn value functions directly from raw episodes of experience.
+Unlike dynamic programming approaches, MC methods do not require prior
+knowledge of the environment's transition probabilities or reward dynamics.
+Instead, they estimate the action-value function $q_(pi)(s, a)$ by
+averaging the sample returns observed during actual interactions with the
+environment.
+
+Because #gls("mc") methods rely on calculating the final return $G_t$,
+they fundamentally require the experience to be divided into well-defined
+episodes that eventually terminate. This makes them a natural fit for card
+games like Prší, where every played game represents a single episode
+that strictly concludes with a terminal state where one player wins.
+
+To estimate the action values, an agent plays out an entire episode using
+its current policy. Once a terminal state is reached, the agent
+looks back at the trajectory of states, actions, and rewards to calculate
+the true return for each step. Because a state-action pair might be visited
+multiple times within the same episode, we must decide which visits to learn from.
+*First-visit #gls("mc")* averages only the returns following the first time a
+state-action pair is visited in an episode, whereas *every-visit #gls("mc")*
+averages the returns following all visits. While every-visit #gls("mc")
+has states which may not be independent, both of these methods still
+converge to the true value function.
+
+#let monte_carlo_update_rule = weight => {
+    $
+        Q(S_t, A_t) <- Q(S_t, A_t) + #weight [G_t - Q(S_t, A_t)]
+    $
+}
+#let sa_pair_visits = $C(S_t, A_t)$
+
+To calculate the average return over multiple episodes, the most straightforward
+approach is to use a simple average of observed samples. Let #sa_pair_visits
+be the number of times action $A_t$ has been taken in state $S_t$. The update
+rule then is:
+$
+    #monte_carlo_update_rule($1 / #sa_pair_visits$).
+$
+However, this is not optimal in the sense that it weighs the very oldest
+observed return with the same weight as the most recent one. This is reasonable
+if the policy never changes, but when it does, it makes more sense to give more
+weight to recently observed values. We can do this by using an exponential
+moving average with the parameter $alpha$, where we get
+$
+    #monte_carlo_update_rule($alpha$)
+$
+as the update rule.
+
+To guarantee that the estimates for all state-action pairs converge to their
+true values, the agent must continuously explore the environment. In theoretical
+settings, this is often handled by the assumption of *exploring starts*, where
+every episode is forced to begin with a randomly selected state and action.
+In many environments, enforcing a random initial action is unnatural and
+selecting a random state may not even be possible at all.
+However, the inherent randomness of shuffling and dealing cards
+in Prší serves a highly similar purpose: it ensures the agent is constantly exposed
+to a vast distribution of starting states without any manual intervention.
+
+Because random starting states alone do not guarantee exploration in the deeper
+stages of an episode, nor will they result in a random first action,
+our agent still utilizes an $epsilon$-greedy policy.
+This combination ensures that the agent sufficiently explores the state space while
+simultaneously optimizing its behavior. A simple #gls("mc") algorithm with an
+$epsilon$-greedy policy using $alpha$ as the update step can be seen
+in @alg:mc-control. @Sutton2018 @npfl139-lec01
+
+#figure(
+    algo(
+        title: [Monte Carlo Control],
+        parameters: ("episodes", $epsilon$, $gamma$),
+    )[
+        #let StAt = $(S_t, A_t)$
+
+        Initialize $Q(s, a) <- 0$ for all $s in cal(S), a in cal(A)(s)$\
+        Loop for each episode:#i\
+        Generate trajectory $S_0, A_0, R_1, S_1, A_1, R_2, ..., S_(T-1), A_(T-1), R_T$ using $epsilon$-greedy policy derived from $Q$\
+        $G <- 0$\
+
+        Loop for $t = T-1$ down to $0$:#i\
+        $G <- R_(t+1) + gamma G$\
+
+        If #StAt not in $(S_0, A_0), ..., (S_(t-1), A_(t-1))$:#i\
+        $Q #StAt <- Q #StAt + alpha [G - Q #StAt]$
+    ],
+    caption: flex-caption(
+        [$epsilon$-greedy Monte Carlo Control],
+        [First-visit Monte Carlo Control with $epsilon$-greedy exploration],
+    ),
+    kind: "algo",
+    supplement: "Algorithm",
+) <alg:mc-control>
 
 === Q-Learning
 
