@@ -15,3 +15,5 @@ Rename future work to discussion + FW
 Add [this](https://www.youtube.com/playlist?list=PLzvYlJMoZ02Dxtwe-MmH4nOB5jYlMGBjr) to bibliography
 
 Add logging into files (pandas) + human agent eval logs
+
+Add "continue_training" to models (load from file and train)

@@ -306,11 +306,10 @@ class REINFORCEAgent(TrainableAgent):
             np.array(batch_masks), dtype=torch.bool, device=self.device
         )
 
-        if (
-            self.args.baseline
-            and self.value_net is not None
-            and self.value_optimizer is not None
-        ):
+        if self.args.baseline:
+            assert self.value_net is not None
+            assert self.value_optimizer is not None
+
             self.value_net.train()
             predicted_values = self.value_net(states).squeeze(1)
             value_loss = nn.functional.mse_loss(predicted_values, returns)
