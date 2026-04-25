@@ -260,7 +260,7 @@ With this definition of the return $G_t$, we can now finally formalize the goal
 of the agent, that being maximization of $EE[G_t]$ (or specifically $EE[G_0]$
 for episodic tasks).~@Sutton2018 @npfl139-lec01
 
-=== (Action-)Value function
+=== (Action-)Value Function
 
 Value functions are used to evaluate policies.
 The agent's policy $pi$ defines the behaviour of the agent by determining
