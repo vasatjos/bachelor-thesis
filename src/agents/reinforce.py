@@ -159,7 +159,7 @@ class REINFORCEAgent(TrainableAgent):
             batch_masks.extend(episode_masks)
 
             if (episode + 1) % self.args.batch_size == 0:
-                self._update(batch_states, batch_actions, batch_returns, batch_masks)
+                self._learn(batch_states, batch_actions, batch_returns, batch_masks)
                 batch_states, batch_actions, batch_returns, batch_masks = [], [], [], []
 
             if (episode + 1) % self.args.log_each == 0:
@@ -290,7 +290,7 @@ class REINFORCEAgent(TrainableAgent):
                 self.value_net.parameters(), lr=self.args.learning_rate
             )
 
-    def _update(
+    def _learn(
         self,
         batch_states: list[np.ndarray],
         batch_actions: list[int],
