@@ -197,7 +197,11 @@
         counter(figure.where(kind: table)).update(0)
         counter(figure.where(kind: raw)).update(0)
 
-        pagebreak(weak: true)
+        if print {
+            pagebreak(weak: true, to: "odd")
+        } else {
+            pagebreak(weak: true)
+        }
 
         show: block
 
