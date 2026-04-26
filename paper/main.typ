@@ -410,7 +410,7 @@ converge to the true value function.
 
 #let monte_carlo_update_rule = weight => {
     $
-        Q(S_t, A_t) <- Q(S_t, A_t) + #weight [G_t - Q(S_t, A_t)]
+        Q(S_t, A_t) <- Q(S_t, A_t) + weight [G_t - Q(S_t, A_t)]
     $
 }
 #let sa_pair_visits = $C(S_t, A_t)$
@@ -453,7 +453,7 @@ in @alg:mc-control. @Sutton2018 @npfl139-lec01
 #figure(
     algo(
         title: [Monte Carlo Control],
-        parameters: ("episodes", $epsilon$, $gamma$),
+        parameters: ([episodes], $epsilon$, $gamma$),
         line-numbers: false,
     )[
         #let StAt = $(S_t, A_t)$
@@ -520,7 +520,7 @@ in @alg:mc-control. @Sutton2018 @npfl139-lec01
 #lorem(100)
 
 
-= Future Work
+= Discussion and Future Work // TODO: maybe future work should be a subsection
 
 #lorem(100)
 
