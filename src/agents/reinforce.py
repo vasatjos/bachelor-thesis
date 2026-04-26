@@ -172,15 +172,8 @@ class REINFORCEAgent(TrainableAgent):
             ):
                 self.save(self.args.model_path)
 
-    def evaluate(self, env: PrsiEnv, episodes: int) -> None:
+    def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> None:
         self.policy_net.eval()
-
-        opponent: Agent | None = None
-        match self.args.opponent:
-            case "random":
-                opponent = RandomAgent()
-            case "greedy":
-                opponent = GreedyAgent()
 
         env.reset(full=True, opponent=opponent)
         wins = 0
@@ -524,4 +517,4 @@ if __name__ == "__main__":
         agent.train(env)
         agent.save(args.model_path)
 
-    agent.evaluate(env, episodes=args.evaluate_for)
+    agent.evaluate(env, episodes=args.evaluate_for, opponent=opponent)

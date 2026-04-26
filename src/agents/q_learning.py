@@ -193,16 +193,9 @@ class QLearningAgent(TrainableAgent):
             ):
                 self.save(self.args.model_path)
 
-    def evaluate(self, env: PrsiEnv, episodes: int) -> None:
+    def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> None:
         original_epsilon = self.args.epsilon
         self.args.epsilon = 0.0
-
-        opponent: Agent | None = None
-        match args.opponent:
-            case "random":
-                opponent = RandomAgent()
-            case "greedy":
-                opponent = GreedyAgent()
 
         env.reset(full=True, opponent=opponent)  # Agent starts first evaluation game
         wins = 0
@@ -446,4 +439,4 @@ if __name__ == "__main__":
         agent.train(env)
         agent.save(args.model_path)
 
-    agent.evaluate(env, episodes=args.evaluate_for)
+    agent.evaluate(env, episodes=args.evaluate_for, opponent=opponent)

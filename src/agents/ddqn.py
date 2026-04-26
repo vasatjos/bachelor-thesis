@@ -194,4 +194,4 @@ if __name__ == "__main__":
         agent.train(env)
         agent.save(args.model_path)
 
-    agent.evaluate(env, episodes=args.evaluate_for)
+    agent.evaluate(env, episodes=args.evaluate_for, opponent=opponent)
