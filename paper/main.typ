@@ -151,7 +151,7 @@ where the loop begins anew. Formally, we'll model these environments as
 #figure(
     image("images/mdp.png", width: 80%),
     caption: flex-caption(
-        [MDP illustration],
+        [Markov Decision Process],
         [Markov Decision Process @npfl139-lec01],
     ),
 ) <fig:mdp-loop>
@@ -211,7 +211,7 @@ illustration can be seen in @fig:pomdp-loop.~@Spaan2012 @Sutton2018 @npfl139-lec
 #figure(
     image("images/pomdp.png", width: 80%),
     caption: flex-caption(
-        [POMDP illustration],
+        [Partially Observable Markov Decision Process],
         [Partially Observable Markov Decision Process @npfl139-lec01],
     ),
 ) <fig:pomdp-loop>
@@ -222,9 +222,10 @@ illustration can be seen in @fig:pomdp-loop.~@Spaan2012 @Sutton2018 @npfl139-lec
 While we have said that the goal of the agent is to maximize the reward it gets,
 it wasn't an entirely accurate formulation.
 The goal of the agent is to maximize the _cumulative_
-reward over the whole interaction. Let's imagine
-a sequence of rewards after timestep $t$: $R_(t+1), R_(t+2), R_(t+3), ...$
+reward over the whole interaction.
 
+Let's take
+a sequence of rewards after timestep $t$: $R_(t+1), R_(t+2), R_(t+3), ...$
 Our goal will be to maximize the *return* $G_t$, which can in its
 simplest form be defined as
 $
