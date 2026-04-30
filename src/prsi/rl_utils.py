@@ -120,6 +120,9 @@ def behave_randomly(state: GameState, hand: list[Card]) -> Action:
 
 
 def get_valid_actions(game_state: GameState, hand: list[Card]) -> list[Action]:
+    """
+    Returns a list of valid actions given a state and a hand of cards.
+    """
     valid_actions: list[Action] = []
     allowed_cards = find_allowed_cards(game_state)
 

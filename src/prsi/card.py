@@ -23,6 +23,12 @@ ICONS = {
 
 @total_ordering
 class Card:
+    """
+    A simple Prší card representation.
+
+    Every card has a suit, rank and effect (the effect can be null).
+    """
+
     def __init__(self, suit: Suit, rank: Rank) -> None:
         self.suit = suit
         self.rank = rank

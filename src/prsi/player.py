@@ -3,6 +3,11 @@ from prsi.card import Card
 
 
 class Player:
+    """
+    Player representation. Keeps track of which cards
+    a player has on hand.
+    """
+
     def __init__(self, player_id: int) -> None:
         self.hand: list[Card] = []
         self._id = player_id

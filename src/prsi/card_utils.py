@@ -4,6 +4,10 @@ COLOR_RESET = "\033[0m"
 
 
 class Suit(StrEnum):
+    """
+    Enum representing the suits in a german card deck.
+    """
+
     HEARTS = "\033[31m"
     LEAVES = "\033[32m"
     BELLS = "\033[34m"
@@ -11,6 +15,10 @@ class Suit(StrEnum):
 
 
 class Rank(IntEnum):
+    """
+    Enum representing the ranks of cards in a german card deck.
+    """
+
     SEVEN = 7
     EIGHT = 8
     NINE = 9
@@ -22,6 +30,10 @@ class Rank(IntEnum):
 
 
 class CardEffect(Enum):
+    """
+    Enum representing the effect of cards in Prší.
+    """
+
     NONE = 0
     SKIP_TURN = 1
     DRAW_TWO = 2

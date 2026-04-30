@@ -12,14 +12,23 @@ class Agent(ABC):
     """
 
     def clone(self) -> "Agent":
+        """
+        Return a deep copy of the agent. Useful for self-play.
+        """
         return deepcopy(self)
 
     @abstractmethod
     def choose_action(
         self, state: Any, hand: list[Card], info: dict[str, Any]
     ) -> Action:
+        """
+        Returns the action the agent has chosen.
+        """
         raise NotImplementedError("Base class cannot choose action.")
 
     @abstractmethod
     def evaluate(self, *args, **kwargs) -> None:
+        """
+        Evaluate the agent performance.
+        """
         raise NotImplementedError("Base class cannot be evaluated.")

@@ -7,6 +7,11 @@ from prsi.deck import get_suit, get_rank
 
 @dataclass(frozen=True)
 class GameState:
+    """
+    Game state representation for Prší. Keeps track of effects
+    and actual suit (can differ from top card suit thanks to obers).
+    """
+
     top_card: Card | None = None
     actual_suit: Suit | None = None
     current_effect: CardEffect = CardEffect.NONE

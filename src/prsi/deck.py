@@ -4,16 +4,19 @@ from prsi.card_utils import Suit, Rank, CardEffect
 from prsi.card import Card
 
 
-def generate_suit(suit: Suit) -> set[Card]:
+def _generate_suit(suit: Suit) -> set[Card]:
     return {Card(suit, rank) for rank in Rank}
 
 
-def generate_rank(rank: Rank) -> set[Card]:
+def _generate_rank(rank: Rank) -> set[Card]:
     return {Card(suit, rank) for suit in Suit}
 
 
-# NOTE: get_x MUCH faster than generate_x
+# NOTE: get_x MUCH faster than _generate_x
 def get_suit(suit: Suit) -> set[Card]:
+    """
+    Return all cards of the given suit.
+    """
     match suit:
         case Suit.HEARTS:
             return Deck.HEARTS
@@ -26,6 +29,9 @@ def get_suit(suit: Suit) -> set[Card]:
 
 
 def get_rank(rank: Rank) -> set[Card]:
+    """
+    Return all cards of the rank.
+    """
     match rank:
         case Rank.SEVEN:
             return Deck.SEVENS
@@ -50,21 +56,25 @@ class DeckEmptyError(Exception):
 
 
 class Deck:
+    """
+    Deck of german playing cards.
+    """
+
     CARD_COUNT = len(Suit) * len(Rank)
 
     ALL_CARDS = {Card(suit, rank) for suit in Suit for rank in Rank}
-    SEVENS = generate_rank(Rank.SEVEN)
-    EIGHTS = generate_rank(Rank.EIGHT)
-    NINES = generate_rank(Rank.NINE)
-    TENS = generate_rank(Rank.TEN)
-    UNTERS = generate_rank(Rank.UNTER)
-    OBERS = generate_rank(Rank.OBER)
-    KINGS = generate_rank(Rank.KING)
-    ACES = generate_rank(Rank.ACE)
-    HEARTS = generate_suit(Suit.HEARTS)
-    BELLS = generate_suit(Suit.BELLS)
-    LEAVES = generate_suit(Suit.LEAVES)
-    ACORNS = generate_suit(Suit.ACORNS)
+    SEVENS = _generate_rank(Rank.SEVEN)
+    EIGHTS = _generate_rank(Rank.EIGHT)
+    NINES = _generate_rank(Rank.NINE)
+    TENS = _generate_rank(Rank.TEN)
+    UNTERS = _generate_rank(Rank.UNTER)
+    OBERS = _generate_rank(Rank.OBER)
+    KINGS = _generate_rank(Rank.KING)
+    ACES = _generate_rank(Rank.ACE)
+    HEARTS = _generate_suit(Suit.HEARTS)
+    BELLS = _generate_suit(Suit.BELLS)
+    LEAVES = _generate_suit(Suit.LEAVES)
+    ACORNS = _generate_suit(Suit.ACORNS)
 
     def __init__(self) -> None:
         self.discard_pile: list[Card]
@@ -73,6 +83,9 @@ class Deck:
         self.reset()
 
     def reset(self) -> None:
+        """
+        Shuffle the deck, place the top card on the discard pile (play the card).
+        """
         self.discard_pile: list[Card] = []  # type: ignore[no-redef]
         self.drawing_pile: list[Card] = [  # type: ignore[no-redef]
             Card(suit, rank) for suit in Suit for rank in Rank
@@ -92,6 +105,8 @@ class Deck:
         If the drawing pile is empty, the discard pile gets flipped over
         and becomes the drawing pile.
         Whether the deck was flipped over or not is returned.
+
+        Raises `DeckEmptyError` if there are now cards available.
         """
 
         if len(self.drawing_pile) > 0:
