@@ -456,6 +456,7 @@ class QLearningAgent(TrainableAgent):
 
     def _get_hyperparameter_string(self) -> str:
         hyper_parts = []
+        hyper_parts.append(f"seed{self.args.seed}")
         hyper_parts.append(f"eps{self.args.epsilon}")
 
         if self.args.epsilon_decay != 1:

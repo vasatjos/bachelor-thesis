@@ -545,6 +545,7 @@ class REINFORCEAgent(TrainableAgent):
 
     def _get_hyperparameter_string(self) -> str:
         hyper_parts = []
+        hyper_parts.append(f"seed{self.args.seed}")
 
         hyper_parts.append(f"gamma{self.args.gamma}")
         hyper_parts.append(f"lr{self.args.learning_rate}")

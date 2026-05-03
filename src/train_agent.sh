@@ -15,16 +15,10 @@ STORAGE_DIR="/storage/praha1/home/vasatjos/thesis"
 AGENT_STRATEGIES_DIR="${STORAGE_DIR}/agent_strategies"
 LOGS_DIR="${STORAGE_DIR}/logs"
 
-case "${AGENT_NAME}" in
-    "dqn" | "ddqn" | "reinforce")
-        MODEL_PATH="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}/${JOB_NAME}.pth"
-        ;;
-    *)
-        MODEL_PATH="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}/${JOB_NAME}.pkl"
-        ;;
-esac
+# Python will create the hyperparam directory directly inside the agent's folder.
+MODEL_BASE_DIR="${AGENT_STRATEGIES_DIR}/${AGENT_NAME}"
 
-mkdir -p "${AGENT_STRATEGIES_DIR}/${AGENT_NAME}"
+mkdir -p "${MODEL_BASE_DIR}"
 mkdir -p "${LOGS_DIR}"
 
 cd "${SCRATCH_DIR}"
@@ -46,12 +40,11 @@ echo "Installing dependencies..."
 uv sync --all-groups
 
 cd src
-mkdir -p "agent_strategies/${AGENT_NAME}"
 
 echo "Starting training at: $(date)"
-echo "Running: uv run -m agents.${AGENT_NAME} ${HYPERPARAMS} --model_path ${MODEL_PATH}"
+echo "Running: uv run -m agents.${AGENT_NAME} ${HYPERPARAMS} --model_path ${MODEL_BASE_DIR}"
 
-uv run -m "agents.${AGENT_NAME}" ${HYPERPARAMS} --model_path "${MODEL_PATH}"
+uv run -m "agents.${AGENT_NAME}" ${HYPERPARAMS} --model_path "${MODEL_BASE_DIR}"
 
 echo "Training completed at: $(date)"
 
