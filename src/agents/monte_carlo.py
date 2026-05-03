@@ -473,7 +473,6 @@ class MonteCarloAgent(TrainableAgent):
                 self.played_cards_subset[0] += 1
 
     def _get_hyperparameter_string(self) -> str:
-        """Build directory string dynamically based on relevant hyperparameters."""
         hyper_parts = []
         hyper_parts.append(f"eps{self.args.epsilon}")
 

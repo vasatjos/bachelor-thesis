@@ -1,8 +1,10 @@
+import os
 import argparse
 import random
 from time import time
 from typing import Any
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from prsi.agents.agent import Agent
@@ -38,13 +40,18 @@ parser.add_argument(
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--model_path",
-    default="agent_strategies/dqn/model.pth",
+    default="agent_strategies/dqn/",
     type=str,
-    help="Path to save/load model.",
+    help="Base path to save/load model. A subdirectory for the hyperparameters will be created here.",
 )
 parser.add_argument("--log_each", default=10_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--save_each", default=None, type=int, help="Periodic saving frequency."
+)
+parser.add_argument(
+    "--disable_csv_logging",
+    action="store_true",
+    help="Disable saving logs to logs.csv.",
 )
 
 # HYPERPARAMETERS
@@ -118,6 +125,7 @@ class DQNAgent(TrainableAgent):
         if args is None and path is None:
             raise ValueError("Agent needs either args or a path to load them from.")
 
+        self.log_data: list[dict[str, Any]] = []
         self.played_cards_subset: np.ndarray
 
         if args is None:
@@ -127,6 +135,13 @@ class DQNAgent(TrainableAgent):
         self.args = args
         self._init_played_subset()
         self._build_networks()
+
+        hyper_str = self._get_hyperparameter_string()
+        self.save_dir = os.path.join(self.args.model_path, hyper_str)
+        self.full_model_path = os.path.join(self.save_dir, "model.pth")
+        self.csv_path = os.path.join(self.save_dir, "logs.csv")
+
+        os.makedirs(self.save_dir, exist_ok=True)
 
     @property
     def device(self) -> torch.device:
@@ -193,12 +208,13 @@ class DQNAgent(TrainableAgent):
             if (episode + 1) % self.args.log_each == 0:
                 self.log(episode, batch_wins, draw_actions, total_steps)
                 batch_wins = 0
+                draw_actions = 0  # Reset for next batch logic if desired, though normally running total might be okay depending on your logic
 
             if (
                 self.args.save_each is not None
                 and (episode + 1) % self.args.save_each == 0
             ):
-                self.save(self.args.model_path)
+                self.save(self.full_model_path)
 
     def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> None:
         original_epsilon = self.args.epsilon
@@ -261,9 +277,17 @@ class DQNAgent(TrainableAgent):
             },
             path,
         )
+
+        if not self.args.disable_csv_logging and self.log_data:
+            df = pd.DataFrame(self.log_data)
+            df.to_csv(self.csv_path, index=False)
+
         print("Model saved successfully!")
 
     def load(self, path: str) -> None:
+        if os.path.isdir(path):
+            path = os.path.join(path, "model.pth")
+
         print(f"Loading model from {path}")
         data = torch.load(path, map_location=self.device)
         args_dict = data.get("args", {})
@@ -277,6 +301,10 @@ class DQNAgent(TrainableAgent):
     def clone(self) -> "DQNAgent":
         cloned = DQNAgent.__new__(DQNAgent)
         cloned.args = self.args
+        cloned.save_dir = self.save_dir
+        cloned.full_model_path = self.full_model_path
+        cloned.csv_path = self.csv_path
+        cloned.log_data = []
         cloned._init_played_subset()
         cloned._build_networks()
         cloned.online_net.load_state_dict(self.online_net.state_dict())
@@ -290,11 +318,26 @@ class DQNAgent(TrainableAgent):
         if self.args.epsilon_decay < 1:
             epsilon_string = f"Epsilon: {self.args.epsilon:.4f}, "
 
+        draw_action_rate = draw_actions / total_actions if total_actions > 0 else 0.0
+        batch_win_rate = batch_wins / self.args.log_each
+
         print(
             f"Episode {episode + 1:_}/{self.args.episodes:_}, "
             f"{epsilon_string}"
-            f"Draw-action rate: {draw_actions / total_actions:.2%}, "
-            f"Batch win rate: {batch_wins / self.args.log_each:.2%}"
+            f"Draw-action rate: {draw_action_rate:.2%}, "
+            f"Batch win rate: {batch_win_rate:.2%}"
+        )
+
+        if self.args.disable_csv_logging:
+            return
+
+        self.log_data.append(
+            {
+                "episode": episode + 1,
+                "epsilon": self.args.epsilon,
+                "draw_action_rate": draw_action_rate,
+                "batch_win_rate": batch_win_rate,
+            }
         )
 
     def _build_networks(self) -> None:
@@ -519,6 +562,34 @@ class DQNAgent(TrainableAgent):
                         self.played_cards_subset[0] + 1
                     )
 
+    def _get_hyperparameter_string(self) -> str:
+        hyper_parts = []
+        hyper_parts.append(f"eps{self.args.epsilon}")
+
+        if self.args.epsilon_decay != 1:
+            hyper_parts.append(f"decay{self.args.epsilon_decay}")
+            hyper_parts.append(f"mineps{self.args.min_epsilon}")
+
+        hyper_parts.append(f"gamma{self.args.gamma}")
+        hyper_parts.append(f"lr{self.args.learning_rate}")
+        hyper_parts.append(f"bs{self.args.batch_size}")
+        hyper_parts.append(f"targ{self.args.target_update_freq}")
+        hyper_parts.append(
+            f"hid{self.args.hidden_layer_count}x{self.args.hidden_layer_size}"
+        )
+
+        hyper_parts.append(f"hand_{self.args.hand_state_option}")
+        if self.args.hand_state_option == "count_truncated":
+            hyper_parts.append(f"trunc{self.args.truncated_hand_size}")
+
+        hyper_parts.append(f"sub_{self.args.played_subset}")
+
+        if self.args.self_play:
+            hyper_parts.append("selfplay")
+            hyper_parts.append(f"spfreq{self.args.self_play_update_freq}")
+
+        return "-".join(hyper_parts)
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
@@ -548,6 +619,6 @@ if __name__ == "__main__":
         agent.load(args.model_path)
     else:
         agent.train(env)
-        agent.save(args.model_path)
+        agent.save(agent.full_model_path)
 
     agent.evaluate(env, episodes=args.evaluate_for, opponent=opponent)

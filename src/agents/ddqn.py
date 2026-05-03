@@ -20,13 +20,18 @@ parser.add_argument(
 parser.add_argument("--load_model", action="store_true", help="Load model from disk.")
 parser.add_argument(
     "--model_path",
-    default="agent_strategies/ddqn/model.pth",
+    default="agent_strategies/ddqn/",
     type=str,
-    help="Path to save/load model.",
+    help="Base path to save/load model. A subdirectory for the hyperparameters will be created here.",
 )
 parser.add_argument("--log_each", default=10_000, type=int, help="Log frequency.")
 parser.add_argument(
     "--save_each", default=None, type=int, help="Periodic saving frequency."
+)
+parser.add_argument(
+    "--disable_csv_logging",
+    action="store_true",
+    help="Disable saving logs to logs.csv.",
 )
 
 # HYPERPARAMETERS
@@ -97,6 +102,10 @@ class DoubleDQNAgent(DQNAgent):
     def clone(self) -> "DoubleDQNAgent":
         cloned = DoubleDQNAgent.__new__(DoubleDQNAgent)
         cloned.args = self.args
+        cloned.save_dir = self.save_dir
+        cloned.full_model_path = self.full_model_path
+        cloned.csv_path = self.csv_path
+        cloned.log_data = []
         cloned._init_played_subset()
         cloned._build_networks()
         cloned.online_net.load_state_dict(self.online_net.state_dict())
@@ -192,6 +201,6 @@ if __name__ == "__main__":
         agent.load(args.model_path)
     else:
         agent.train(env)
-        agent.save(args.model_path)
+        agent.save(agent.full_model_path)
 
     agent.evaluate(env, episodes=args.evaluate_for, opponent=opponent)
