@@ -595,11 +595,11 @@ if __name__ == "__main__":
             raise ValueError("Invalid opponent")
 
     env = PrsiEnv(opponent)
-    agent = REINFORCEAgent(args=args)
 
     if args.load_model:
-        agent.load(args.model_path)
+        agent = REINFORCEAgent(path=args.model_path)
     else:
+        agent = REINFORCEAgent(args=args)
         agent.train(env)
         agent.save(agent.full_model_path)
 

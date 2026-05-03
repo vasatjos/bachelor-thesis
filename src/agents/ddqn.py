@@ -195,11 +195,10 @@ if __name__ == "__main__":
 
     env = PrsiEnv(opponent)
 
-    agent = DoubleDQNAgent(args=args)
-
     if args.load_model:
-        agent.load(args.model_path)
+        agent = DoubleDQNAgent(path=args.model_path)
     else:
+        agent = DoubleDQNAgent(args=args)
         agent.train(env)
         agent.save(agent.full_model_path)
 

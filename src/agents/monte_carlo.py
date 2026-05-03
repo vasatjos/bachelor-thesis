@@ -37,7 +37,7 @@ parser.add_argument(
     "--model_path",
     default="agent_strategies/monte_carlo/",
     type=str,
-    help="Base path to save/load model. A subdirectory for the hyperparameters will be created here.",
+    help="Path to save/load model. A subdirectory for the hyperparameters will be created here when saving.",
 )
 parser.add_argument(
     "--save_each", default=None, type=int, help="Periodic saving frequency."
@@ -521,10 +521,11 @@ if __name__ == "__main__":
             raise ValueError("Invalid opponent")
 
     env = PrsiEnv(opponent)
-    agent = MonteCarloAgent(args=args)
+
     if args.load_model:
-        agent.load(args.model_path)
+        agent = MonteCarloAgent(path=args.model_path)
     else:
+        agent = MonteCarloAgent(args=args)
         agent.train(env)
         agent.save(agent.full_model_path)
 

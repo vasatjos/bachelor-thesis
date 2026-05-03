@@ -498,10 +498,11 @@ if __name__ == "__main__":
             raise ValueError("Invalid opponent")
 
     env = PrsiEnv(opponent)
-    agent = QLearningAgent(args=args)
+
     if args.load_model:
-        agent.load(args.model_path)
+        agent = QLearningAgent(path=args.model_path)
     else:
+        agent = QLearningAgent(args=args)
         agent.train(env)
         agent.save(agent.full_model_path)
 
