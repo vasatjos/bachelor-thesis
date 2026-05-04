@@ -162,6 +162,8 @@ class DoubleDQNAgent(DQNAgent):
             next_q_target = self.target_net(next_states)
             max_next_q = next_q_target.gather(1, best_next_actions).squeeze(1)
 
+            max_next_q[max_next_q == -torch.inf] = 0.0
+
             # Calculate target
             target_q = rewards + self.args.gamma * max_next_q * (1.0 - dones)
 

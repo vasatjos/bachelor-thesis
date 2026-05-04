@@ -153,6 +153,9 @@ class QLearningAgent(TrainableAgent):
                 game_state, info = env.reset()
             hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
+
+            self._update_subset(game_state.top_card, False)
+
             done = False
 
             while not done:
@@ -161,6 +164,10 @@ class QLearningAgent(TrainableAgent):
 
                 next_game_state, reward, done, next_info = env.step(action)
                 next_hand = next_info["hand"]
+
+                self._update_subset(
+                    next_game_state.top_card, next_info.get("deck_flipped_over", False)
+                )
 
                 # Q-Learning update
                 if done:
@@ -219,14 +226,20 @@ class QLearningAgent(TrainableAgent):
             game_state, info = env.reset()
             hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
-            done = False
 
+            self._update_subset(game_state.top_card, False)
+
+            done = False
             reward = 0.0
 
             while not done:
                 action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
+
+                self._update_subset(
+                    game_state.top_card, info.get("deck_flipped_over", False)
+                )
 
             if reward > 0:
                 wins += 1
@@ -355,7 +368,6 @@ class QLearningAgent(TrainableAgent):
         active_suit_idx = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
         effect_strength = np.uint8(state.effect_strength)
-        self._update_subset(state.top_card, info.get("deck_flipped_over", False))
 
         return (
             hand_state,
@@ -415,7 +427,10 @@ class QLearningAgent(TrainableAgent):
             return 0  # we only care about suit
         return CARD_TO_INDEX[top_card]
 
-    def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
+    def _update_subset(self, card: Card | None, deck_flipped_over: bool) -> None:
+        if card is None:
+            raise ValueError("Top card cannot be None when updating played subset.")
+
         if deck_flipped_over:
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
         match self.args.played_subset:

@@ -142,6 +142,8 @@ class REINFORCEAgent(TrainableAgent):
                 len(self.played_cards_subset), dtype=np.uint8
             )
 
+            self._update_subset(game_state.top_card, False)
+
             episode_states: list[np.ndarray] = []
             episode_actions: list[int] = []
             episode_rewards: list[float] = []
@@ -166,6 +168,11 @@ class REINFORCEAgent(TrainableAgent):
 
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
+
+                self._update_subset(
+                    game_state.top_card, info.get("deck_flipped_over", False)
+                )
+
                 episode_rewards.append(float(reward))
 
             if reward > 0:
@@ -212,6 +219,9 @@ class REINFORCEAgent(TrainableAgent):
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
             )
+
+            self._update_subset(game_state.top_card, False)
+
             done = False
             reward = 0.0
 
@@ -219,6 +229,10 @@ class REINFORCEAgent(TrainableAgent):
                 action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
+
+                self._update_subset(
+                    game_state.top_card, info.get("deck_flipped_over", False)
+                )
 
             if reward > 0:
                 wins += 1
@@ -421,7 +435,6 @@ class REINFORCEAgent(TrainableAgent):
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
         effect_strength = np.uint8(state.effect_strength)
-        self._update_subset(state.top_card, info.get("deck_flipped_over", False))
 
         return self._state_to_vector(
             hand_state,
@@ -513,7 +526,10 @@ class REINFORCEAgent(TrainableAgent):
             return 0
         return CARD_TO_INDEX[top_card]
 
-    def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
+    def _update_subset(self, card: Card | None, deck_flipped_over: bool) -> None:
+        if card is None:
+            raise ValueError("Top card cannot be None when updating played subset.")
+
         if deck_flipped_over:
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
