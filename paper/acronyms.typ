@@ -56,6 +56,11 @@
     longplural: "neural networks",
   ),
   (
+    key: "td",
+    short: "TD",
+    long: "Temporal Difference",
+  ),
+  (
     key: "ml",
     short: "ML",
     long: "machine learning",

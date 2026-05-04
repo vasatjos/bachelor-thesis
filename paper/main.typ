@@ -125,6 +125,10 @@ Then we'll detail value-based methods (@chapter:value-methods) and
 policy gradient methods (@chapter:policy-methods). These algorithms will
 form the foundation for our Prší agents in @chapter:experiments.
 
+// Unless otherwise noted, the mathematical notation, foundational definitions,
+// and general algorithmic frameworks presented in this chapter closely follow
+// the conventions established in @Sutton2018.
+
 == Introduction to Reinforcement Learning <chapter:rl-intro>
 
 The main advantage of #gls("rl") over
@@ -194,7 +198,7 @@ or, fittingly, card games)
 where even though the environment does have a state internally,
 the agent doesn't know what the state looks like. In Prší, for example, no player
 knows what cards the opponent has, even though a "full state" exists.
-To model environments like these, we define the #gls("pomdp").
+To model environments like these, we define the #gls("pomdp") @Spaan2012.
 
 #Glspl("pomdp") are inherently similar to #glspl("mdp"), but they are
 defined as a sextuple
@@ -206,7 +210,7 @@ defined as a sextuple
 $(cal(S), cal(A), p, gamma, cal(O), o)$,
 where $cal(O)$ is the set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is
 the observation model. We then give agents $O_t$ as input instead of $S_t$. An
-illustration can be seen in @fig:pomdp-loop.~@Spaan2012 @Sutton2018 @npfl139-lec01
+illustration can be seen in @fig:pomdp-loop.~@Sutton2018 @npfl139-lec01
 
 #figure(
     image("images/pomdp.png", width: 80%),
@@ -374,7 +378,7 @@ The core idea of these approaches is that if we can accurately predict
 the long-term value of every action in every state, the task of finding
 an optimal policy becomes trivial. By simply selecting the action with
 the highest estimated value -- the greedy approach with respect
-to the action-value function -- the agent can derive its behavior without ever
+to the action-value function -- the agent can derive its behaviour without ever
 having to explicitly learn a separate policy function. Once we have
 estimated $q_*$ as $Q$ during training, we'll simply select actions
 deterministically by using the policy
@@ -447,7 +451,7 @@ Because random starting states alone do not guarantee exploration in the deeper
 stages of an episode, nor will they result in a random first action,
 our agent still utilizes an $epsilon$-greedy policy.
 This combination ensures that the agent sufficiently explores the state space while
-simultaneously optimizing its behavior. A simple #gls("mc") algorithm with an
+simultaneously optimizing its behaviour. A simple #gls("mc") algorithm with an
 $epsilon$-greedy policy using $alpha$ as the update step can be seen
 in @alg:mc-control. @Sutton2018 @npfl139-lec01
 
@@ -471,7 +475,7 @@ in @alg:mc-control. @Sutton2018 @npfl139-lec01
     ],
     caption: flex-caption(
         [$epsilon$-greedy Monte Carlo Control],
-        [First-visit Monte Carlo Control with $epsilon$-greedy exploration],
+        [First-visit Monte Carlo Control with $epsilon$-greedy exploration @Sutton2018],
     ),
     kind: "algo",
     supplement: "Algorithm",
@@ -479,7 +483,73 @@ in @alg:mc-control. @Sutton2018 @npfl139-lec01
 
 === Q-Learning
 
-#lorem(70)
+While #gls("mc") methods are intuitive and effective, they suffer from a
+significant limitation: they must wait until the end of an episode to observe
+the final return $G_t$ before any learning can occur. In environments with
+long episodes, this delays the update process, even if many rewards were
+already observed throughout the episode. Furthermore, if an episode
+is never guaranteed to terminate, standard #gls("mc") methods cannot be used
+at all.
+
+Q-Learning elegantly bypasses this issue by utilizing #gls("td") learning.
+Instead of waiting for the true episodic return, #gls("td") methods update their
+value estimates based in part on other learned estimates -- a process known as
+_bootstrapping_.
+
+In Q-Learning, the agent takes an action $A_t$ in state $S_t$, observes
+the immediate reward $R_(t+1)$ and the next state $S_(t+1)$, and
+immediately performs an update. To do this, it replaces the full return $G_t$
+used in #gls("mc") with the _#gls("td") target_, which estimates the remainder of the
+return by assuming the agent will take the optimal action from the
+next state onward.
+
+This brings us to the second major distinction from #gls("mc") methods:
+Q-Learning is an _off-policy_ algorithm. It separates the _behaviour policy_
+(the policy used to interact with the environment and gather data,
+such as $epsilon$-greedy) from the _target policy_ (the policy being
+learned and evaluated). The algorithm learns the optimal action-value
+function $q_*$ directly, regardless of the agent's exploratory actions.
+
+The Q-Learning update rule is derived directly from the Bellman Optimality
+Equation and is defined as:
+$
+    Q(S_t, A_t) <- Q(S_t, A_t) + alpha [R_(t+1) + gamma max_a Q(S_(t+1), a) - Q(S_t, A_t)]
+$
+where the term $R_(t+1) + gamma max_a Q(S_(t+1), a)$ acts as our
+bootstrapped #gls("td") target.
+
+What this update rule states is that the agent modifies the estimate to account
+for the new observed reward and assumes greedy behaviour will be followed
+afterwards. This can actually result in worse results during training, as
+the assumption of greedy behaviour is not correct under the $epsilon$-greedy
+policy. If the evaluation uses $epsilon = 0$ however, the agent's estimates
+for $Q$ will be "more correct" than the #gls("mc") estimates, which have
+learned the action-value function only for the $epsilon$-greedy case.
+
+#figure(
+    algo(
+        title: [Q-Learning Control],
+        parameters: ([episodes], $alpha$, $epsilon$, $gamma$),
+        line-numbers: false,
+    )[
+        Initialize $Q(s, a)$ arbitrarily for all $s in cal(S), a in cal(A)(s)$\
+        except that $Q("terminal", dot) = 0$\
+        Loop for each episode:#i\
+        Initialize $S$\
+        Loop for each step of episode:#i\
+        Choose $A$ from $S$ using $epsilon$-greedy policy derived from $Q$\
+        Take action $A$, observe $R, S'$\
+        $Q(S, A) <- Q(S, A) + alpha [R + gamma max_a Q(S', a) - Q(S, A)]$\
+        $S <- S'$#d\
+        until $S$ is terminal\
+    ],
+    caption: flex-caption(
+        [Q-Learning Control],
+        [Q-Learning: Off-policy TD control algorithm @Sutton2018],
+    ),
+    kind: "algo",
+    supplement: "Algorithm",
+) <alg:q-learning>
 
 === Deep Q-Network
 
