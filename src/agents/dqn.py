@@ -154,6 +154,7 @@ class DQNAgent(TrainableAgent):
         total_steps = 0
         batch_wins = 0
         draw_actions = 0
+        batch_steps = 0
 
         for episode in range(self.args.episodes):
             if self.args.self_play and episode % self.args.self_play_update_freq == 0:
@@ -165,6 +166,9 @@ class DQNAgent(TrainableAgent):
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
             )
+
+            self._update_subset(game_state.top_card, False)
+
             done = False
             reward = 0.0
 
@@ -178,6 +182,9 @@ class DQNAgent(TrainableAgent):
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
 
+                self._update_subset(
+                    game_state.top_card, info.get("deck_flipped_over", False)
+                )
                 next_state_vec = self._process_state(game_state, info, hand)
                 next_valid_mask = get_valid_action_mask(game_state, hand)
 
@@ -192,6 +199,7 @@ class DQNAgent(TrainableAgent):
                     )
                 )
                 total_steps += 1
+                batch_steps += 1
 
                 if len(replay_buffer) >= self.args.batch_size:
                     self._learn(replay_buffer)
@@ -206,9 +214,10 @@ class DQNAgent(TrainableAgent):
                 self.args.epsilon *= self.args.epsilon_decay
 
             if (episode + 1) % self.args.log_each == 0:
-                self.log(episode, batch_wins, draw_actions, total_steps)
+                self.log(episode, batch_wins, draw_actions, batch_steps)
                 batch_wins = 0
-                draw_actions = 0  # Reset for next batch logic if desired, though normally running total might be okay depending on your logic
+                draw_actions = 0
+                batch_steps = 0
 
             if (
                 self.args.save_each is not None
@@ -230,6 +239,8 @@ class DQNAgent(TrainableAgent):
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
             )
+
+            self._update_subset(game_state.top_card, False)
             done = False
             reward = 0.0
 
@@ -237,6 +248,9 @@ class DQNAgent(TrainableAgent):
                 action = self.choose_action(game_state, hand, info)
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
+                self._update_subset(
+                    game_state.top_card, info.get("deck_flipped_over", False)
+                )
 
             if reward > 0:
                 wins += 1
@@ -414,6 +428,7 @@ class DQNAgent(TrainableAgent):
             next_q = self.target_net(next_states)
             next_q[~next_valid_masks] = -torch.inf
             max_next_q = next_q.max(dim=1).values
+            max_next_q[max_next_q == -torch.inf] = 0.0
             target_q = rewards + self.args.gamma * max_next_q * (1.0 - dones)
 
         loss = self.loss(current_q, target_q)
@@ -440,7 +455,6 @@ class DQNAgent(TrainableAgent):
         active_suit = SUIT_TO_INDEX[state.actual_suit]
         card_effect = state.current_effect
         effect_strength = np.uint8(state.effect_strength)
-        self._update_subset(state.top_card, info.get("deck_flipped_over", False))
 
         return self._state_to_vector(
             hand_state,
@@ -532,7 +546,10 @@ class DQNAgent(TrainableAgent):
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
-    def _update_subset(self, card: Card, deck_flipped_over: bool) -> None:
+    def _update_subset(self, card: Card | None, deck_flipped_over: bool) -> None:
+        if card is None:
+            raise ValueError("Top card cannot be None when updating played subset.")
+
         if deck_flipped_over:
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
