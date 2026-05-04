@@ -65,4 +65,9 @@
     short: "ML",
     long: "machine learning",
   ),
+  (
+    key: "sgd",
+    short: "SGD",
+    long: "Stochastic Gradient Descent",
+  ),
 )

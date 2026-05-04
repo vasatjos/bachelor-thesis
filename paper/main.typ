@@ -553,7 +553,63 @@ learned the action-value function only for the $epsilon$-greedy case.
 
 === Deep Q-Network
 
-#lorem(70)
+A fundamental issue with the methods presented so far was that they were so-called
+_tabular methods_. $Q$ was just a table with a field for each state-action pair.
+This is not ideal for many environments, including Prší, as different states
+may share a large part of information. Although specific state representations
+for Prší will be discussed in @chapter:environment and @chapter:experiments,
+it is clear that many states are fundamentally similar. For instance, two
+game states might differ by only a single played card, yet their underlying
+strategic values are nearly identical.
+Tabular methods fail to capture this shared structure, treating each state in isolation.
+
+To solve this problem of states being "too independent", we'll look at our
+approximations not as tables, but functions parametrized by a weight vector
+$bold(w) in RR^d$. This will allow the agent to generalize learned
+experiences across many similar states. We'll denote our estimates for
+the value function and action-value function as follows:
+
+#[
+    // The text after the equation is only one line,
+    // this prevents widowing
+    #show math.equation.where(block: true): set block(sticky: true)
+
+    $
+        hat(v)(s; bold(w))\
+        hat(q)(s, a; bold(w)).
+    $
+    In the field of #gls("rl"), this approach is fittingly
+    called _function approximation_.
+]
+
+To find the optimal weight vector $bold(w)$, we must define an objective
+function to minimize. In tabular methods, an update to one state does not
+affect any other state, making it theoretically possible to learn the exact
+value of every state. With function approximation, however, updating the weight
+vector to improve the estimate for one state alters the estimates for
+many others. Since we cannot achieve zero error for all states simultaneously,
+we must specify which states we care about most.
+
+We do this by weighting the errors according to a state distribution
+$mu(s) >= 0$, $sum_s mu(s) = 1$. The most logical choice for this distribution
+is one which represents the fraction of time the agent spends in state $s$.
+We can then define the Mean Squared Value Error $overline(upright(V E))$
+for the state-value function as:
+$
+    overline(upright(V E))(bold(w)) =
+    sum_(s in cal(S)) mu(s) [v_pi (s) - hat(v)(s; bold(w))]^2.
+$\
+
+In practice, calculating this exact sum is impossible because the true
+state distribution $mu(s)$ and the true values $q_pi (s, a)$ are unknown.
+However, by interacting with the environment, the agent naturally visits
+states according to $mu(s)$. Therefore, instead of computing the full sum,
+we can minimize the error by sampling transitions from the agent's
+collected experience and updating the weights using #gls("sgd").
+Furthermore, just as in tabular Q-Learning, we
+substitute the unknown true return with a bootstrapped #gls("td") target.
+
+// This leads us to #gls("dqn", first: true) @dqn2015
 
 == Policy Gradient Methods <chapter:policy-methods>
 
