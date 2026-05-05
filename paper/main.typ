@@ -711,7 +711,7 @@ an actual implementation of an environment.
 Prší~@prsi (translating to "it's raining") is a popular card game played in
 the Czech Republic. It is played with a German-suited card deck,
 which contains 32 cards -- from 7 to Ace across
-foufour suits:
+four suits:
 - Hearts #box(height: 0.95em, baseline: 20%, image("images/hearts.png")),
 - Bells #box(height: 0.95em, baseline: 20%, image("images/bells.png")),
 - Leaves #box(height: 0.95em, baseline: 20%, image("images/leaves.png")),
