@@ -679,7 +679,7 @@ $
         Perform a gradient descent step on $(Y_j - hat(q)(S_j, A_j; bold(w)))^2$ with respect to $bold(w)$\
         Every $C$ steps, synchronize target network: $bold(w)^- <- bold(w)$\
         $S_t <- S_(t+1)$#d\
-        until $S$ is terminal\
+        until $S_t$ is terminal\
     ],
     caption: flex-caption(
         [Deep Q-Network],
