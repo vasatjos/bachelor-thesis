@@ -91,7 +91,7 @@ In these settings, the "truth" of the game is hidden behind the back
 of a card or the mind of an opponent, forcing an agent to reason under
 deep uncertainty rather than just calculating a path through a known state.
 
-In this thesis, we will focus on Prší, a cultural staple in the Czech Republic.
+In this thesis, we will focus on Prší~@prsi, a cultural staple in the Czech Republic.
 It is one of the many variants of the German card game Mau-Mau and is
 not dissimilar to the world-famous card game Uno.
 We'll use this unique setting to explore how both traditional and modern
@@ -569,19 +569,12 @@ approximations not as tables, but functions parametrized by a weight vector
 $bold(w) in RR^d$. This will allow the agent to generalize learned
 experiences across many similar states. We'll denote our estimates for
 the value function and action-value function as follows:
-
-#[
-    // The text after the equation is only one line,
-    // this prevents widowing
-    #show math.equation.where(block: true): set block(sticky: true)
-
-    $
-        hat(v)(s; bold(w))\
-        hat(q)(s, a; bold(w)).
-    $
-    In the field of #gls("rl"), this approach is fittingly
-    called _function approximation_.
-]
+$
+    hat(v)(s; bold(w))\
+    hat(q)(s, a; bold(w)).
+$
+In the field of #gls("rl"), this approach is fittingly
+called _function approximation_.
 
 To find the optimal weight vector $bold(w)$, we must define an objective
 function to minimize. In tabular methods, an update to one state does not
@@ -656,6 +649,8 @@ $
     ).
 $
 
+// TODO: DDQN
+
 #figure(
     algo(
         title: [Deep Q-Learning with Experience Replay],
@@ -706,9 +701,57 @@ $
 
 = Implementing an Environment for Prší <chapter:environment>
 
+With the methods we will be using now defined, let's take a closer look at
+what environment they will actually be tackling. In this chapter, we'll first
+introduce the game of Prší and its ruleset, and afterwards we'll briefly discuss
+an actual implementation of an environment.
+
 == The Rules of Prší
 
-#lorem(100)
+Prší~@prsi (translating to "it's raining") is a popular card game played in
+the Czech Republic. It is played with a German-suited card deck,
+which contains 32 cards -- from 7 to Ace of
+4 suits:
+- Hearts #box(height: 0.95em, baseline: 20%, image("images/hearts.png")),
+- Bells #box(height: 0.95em, baseline: 20%, image("images/bells.png")),
+- Leaves #box(height: 0.95em, baseline: 20%, image("images/leaves.png")),
+- and Acorns #box(height: 0.95em, baseline: 20%, image("images/acorns.png")).
+A full deck can be seen in @fig:bohemian-deck.
+While not every household in Czechia abides by the same rules, below is
+described the version we will be following during the implementation of
+our environment.
+
+The game is played with 2-6 players (unless playing with multiple decks).
+Each player is dealt 4 cards
+and one initial card is placed face-up onto the discard pile to start the game.
+The remaining cards are placed face-down as the drawing pile. Players then
+take turns clockwise, placing one of their cards onto the discard pile
+until all players but one have no cards left.
+To place a card on top of the discard pile, the card being placed
+must match the top card in either suit or rank (or both).
+If a player has no playable cards, they must draw a card from the draw pile.
+If there are no cards left in the draw pile, the discard pile gets flipped
+over and becomes the draw pile (the top card from the discard pile remains unflipped
+for clarity).
+
+In Prší several special cards also have unique effects. Playing an Ace
+forces next player to skip a turn unless they also play an Ace. An Ober
+(Queen equivalent) doesn't need to match neither rank nor suit of the top card
+to be played, and the player playing an Ober can choose which suit the next played
+card must belong to. Playing a 7 forces the next
+player to draw 2 cards. If the next player instead also plays a 7, the player
+after him is forced to draw 4, etc. If a player has won (has no cards on hand),
+he can be brought back during his winning round if the player before him plays
+the 7 of hearts. He must then draw the relevant number of cards (2-8) and continue
+playing.
+
+#figure(
+    image("images/Bohemian_deck.png", width: 80%),
+    caption: flex-caption(
+        [Deck of Prší cards],
+        [A deck of German cards (Bohemian pattern) @bohemian-deck],
+    ),
+) <fig:bohemian-deck>
 
 == Designing a Reinforcement Learning Environment
 
