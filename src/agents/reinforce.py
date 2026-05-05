@@ -255,7 +255,7 @@ class REINFORCEAgent(TrainableAgent):
         action_mask = torch.tensor(
             get_valid_action_mask(state, hand), dtype=torch.bool, device=self.device
         )
-        logits[~action_mask] = -torch.inf
+        logits[~action_mask] = -1e9
         probs = torch.softmax(logits, dim=-1).cpu().numpy()
 
         action_idx = np.random.choice(len(probs), p=probs)
@@ -393,7 +393,7 @@ class REINFORCEAgent(TrainableAgent):
         logits = self.policy_net(states)
 
         # Mask invalid actions before calculating probabilities and entropy
-        logits[~masks] = -torch.inf
+        logits[~masks] = -1e9
 
         dist = Categorical(logits=logits)
         taken_log_probs = dist.log_prob(actions)

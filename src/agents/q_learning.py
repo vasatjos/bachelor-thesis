@@ -261,7 +261,7 @@ class QLearningAgent(TrainableAgent):
 
         # Greedy: find best Q-value among valid actions
         best_action: Action = valid_actions[0]
-        best_value = -np.inf
+        best_value = -1e9
 
         for action in valid_actions:
             value = self.action_value_fn.get(processed_state, {}).get(action, 0.0)
@@ -453,7 +453,7 @@ class QLearningAgent(TrainableAgent):
         """Get the maximum Q-value for the given state over all valid actions."""
         valid_actions = get_valid_actions(game_state, hand)
 
-        max_value = -np.inf
+        max_value = -1e9
         for action in valid_actions:
             value = self.action_value_fn.get(state, {}).get(action, 0.0)
             if value > max_value:
