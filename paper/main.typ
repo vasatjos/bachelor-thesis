@@ -710,40 +710,40 @@ an actual implementation of an environment.
 
 Prší~@prsi (translating to "it's raining") is a popular card game played in
 the Czech Republic. It is played with a German-suited card deck,
-which contains 32 cards -- from 7 to Ace of
-4 suits:
+which contains 32 cards -- from 7 to Ace across
+foufour suits:
 - Hearts #box(height: 0.95em, baseline: 20%, image("images/hearts.png")),
 - Bells #box(height: 0.95em, baseline: 20%, image("images/bells.png")),
 - Leaves #box(height: 0.95em, baseline: 20%, image("images/leaves.png")),
-- and Acorns #box(height: 0.95em, baseline: 20%, image("images/acorns.png")).
+- Acorns #box(height: 0.95em, baseline: 20%, image("images/acorns.png")).
 A full deck can be seen in @fig:bohemian-deck.
-While not every household in Czechia abides by the same rules, below is
-described the version we will be following during the implementation of
+While not every household in Czechia abides by the same rules, the version
+described below is the one we will be following during the implementation of
 our environment.
 
-The game is played with 2-6 players (unless playing with multiple decks).
-Each player is dealt 4 cards
+The game is played with two to six players (unless playing with multiple decks).
+Each player is dealt four cards
 and one initial card is placed face-up onto the discard pile to start the game.
 The remaining cards are placed face-down as the drawing pile. Players then
 take turns clockwise, placing one of their cards onto the discard pile
 until all players but one have no cards left.
 To place a card on top of the discard pile, the card being placed
-must match the top card in either suit or rank (or both).
+must match the top card in either suit or rank.
 If a player has no playable cards, they must draw a card from the draw pile.
 If there are no cards left in the draw pile, the discard pile gets flipped
-over and becomes the draw pile (the top card from the discard pile remains unflipped
+over and becomes the draw pile (although the top card from the discard pile remains unflipped
 for clarity).
 
-In Prší several special cards also have unique effects. Playing an Ace
-forces next player to skip a turn unless they also play an Ace. An Ober
-(Queen equivalent) doesn't need to match neither rank nor suit of the top card
+In Prší, several special cards also have unique effects. Playing an Ace
+forces the next player to skip a turn unless they also play an Ace. An Ober
+(Queen equivalent) doesn't need to match either rank or suit of the top card
 to be played, and the player playing an Ober can choose which suit the next played
 card must belong to. Playing a 7 forces the next
-player to draw 2 cards. If the next player instead also plays a 7, the player
-after him is forced to draw 4, etc. If a player has won (has no cards on hand),
-he can be brought back during his winning round if the player before him plays
-the 7 of hearts. He must then draw the relevant number of cards (2-8) and continue
-playing.
+player to draw two cards. If the next player instead also plays a 7, the player
+after them is forced to draw four, etc. If a player has won (has no cards on hand),
+they can be brought back during his winning round if the player before them plays
+the 7 of hearts. They must then draw the relevant number of cards (two to eight)
+and continue playing.
 
 #figure(
     image("images/Bohemian_deck.png", width: 80%),
