@@ -35,12 +35,12 @@
     ],
 
     keywords-en: [
-        machine learning, reinforcement learning, card games, Q-Learning,
-        DQN, neural networks
+        machine learning, reinforcement learning, Q-Learning,
+        DQN, neural networks, imperfect information games, card games, Prší
     ],
     keywords-cz: [
-        strojové učení, posilované učení, karetní hry, Q-Learning,
-        DQN, neuronové sítě
+        strojové učení, posilované učení, Q-Learning,
+        DQN, neuronové sítě, hry s neúplnou informací, karetní hry, Prší
     ],
 
     acknowledgement: [
@@ -84,7 +84,7 @@ how to act, only telling the #gls("ai") agent how good the most recent thing
 the agent did was by handing out a numerical reward for every action performed.
 
 #Gls("rl") has shown superhuman performance in many board games and video games alike,
-with AlphaZero @alphazero famously beating the best go players in the world and Agent57 @agent57
+with AlphaZero~@alphazero famously beating the best go players in the world and Agent57~@agent57
 achieving superhuman performance in the whole Atari suite of games.
 However, a less explored frontier remains: games with imperfect information.
 In these settings, the "truth" of the game is hidden behind the back
@@ -198,7 +198,7 @@ or, fittingly, card games)
 where even though the environment does have a state internally,
 the agent doesn't know what the state looks like. In Prší, for example, no player
 knows what cards the opponent has, even though a "full state" exists.
-To model environments like these, we define the #gls("pomdp") @Spaan2012.
+To model environments like these, we define the #gls("pomdp")~@Spaan2012.
 
 #Glspl("pomdp") are inherently similar to #glspl("mdp"), but they are
 defined as a sextuple
@@ -453,7 +453,7 @@ our agent still utilizes an $epsilon$-greedy policy.
 This combination ensures that the agent sufficiently explores the state space while
 simultaneously optimizing its behaviour. A simple #gls("mc") algorithm with an
 $epsilon$-greedy policy using $alpha$ as the update step can be seen
-in @alg:mc-control. @Sutton2018 @npfl139-lec01
+in @alg:mc-control.~@Sutton2018 @npfl139-lec01
 
 #figure(
     algo(
@@ -528,7 +528,7 @@ learned the action-value function only for the $epsilon$-greedy case.
 
 #figure(
     algo(
-        title: [Q-Learning Control],
+        title: [Q-Learning],
         parameters: ([episodes], $alpha$, $epsilon$, $gamma$),
         line-numbers: false,
     )[
@@ -544,7 +544,7 @@ learned the action-value function only for the $epsilon$-greedy case.
         until $S$ is terminal\
     ],
     caption: flex-caption(
-        [Q-Learning Control],
+        [Q-Learning],
         [Q-Learning: Off-policy TD control algorithm @Sutton2018],
     ),
     kind: "algo",
@@ -618,8 +618,6 @@ substitute the unknown true return with a bootstrapped #gls("td") target.
 #lorem(70)
 
 #lorem(100)
-
-// Maybe PPO as well
 
 
 = Implementing an Environment for Prší <chapter:environment>
