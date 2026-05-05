@@ -259,7 +259,7 @@ state which can't be transitioned out of and gives a reward of 0.
 We can also use $G_t = sum_(k=0)^(T-t-1) gamma^k R_(t+1+k)$
 and allow for $T = infinity$ or $gamma = 1$ (never both).
 Fixing $gamma < 1$ can however be useful even in episodic tasks, as it
-serves to weight immediate rewards more heavily than distant ones. This
+serves to weigh immediate rewards more heavily than distant ones. This
 encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
@@ -311,7 +311,7 @@ value of the expected next state. This is known as the *Bellman equation*
 for $v_pi$:
 $
     v_pi (s) = EE[G_t mid(bar) S_t = s]
-    = sum_a pi(a mid(bar) s) sum_(s', r) p(s', r mid(bar) s, a) [r + gamma v_pi (s')].
+    = sum_a pi(a mid(bar) s) sum_(s', r) p(s', r mid(bar) s, a) [r + gamma v_pi (s')]
 $
 where $a in cal(A)(s)$ and $s, s' in cal(S)$. We also define the *Bellman
 optimality equation* for $v_*$, which expresses the fact that the value of a
@@ -397,7 +397,7 @@ averaging the sample returns observed during actual interactions with the
 environment.
 
 Because #gls("mc") methods rely on calculating the final return $G_t$,
-they fundamentally require the experience to be divided into well-defined
+they require the experience to be divided into well-defined
 episodes that eventually terminate. This makes them a natural fit for card
 games like Prší, where every played game represents a single episode
 that strictly concludes with a terminal state where one player wins.
@@ -600,16 +600,94 @@ $
     sum_(s in cal(S)) mu(s) [v_pi (s) - hat(v)(s; bold(w))]^2.
 $\
 
-In practice, calculating this exact sum is impossible because the true
-state distribution $mu(s)$ and the true values $q_pi (s, a)$ are unknown.
-However, by interacting with the environment, the agent naturally visits
-states according to $mu(s)$. Therefore, instead of computing the full sum,
-we can minimize the error by sampling transitions from the agent's
-collected experience and updating the weights using #gls("sgd").
-Furthermore, just as in tabular Q-Learning, we
+In practice, calculating this exact sum is impossible because the true state
+distribution $mu(s)$ and the true values $q_pi (s, a)$ are unknown,
+and the state space is typically too vast to iterate over. However, as the
+agent interacts with the environment, it naturally visits states with frequencies
+that approximate $mu(s)$. This allows us to bypass the intractable
+full sum over the state space. Instead, we can estimate the expected
+error by sampling transitions from the agent's collected experience
+and adjusting the weights using #gls("sgd").
+
+Then, we can either use the real return for gradient #gls("mc") algorithms,
+or, just as in tabular Q-Learning, we can
 substitute the unknown true return with a bootstrapped #gls("td") target.
 
-// This leads us to #gls("dqn", first: true) @dqn2015
+This leads us to #gls("dqn", first: true)~@dqn2015, which brought 2
+major innovations in using #glspl("nn") for approximating $Q$ values:
+a separate *target network* and *experience replay*.
+
+To stabilize training with non-linear #glspl("nn"), #gls("dqn")
+first employs experience replay. Because sequential game states are highly
+correlated, training directly on consecutive interactions violates the standard
+machine learning assumption of independent data. It can also lead to forgetting
+past experiences. Instead, the agent stores transitions
+$(S_t, A_t, R_(t+1), S_(t+1))$ in a (finite) memory buffer $D$ and uniformly samples
+random mini-batches for training, effectively breaking temporal correlations.
+Using these randomized batches, the primary network updates its weights using
+#gls("sgd") (or possibly other #gls("nn") optimization methods like Adam~@Adam)
+to minimize the Mean Squared Error against the #gls("td") target:
+$
+    L(bold(w)) = EE lr(
+        [
+            (R_(t+1) + gamma max_(a') hat(q)(S_(t+1), a'; bold(w))
+                - hat(q)(S_t, A_t; bold(w)))^2
+        ]
+    ).
+$\
+
+However, calculating the target $hat(q)(S_(t+1), a'; bold(w))$ using the exact
+same weight vector $bold(w)$ that is actively being updated
+creates a problem, often described as chasing a moving target.
+To solve this, #gls("dqn") introduces a separate *target network*
+parameterized by $bold(w)^-$. This secondary network computes the target
+value $R_(t+1) + gamma max_(a') hat(q)(S_(t+1), a'; bold(w)^-)$.
+Its weights are held completely fixed during backpropagation and are only
+periodically synchronized with the primary network $bold(w)$ every $C$ timesteps,
+providing a stationary objective that prevents the learning process
+from diverging. The actual loss function optimized at each step thus becomes:
+$
+    L(bold(w)) = EE lr(
+        [
+            (R_(t+1) + gamma max_(a') hat(q)(S_(t+1), a'; bold(w)^-)
+                - hat(q)(S_t, A_t; bold(w)))^2
+        ]
+    ).
+$
+
+#figure(
+    algo(
+        title: [Deep Q-Learning with Experience Replay],
+        parameters: ([capacity $N$], [update frequency $C$], $epsilon$, $gamma$),
+        line-numbers: false,
+    )[
+        Initialize replay memory $D$ to capacity $N$\
+        Initialize action-value function $hat(q)$ with random weights $bold(w)$\
+        Initialize target action-value function with weights $bold(w)^- <- bold(w)$\
+        Loop for each episode:#i\
+        Initialize state $S_0$\
+        Loop for each step $t$ of episode:#i\
+        Choose $A_t$ from $S_t$ using $epsilon$-greedy policy derived from $hat(q)(dot, dot; bold(w))$\
+        Take action $A_t$, observe reward $R_(t+1)$ and next state $S_(t+1)$\
+        Store transition $(S_t, A_t, R_(t+1), S_(t+1))$ in $D$\
+        Sample random mini-batch of transitions $(S_j, A_j, R_(j+1), S_(j+1))$ from $D$\
+        #comment([Calculate TD target $Y_j$ for each transition in the mini-batch], inline: true)\
+        If $S_(j+1)$ is a terminal state:#i\
+        $Y_j <- R_(j+1)$#d\
+        Else:#i\
+        $Y_j <- R_(j+1) + gamma max_(a') hat(q)(S_(j+1), a'; bold(w)^-)$#d\
+        Perform a gradient descent step on $(Y_j - hat(q)(S_j, A_j; bold(w)))^2$ with respect to $bold(w)$\
+        Every $C$ steps, synchronize target network: $bold(w)^- <- bold(w)$\
+        $S_t <- S_(t+1)$#d\
+        until $S$ is terminal\
+    ],
+    caption: flex-caption(
+        [Deep Q-Network],
+        [Deep Q-Learning with experience replay and target networks @dqn2015],
+    ),
+    kind: "algo",
+    supplement: "Algorithm",
+) <alg:dqn>
 
 == Policy Gradient Methods <chapter:policy-methods>
 
