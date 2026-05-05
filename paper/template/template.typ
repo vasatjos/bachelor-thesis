@@ -155,6 +155,9 @@
 
     show math.equation.where(block: false): box // don't break inline math
 
+    show regex("(?i)(\b(?:a|an|the)\b) "): it => {
+        it.text.slice(0, -1) + sym.space.nobreak
+    }
     set figure(placement: auto)
     show figure.caption: set text(0.9em)
     show figure.caption: box.with(width: 92%)
