@@ -73,11 +73,14 @@ class PrsiEnv:
 
         self._deal()
 
+        new_cards = [first_card]
+
         if self._player_won_last:  # player makes first move
             return self._state, {
                 "hand": self._player_info.hand,
                 "opponent_card_count": (self._opponent_player_info.card_count),
                 "deck_flipped_over": False,
+                "new_cards": new_cards,
             }
 
         # Opponent makes first move
@@ -85,16 +88,24 @@ class PrsiEnv:
             "hand": self._opponent_player_info.hand,
             "opponent_card_count": self._player_info.card_count,
             "deck_flipped_over": False,
+            "new_cards": new_cards,
         }
         opponent_action = self._opponent.choose_action(
             self._state, self._opponent_player_info.hand, player_info
         )
         flipped = self._execute_action(self._opponent_player_info, opponent_action)
 
+        if flipped:
+            # The deck flipped, previous cards were shuffled away. Only top_card remains.
+            new_cards = [self._state.top_card]  # type: ignore[list-item]
+        if opponent_action is not None:
+            new_cards.append(opponent_action[0])
+
         return self._state, {
             "hand": self._player_info.hand,
             "opponent_card_count": self._opponent_player_info.card_count,
             "deck_flipped_over": flipped,
+            "new_cards": new_cards,
         }
 
     def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
@@ -111,9 +122,15 @@ class PrsiEnv:
             raise RuntimeError("Game is over. Call reset() to start a new game.")
 
         self._steps += 1
+        new_cards = []
 
         try:
             flipped_player = self._execute_action(self._player_info, action)
+            if flipped_player:
+                # Discard pile wiped except for the top card
+                new_cards = [self._state.top_card]
+            if action is not None:
+                new_cards.append(action[0])
         except DeckEmptyError as e:  # lose when drawing from empty deck
             self._done = True
             self._player_won_last = False
@@ -126,6 +143,7 @@ class PrsiEnv:
                     "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": True,
+                    "new_cards": new_cards,
                 },
             )
 
@@ -143,6 +161,7 @@ class PrsiEnv:
                     "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": flipped_player,
+                    "new_cards": new_cards,
                 },
             )
             # else: simply fall through to opponent's turn
@@ -151,6 +170,7 @@ class PrsiEnv:
             "hand": self._opponent_player_info.hand,
             "opponent_card_count": self._player_info.card_count,
             "deck_flipped_over": flipped_player,
+            "new_cards": new_cards,
         }
         opponent_action = self._opponent.choose_action(
             self._state, self._opponent_player_info.hand, player_info
@@ -159,6 +179,11 @@ class PrsiEnv:
             flipped_opponent = self._execute_action(
                 self._opponent_player_info, opponent_action
             )
+            if flipped_opponent:
+                # If opponent draw flipped the deck, player's earlier play is wiped out!
+                new_cards = [self._state.top_card]
+            if opponent_action is not None:
+                new_cards.append(opponent_action[0])
         except DeckEmptyError:
             self._done = True
             self._player_won_last = True
@@ -170,6 +195,7 @@ class PrsiEnv:
                     "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
                     "deck_flipped_over": True,
+                    "new_cards": new_cards,
                 },
             )
 
@@ -185,7 +211,8 @@ class PrsiEnv:
                 {
                     "hand": self._player_info.hand,
                     "opponent_card_count": self._opponent_player_info.card_count,
-                    "deck_flipped_over": flipped_opponent,
+                    "deck_flipped_over": flipped_player or flipped_opponent,
+                    "new_cards": new_cards,
                 },
             )
 
@@ -199,6 +226,7 @@ class PrsiEnv:
                 "hand": self._player_info.hand,
                 "opponent_card_count": self._opponent_player_info.card_count,
                 "deck_flipped_over": flipped_player or flipped_opponent,
+                "new_cards": new_cards,
             },
         )
 

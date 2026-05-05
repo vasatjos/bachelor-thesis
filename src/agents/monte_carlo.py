@@ -165,7 +165,7 @@ class MonteCarloAgent(TrainableAgent):
             hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
 
-            self._update_subset(game_state.top_card, False)
+            self._update_subset(info.get("new_cards", []), False)
 
             done = False
 
@@ -182,7 +182,7 @@ class MonteCarloAgent(TrainableAgent):
                 hand = info["hand"]
 
                 self._update_subset(
-                    game_state.top_card, info.get("deck_flipped_over", False)
+                    info.get("new_cards", []), info.get("deck_flipped_over", False)
                 )
 
                 if reward == 1:
@@ -256,7 +256,7 @@ class MonteCarloAgent(TrainableAgent):
             hand = info["hand"]
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
 
-            self._update_subset(game_state.top_card, False)
+            self._update_subset(info.get("new_cards", []), False)
 
             done = False
             reward = 0.0
@@ -267,7 +267,7 @@ class MonteCarloAgent(TrainableAgent):
                 hand = info["hand"]
 
                 self._update_subset(
-                    game_state.top_card, info.get("deck_flipped_over", False)
+                    info.get("new_cards", []), info.get("deck_flipped_over", False)
                 )
 
             if reward > 0:
@@ -460,33 +460,25 @@ class MonteCarloAgent(TrainableAgent):
             return 0  # we only care about suit
         return CARD_TO_INDEX[top_card]
 
-    def _update_subset(self, card: Card | None, deck_flipped_over: bool) -> None:
-        if card is None:
-            raise ValueError("Top card cannot be None when updating played subset.")
-
+    def _update_subset(self, new_cards: list[Card], deck_flipped_over: bool) -> None:
         if deck_flipped_over:
             self.played_cards_subset = [np.uint8(0)] * len(self.played_cards_subset)
-        match self.args.played_subset:
-            case "all":
-                idx = CARD_TO_INDEX[card]
-                self.played_cards_subset[idx] += 1
-            case "specials":
-                if (
-                    card.rank != Rank.SEVEN
-                    and card.rank != Rank.OBER
-                    and card.rank != Rank.ACE
-                ):
-                    return
-                if card.rank == Rank.SEVEN:
-                    self.played_cards_subset[0] += 1
-                if card.rank == Rank.OBER:
-                    self.played_cards_subset[1] += 1
-                if card.rank == Rank.ACE:
-                    self.played_cards_subset[2] += 1
-            case "sevens":
-                if card.rank != Rank.SEVEN:
-                    return
-                self.played_cards_subset[0] += 1
+
+        for card in new_cards:
+            match self.args.played_subset:
+                case "all":
+                    idx = CARD_TO_INDEX[card]
+                    self.played_cards_subset[idx] += 1
+                case "specials":
+                    if card.rank == Rank.SEVEN:
+                        self.played_cards_subset[0] += 1
+                    elif card.rank == Rank.OBER:
+                        self.played_cards_subset[1] += 1
+                    elif card.rank == Rank.ACE:
+                        self.played_cards_subset[2] += 1
+                case "sevens":
+                    if card.rank == Rank.SEVEN:
+                        self.played_cards_subset[0] += 1
 
     def _get_hyperparameter_string(self) -> str:
         hyper_parts = []

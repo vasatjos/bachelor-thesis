@@ -167,7 +167,7 @@ class DQNAgent(TrainableAgent):
                 len(self.played_cards_subset), dtype=np.uint8
             )
 
-            self._update_subset(game_state.top_card, False)
+            self._update_subset(info.get("new_cards", []), False)
 
             done = False
             reward = 0.0
@@ -183,7 +183,7 @@ class DQNAgent(TrainableAgent):
                 hand = info["hand"]
 
                 self._update_subset(
-                    game_state.top_card, info.get("deck_flipped_over", False)
+                    info.get("new_cards", []), info.get("deck_flipped_over", False)
                 )
                 next_state_vec = self._process_state(game_state, info, hand)
                 next_valid_mask = get_valid_action_mask(game_state, hand)
@@ -240,7 +240,7 @@ class DQNAgent(TrainableAgent):
                 len(self.played_cards_subset), dtype=np.uint8
             )
 
-            self._update_subset(game_state.top_card, False)
+            self._update_subset(info.get("new_cards", []), False)
             done = False
             reward = 0.0
 
@@ -249,7 +249,7 @@ class DQNAgent(TrainableAgent):
                 game_state, reward, done, info = env.step(action)
                 hand = info["hand"]
                 self._update_subset(
-                    game_state.top_card, info.get("deck_flipped_over", False)
+                    info.get("new_cards", []), info.get("deck_flipped_over", False)
                 )
 
             if reward > 0:
@@ -546,38 +546,36 @@ class DQNAgent(TrainableAgent):
             case _:
                 raise ValueError("Invalid hand_state_option.")
 
-    def _update_subset(self, card: Card | None, deck_flipped_over: bool) -> None:
-        if card is None:
-            raise ValueError("Top card cannot be None when updating played subset.")
-
+    def _update_subset(self, new_cards: list[Card], deck_flipped_over: bool) -> None:
         if deck_flipped_over:
             self.played_cards_subset = np.zeros(
                 len(self.played_cards_subset), dtype=np.uint8
             )
-        match self.args.played_subset:
-            case "all":
-                idx = CARD_TO_INDEX[card]
-                self.played_cards_subset[idx] = np.uint8(
-                    self.played_cards_subset[idx] + 1
-                )
-            case "specials":
-                if card.rank == Rank.SEVEN:
-                    self.played_cards_subset[0] = np.uint8(
-                        self.played_cards_subset[0] + 1
+        for card in new_cards:
+            match self.args.played_subset:
+                case "all":
+                    idx = CARD_TO_INDEX[card]
+                    self.played_cards_subset[idx] = np.uint8(
+                        self.played_cards_subset[idx] + 1
                     )
-                elif card.rank == Rank.OBER:
-                    self.played_cards_subset[1] = np.uint8(
-                        self.played_cards_subset[1] + 1
-                    )
-                elif card.rank == Rank.ACE:
-                    self.played_cards_subset[2] = np.uint8(
-                        self.played_cards_subset[2] + 1
-                    )
-            case "sevens":
-                if card.rank == Rank.SEVEN:
-                    self.played_cards_subset[0] = np.uint8(
-                        self.played_cards_subset[0] + 1
-                    )
+                case "specials":
+                    if card.rank == Rank.SEVEN:
+                        self.played_cards_subset[0] = np.uint8(
+                            self.played_cards_subset[0] + 1
+                        )
+                    elif card.rank == Rank.OBER:
+                        self.played_cards_subset[1] = np.uint8(
+                            self.played_cards_subset[1] + 1
+                        )
+                    elif card.rank == Rank.ACE:
+                        self.played_cards_subset[2] = np.uint8(
+                            self.played_cards_subset[2] + 1
+                        )
+                case "sevens":
+                    if card.rank == Rank.SEVEN:
+                        self.played_cards_subset[0] = np.uint8(
+                            self.played_cards_subset[0] + 1
+                        )
 
     def _get_hyperparameter_string(self) -> str:
         hyper_parts = []
