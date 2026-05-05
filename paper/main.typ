@@ -125,9 +125,10 @@ Then we'll detail value-based methods (@chapter:value-methods) and
 policy gradient methods (@chapter:policy-methods). These algorithms will
 form the foundation for our Prší agents in @chapter:experiments.
 
-// Unless otherwise noted, the mathematical notation, foundational definitions,
-// and general algorithmic frameworks presented in this chapter closely follow
-// the conventions established in @Sutton2018.
+Unless otherwise noted, the mathematical notation, foundational definitions,
+and general algorithmic frameworks presented in this chapter closely follow
+the conventions established in @Sutton2018, with some minor simplifications
+being inspired by @npfl139-lec01 and @npfl139-lec02.
 
 == Introduction to Reinforcement Learning <chapter:rl-intro>
 
@@ -198,7 +199,7 @@ or, fittingly, card games)
 where even though the environment does have a state internally,
 the agent doesn't know what the state looks like. In Prší, for example, no player
 knows what cards the opponent has, even though a "full state" exists.
-To model environments like these, we define the #gls("pomdp")~@Spaan2012.
+To model environments like these, we define the #gls("pomdp")~@KAELBLING199899 @Spaan2012.
 
 #Glspl("pomdp") are inherently similar to #glspl("mdp"), but they are
 defined as a sextuple
@@ -210,7 +211,7 @@ defined as a sextuple
 $(cal(S), cal(A), p, gamma, cal(O), o)$,
 where $cal(O)$ is the set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is
 the observation model. We then give agents $O_t$ as input instead of $S_t$. An
-illustration can be seen in @fig:pomdp-loop.~@Sutton2018 @npfl139-lec01
+illustration can be seen in @fig:pomdp-loop.
 
 #figure(
     image("images/pomdp.png", width: 80%),
@@ -264,7 +265,7 @@ encourages the agent to seek the fastest path to victory.
 
 With this definition of the return $G_t$, we can now finally formalize the goal
 of the agent, that being maximization of $EE[G_t]$ (or specifically $EE[G_0]$
-for episodic tasks).~@Sutton2018 @npfl139-lec01
+for episodic tasks).
 
 === (Action-)Value Function
 
@@ -325,14 +326,14 @@ The Bellman optimality equation represents a system of equations -- one
 for each state -- the solution to which is the optimal value function $v_*$.
 If the environment dynamics $p(s', r mid(bar) s, a)$ are known, this system
 can be solved using classical Dynamic Programming algorithms such as
-*Value Iteration* or *Policy Iteration*.
+*Value Iteration* or *Policy Iteration*.~@npfl139-lec02
 
 However, for many complex tasks, including Prší, the
 transition probabilities are either unknown or too complex to compute.
 In these cases, we must rely on model-free reinforcement learning methods.
 These methods allow the agent to learn the optimal policy through direct
 interaction with the environment without requiring explicit knowledge of
-the dynamics.~@Sutton2018 @npfl139-lec02
+the dynamics.
 
 === Exploration vs. Exploitation
 
@@ -364,7 +365,7 @@ to behave greedily too often. We can start with a high $epsilon$ like 0.5 and
 slowly decay it after each step in the environment by multiplying it by a value
 like 0.99 until it reaches some minimum threshold (or even 0). This lets us
 collect a lot of different samples before gradually shifting to
-a more greedy policy.~@Sutton2018
+a more greedy policy.
 
 == Value-Based Methods <chapter:value-methods>
 
@@ -453,7 +454,7 @@ our agent still utilizes an $epsilon$-greedy policy.
 This combination ensures that the agent sufficiently explores the state space while
 simultaneously optimizing its behaviour. A simple #gls("mc") algorithm with an
 $epsilon$-greedy policy using $alpha$ as the update step can be seen
-in @alg:mc-control.~@Sutton2018 @npfl139-lec01
+in @alg:mc-control.
 
 #figure(
     algo(
@@ -491,7 +492,7 @@ already observed throughout the episode. Furthermore, if an episode
 is never guaranteed to terminate, standard #gls("mc") methods cannot be used
 at all.
 
-Q-Learning elegantly bypasses this issue by utilizing #gls("td") learning.
+Q-Learning @Watkins1992 elegantly bypasses this issue by utilizing #gls("td") learning.
 Instead of waiting for the true episodic return, #gls("td") methods update their
 value estimates based in part on other learned estimates -- a process known as
 _bootstrapping_.
@@ -665,20 +666,25 @@ $
         Initialize action-value function $hat(q)$ with random weights $bold(w)$\
         Initialize target action-value function with weights $bold(w)^- <- bold(w)$\
         Loop for each episode:#i\
+
         Initialize state $S_0$\
         Loop for each step $t$ of episode:#i\
+
         Choose $A_t$ from $S_t$ using $epsilon$-greedy policy derived from $hat(q)(dot, dot; bold(w))$\
         Take action $A_t$, observe reward $R_(t+1)$ and next state $S_(t+1)$\
         Store transition $(S_t, A_t, R_(t+1), S_(t+1))$ in $D$\
         Sample random mini-batch of transitions $(S_j, A_j, R_(j+1), S_(j+1))$ from $D$\
         #comment([Calculate TD target $Y_j$ for each transition in the mini-batch], inline: true)\
+
         If $S_(j+1)$ is a terminal state:#i\
         $Y_j <- R_(j+1)$#d\
         Else:#i\
         $Y_j <- R_(j+1) + gamma max_(a') hat(q)(S_(j+1), a'; bold(w)^-)$#d\
+
         Perform a gradient descent step on $(Y_j - hat(q)(S_j, A_j; bold(w)))^2$ with respect to $bold(w)$\
         Every $C$ steps, synchronize target network: $bold(w)^- <- bold(w)$\
         $S_t <- S_(t+1)$#d\
+
         until $S_t$ is terminal\
     ],
     caption: flex-caption(
