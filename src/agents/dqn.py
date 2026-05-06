@@ -426,7 +426,7 @@ class DQNAgent(TrainableAgent):
         # Target: r + gamma * max_{a' valid} Q_target(s', a')
         with torch.no_grad():
             next_q = self.target_net(next_states)
-            next_q[~next_valid_masks] = -1e9
+            next_q[~next_valid_masks] = -torch.inf
             max_next_q = next_q.max(dim=1).values
             max_next_q[max_next_q == -torch.inf] = 0.0
             target_q = rewards + self.args.gamma * max_next_q * (1.0 - dones)

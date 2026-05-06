@@ -39,6 +39,9 @@ export PATH="${HOME}/.local/bin:${PATH}"
 echo "Installing dependencies..."
 uv sync --all-groups
 
+echo "Upgrading PyTorch to CUDA version for cluster..."
+uv pip install torch --index-url https://download.pytorch.org/whl/cu121
+
 cd src
 
 echo "Starting training at: $(date)"
