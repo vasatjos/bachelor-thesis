@@ -40,7 +40,7 @@ echo "Installing dependencies..."
 uv sync --all-groups
 
 echo "Upgrading PyTorch to CUDA version for cluster..."
-uv pip install torch --index-url https://download.pytorch.org/whl/cu121
+uv pip install --reinstall torch --index-url https://download.pytorch.org/whl/cu121
 
 cd src
 

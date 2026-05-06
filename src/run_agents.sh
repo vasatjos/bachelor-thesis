@@ -22,7 +22,7 @@ DDQN_BASE="--episodes 500_000 --log_each 1_000 --evaluate_for 20_000 --save_each
 # ==========================================
 # MONTE CARLO
 # ==========================================
-MC_BASE="--episodes 10_000_000_000 --log_each 50_000 --evaluate_for 1_000_000 --save_each 100_000 -seed 42 "
+MC_BASE="--episodes 10_000_000_000 --log_each 50_000 --evaluate_for 1_000_000 --save_each 100_000 --seed 42 "
 
 ./run_thesis.sh monte_carlo mc1 $MC_BASE  --epsilon 0.01 --gamma 0.99 --hand_state_option count_truncated --truncated_hand_size 4 --played_subset specials 
 ./run_thesis.sh monte_carlo mc2 $MC_BASE  --epsilon 0.05 --gamma 0.99 --hand_state_option count_truncated --truncated_hand_size 4 --played_subset specials 
@@ -52,7 +52,7 @@ QL_BASE="--episodes 10_000_000_000 --log_each 50_000 --evaluate_for 1_000_000 --
 # ==========================================
 # REINFORCE
 # ==========================================
-REINFORCE_BASE="--episodes 10_000_000 --log_each 500 --evaluate_for 10_000 --save_each 5000 -seed 42 "
+REINFORCE_BASE="--episodes 10_000_000 --log_each 500 --evaluate_for 10_000 --save_each 5000 --seed 42 "
 
 ./run_thesis.sh reinforce reinforce1 $REINFORCE_BASE  --gamma 0.99 --learning_rate 0.0001 --batch_size 32 --entropy_regularization 0.001 --baseline --hidden_layer_count 2 --hidden_layer_size 1024 --hand_state_option full --played_subset all 
 ./run_thesis.sh reinforce reinforce2 $REINFORCE_BASE  --gamma 0.99 --learning_rate 0.0001 --batch_size 32 --entropy_regularization 0.01 --baseline --hidden_layer_count 2 --hidden_layer_size 1024 --hand_state_option full --played_subset all 
