@@ -127,7 +127,7 @@ form the foundation for our Prší agents in @chapter:experiments.
 
 Unless otherwise noted, the mathematical notation, foundational definitions,
 and general algorithmic frameworks presented in this chapter closely follow
-the conventions established in @Sutton2018, with some minor simplifications
+@Sutton2018, with some minor simplifications
 being inspired by @npfl139-lec01 and @npfl139-lec02.
 
 == Introduction to Reinforcement Learning <chapter:rl-intro>
@@ -157,7 +157,7 @@ where the loop begins anew. Formally, we'll model these environments as
     image("images/mdp.png", width: 80%),
     caption: flex-caption(
         [Markov Decision Process],
-        [Markov Decision Process @npfl139-lec01],
+        [Markov Decision Process~@npfl139-lec01],
     ),
 ) <fig:mdp-loop>
 
@@ -217,7 +217,7 @@ illustration can be seen in @fig:pomdp-loop.
     image("images/pomdp.png", width: 80%),
     caption: flex-caption(
         [Partially Observable Markov Decision Process],
-        [Partially Observable Markov Decision Process @npfl139-lec01],
+        [Partially Observable Markov Decision Process~@npfl139-lec01],
     ),
 ) <fig:pomdp-loop>
 
@@ -476,7 +476,7 @@ in @alg:mc-control.
     ],
     caption: flex-caption(
         [$epsilon$-greedy Monte Carlo Control],
-        [First-visit Monte Carlo Control with $epsilon$-greedy exploration @Sutton2018],
+        [First-visit Monte Carlo Control with $epsilon$-greedy exploration~@Sutton2018],
     ),
     kind: "algo",
     supplement: "Algorithm",
@@ -492,7 +492,7 @@ already observed throughout the episode. Furthermore, if an episode
 is never guaranteed to terminate, standard #gls("mc") methods cannot be used
 at all.
 
-Q-Learning @Watkins1992 elegantly bypasses this issue by utilizing #gls("td") learning.
+Q-Learning~@Watkins1992 elegantly bypasses this issue by utilizing #gls("td") learning.
 Instead of waiting for the true episodic return, #gls("td") methods update their
 value estimates based in part on other learned estimates -- a process known as
 _bootstrapping_.
@@ -546,7 +546,7 @@ learned the action-value function only for the $epsilon$-greedy case.
     ],
     caption: flex-caption(
         [Q-Learning],
-        [Q-Learning: Off-policy TD control algorithm @Sutton2018],
+        [Q-Learning: Off-policy TD control algorithm~@Sutton2018],
     ),
     kind: "algo",
     supplement: "Algorithm",
@@ -684,7 +684,7 @@ $
     ],
     caption: flex-caption(
         [Deep Q-Network],
-        [Deep Q-Learning with experience replay and target networks @dqn2015],
+        [Deep Q-Learning with experience replay and target networks~@dqn2015],
     ),
     kind: "algo",
     supplement: "Algorithm",
@@ -692,11 +692,183 @@ $
 
 == Policy Gradient Methods <chapter:policy-methods>
 
+We now look at *policy gradient methods*, which take a fundamentally different
+approach to the value-based methods.
+Instead of relying on a value function to dictate behavior, these methods
+parameterize the policy itself directly. Let $bold(theta) in RR^d$ be
+the parameter vector for our policy. We can then denote the probability
+that the agent takes action $a$ in state $s$ as a parameterized mathematical
+function:
+$
+    pi (a mid(bar) s; bold(theta)) =
+    upright(Pr){A_t = a mid(bar) S_t = s, bold(theta)}.
+$
+
+Learning the policy directly offers several distinct advantages. Most notably
+for environments with imperfect information like Prší, it allows the agent to
+learn any distribution over actions. The agent can then choose actions
+by sampling from this distribution. A value-based agent can only learn
+one-hot (or soft) policies, while using policy gradient methods
+allows for a stochastic policy, which can be benefitial in certain environments.
+
+To optimize the policy parameters, we define a scalar performance measure
+$J(bold(theta))$, which represents the expected return. The parameters are
+then updated by performing gradient ascent to maximize this objective:
+$
+    bold(theta)_(t+1) = bold(theta)_t + alpha nabla J(bold(theta)_t),
+$
+where $alpha$ is the step-size parameter and $nabla J(bold(theta)_t)$ is the
+policy gradient.
+
 === REINFORCE
 
-#lorem(70)
+To update the parameters using gradient ascent, we need a way to calculate the
+gradient of our performance measure. The Policy Gradient Theorem
+establishes an analytical gradient for $J(bold(theta))$ that does not depend
+on the derivative of the environment's unknown state distribution. It proves
+that the gradient is proportional to the expected value of the action-value
+function multiplied by the gradient of the natural logarithm of the policy:
+$
+    nabla J(bold(theta)) prop
+    EE_pi [q_pi (S_t, A_t) nabla ln pi (A_t mid(bar) S_t; bold(theta))].
+$
 
-#lorem(100)
+Because this is an expectation over the policy $pi$, we can approximate it by
+sampling trajectories. The REINFORCE algorithm~@Williams1992 is a
+Monte Carlo policy gradient method that relies on this exact formulation.
+
+Since REINFORCE is a Monte Carlo method, it uses the true sampled return $G_t$
+as an unbiased estimate of $q_pi (S_t, A_t)$. The parameter update rule for a
+given timestep $t$ becomes:
+$
+    bold(theta)_(t+1) =
+    bold(theta)_t + alpha gamma^t G_t nabla ln pi (A_t mid(bar) S_t; bold(theta)_t).
+$
+
+Intuitively, this update rule increases the probability of actions that resulted
+in a high return $G_t$, and decreases the probability of actions that resulted
+in a low or negative return. The $ln pi$ term ensures that the update is scaled
+inversely by the action's current probability, preventing frequently taken
+actions from dominating the gradient simply because they appear more often, as
+$nabla ln pi = (nabla pi) / pi$.
+
+
+#figure(
+    algo(
+        title: [REINFORCE],
+        parameters: ([step size $alpha > 0$],),
+        line-numbers: false,
+    )[
+        Initialize policy parameter $bold(theta) in RR^d$\
+        Loop for each episode:#i\
+        Generate an episode $S_0, A_0, R_1, ..., S_(T-1), A_(T-1), R_T$ following $pi(dot mid(bar) dot, bold(theta))$\
+        Loop for each step of the episode $t = 0, 1, ..., T - 1$:#i\
+        $G <- sum_(k=t+1)^T gamma^(k-t-1) R_k$\
+        $bold(theta) <- bold(theta) + alpha gamma^t G nabla ln pi(A_t mid(bar) S_t, bold(theta))$#d\
+        #d
+    ],
+    caption: flex-caption(
+        [REINFORCE],
+        [REINFORCE: Monte-Carlo Policy-Gradient Control @Sutton2018],
+    ),
+    kind: "algo",
+    supplement: "Algorithm",
+) <alg:reinforce>
+
+=== REINFORCE with Baseline
+
+While the standard REINFORCE algorithm provides an unbiased estimate of the
+policy gradient, it suffers from a significant practical limitation: high
+variance. Because the parameter updates are scaled directly by the raw episodic
+return $G_t$, a trajectory with exceptionally high or low stochastic rewards can
+cause massive, destabilizing shifts in the policy parameters.
+
+To reduce this variance, we can generalize the policy gradient theorem by
+subtracting a baseline, denoted as $b(S_t)$, from the return. The baseline can
+be any function or random variable, so long as it does not vary with the
+selected action $a$. Mathematically, subtracting a baseline leaves the expected
+value of the update unchanged, but it drastically reduces the variance of the
+sampled gradients. The updated policy gradient formulation becomes:
+$
+    nabla J(bold(theta)) prop
+    EE_pi [(q_pi (S_t, A_t) - b(S_t)) nabla ln pi (A_t mid(bar) S_t; bold(theta))].
+$
+
+A natural and highly effective choice for the baseline is an estimate of the
+state-value function, $hat(v)(S_t; bold(w))$. By using the state-value
+estimate, the update rule effectively evaluates actions based on their
+*advantage* rather than their raw return. If an action yields a return $G_t$
+that is greater than the expected baseline $hat(v)(S_t; bold(w))$, the
+probability of that action is increased. If the return is lower than expected,
+the probability is decreased.
+
+To implement REINFORCE with a state-value baseline, the agent must simultaneously
+learn two parameterized functions: the policy network $pi (a mid(bar) s; bold(theta))$
+and the state-value network $hat(v)(s; bold(w))$. The value network weights
+$bold(w)$ are typically updated using standard Monte Carlo evaluation (minimizing
+the error between the prediction and $G_t$), while the policy weights
+$bold(theta)$ are updated using the baseline-adjusted return:
+$
+    delta = G_t - hat(v)(S_t; bold(w)),\
+    bold(theta)_(t+1) =
+    bold(theta)_t + alpha_theta gamma^t delta nabla ln pi (A_t mid(bar) S_t; bold(theta)_t).
+$
+
+#figure(
+    algo(
+        title: [REINFORCE with Baseline],
+        parameters: ([step sizes $alpha_theta > 0$, $alpha_w > 0$],),
+        line-numbers: false,
+    )[
+        Initialize policy parameter $bold(theta)$ and state-value weights $bold(w)$\
+        Loop for each episode:#i\
+        Generate an episode $S_0, A_0, R_1, ..., S_(T-1), A_(T-1), R_T$ following $pi (dot mid(bar) dot; bold(theta))$\
+        Loop for each step of the episode $t = 0, 1, ..., T - 1$:#i\
+        $G <- sum_(k=t+1)^T gamma^(k-t-1) R_k$\
+        $delta <- G - hat(v)(S_t; bold(w))$\
+        $bold(w) <- bold(w) + alpha_w delta nabla hat(v)(S_t; bold(w))$\
+        $bold(theta) <- bold(theta) + alpha_theta gamma^t delta nabla ln pi (A_t mid(bar) S_t; bold(theta))$#d\
+        #d
+    ],
+    caption: flex-caption(
+        [REINFORCE with Baseline],
+        [REINFORCE with Baseline @Sutton2018],
+    ),
+    kind: "algo",
+    supplement: "Algorithm",
+) <alg:reinforce-baseline>
+
+#heading([Entropy Regularization], level: 3, numbering: none, outlined: false)
+
+In policy gradient methods, the agent learns to increase the probability of
+actions that yield high rewards. However, if the agent discovers a locally
+optimal strategy early in training, it may rapidly increase the probabilities
+of those specific actions to near certainty. When a policy becomes entirely
+deterministic, exploration effectively halts, preventing the agent from ever
+discovering the true global (or at least a better local) optimum.
+
+To prevent this premature convergence, we can employ *entropy regularization*~@A3C.
+In information theory, entropy measures the unpredictability of a random
+variable. For a stochastic policy $pi$, the entropy at a given state $s$
+is defined as:
+$
+    H (pi (dot mid(bar) s; bold(theta))) =
+    - sum_(a in cal(A)(s)) pi (a mid(bar) s; bold(theta))
+    ln pi (a mid(bar) s; bold(theta)).
+$\
+
+By adding this entropy term to our objective function, weighted by a
+temperature coefficient $beta > 0$, we actively reward the agent for maintaining
+uncertainty in its action selection. The modified objective function becomes:
+$
+    J_"regularized" (bold(theta)) =
+    J(bold(theta)) + beta EE_pi [H(pi (dot mid(bar) S_t; bold(theta)))].
+$\
+
+The regularization term forces the agent to balance two competing goals: maximizing
+the expected return and keeping its action distribution as broad as possible.
+$beta$ can also be decayed as training progresses, allowing the agent to
+slowly transition from wide exploration to exploiting the optimal strategy.
 
 
 = Implementing an Environment for Prší <chapter:environment>
@@ -749,7 +921,7 @@ and continue playing.
     image("images/Bohemian_deck.png", width: 80%),
     caption: flex-caption(
         [Deck of Prší cards],
-        [A deck of German cards (Bohemian pattern) @bohemian-deck],
+        [A deck of German cards (Bohemian pattern)~@bohemian-deck],
     ),
 ) <fig:bohemian-deck>
 
