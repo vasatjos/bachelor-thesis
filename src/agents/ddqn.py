@@ -102,11 +102,13 @@ class DoubleDQNAgent(DQNAgent):
     def clone(self) -> "DoubleDQNAgent":
         cloned = DoubleDQNAgent.__new__(DoubleDQNAgent)
         cloned.args = self.args
+        cloned._device = self._device
         cloned.save_dir = self.save_dir
         cloned.full_model_path = self.full_model_path
         cloned.csv_path = self.csv_path
         cloned.log_data = []
         cloned._init_played_subset()
+        cloned.input_size = self.input_size
         cloned._build_networks()
         cloned.online_net.load_state_dict(self.online_net.state_dict())
         cloned.online_net.eval()

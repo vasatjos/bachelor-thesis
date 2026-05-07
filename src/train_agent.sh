@@ -9,6 +9,7 @@ echo "Job name: ${JOB_NAME}"
 echo "Hyperparameters: ${HYPERPARAMS}"
 
 SCRATCH_DIR="${SCRATCHDIR:-/tmp}"
+export TMPDIR="${SCRATCH_DIR}"
 REPO_URL="git@github.com:vasatjos/bachelor-thesis.git"
 PROJECT_DIR="${SCRATCH_DIR}/bachelor-thesis"
 STORAGE_DIR="/storage/praha1/home/vasatjos/thesis"
@@ -28,7 +29,7 @@ export GIT_SSH_COMMAND="ssh -i /storage/praha1/home/vasatjos/.ssh/deploy_key -o 
 
 echo "Cloning repository..."
 rm -rf "${PROJECT_DIR}"
-git clone "${REPO_URL}"
+git clone --quiet "${REPO_URL}"
 cd "${PROJECT_DIR}"
 
 echo "Installing uv..."
@@ -37,19 +38,27 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="${HOME}/.local/bin:${PATH}"
 
 echo "Installing dependencies..."
-uv sync --all-groups
+uv sync --all-groups --quiet --no-progress
 
 echo "Upgrading PyTorch to CUDA version for cluster..."
-uv pip install --reinstall torch --index-url https://download.pytorch.org/whl/cu121
+uv pip install --reinstall torch --index-url https://download.pytorch.org/whl/cu121 --quiet --no-progress
 
 cd src
 
 echo "Starting training at: $(date)"
 echo "Running: uv run -m agents.${AGENT_NAME} ${HYPERPARAMS} --model_path ${MODEL_BASE_DIR}"
 
-uv run -m "agents.${AGENT_NAME}" ${HYPERPARAMS} --model_path "${MODEL_BASE_DIR}"
+# Redirect training output to local scratch to bypass 1GB PBS spool limit
+# We use tee to still see the output in the PBS log (which is now small due to quiet flags)
+# but the bulk of it will be safely on scratch.
+uv run -m "agents.${AGENT_NAME}" ${HYPERPARAMS} --model_path "${MODEL_BASE_DIR}" 2>&1 | tee "${SCRATCH_DIR}/${JOB_NAME}.log"
 
 echo "Training completed at: $(date)"
+
+if [ -f "${SCRATCH_DIR}/${JOB_NAME}.log" ]; then
+    echo "Copying training log to storage..."
+    cp "${SCRATCH_DIR}/${JOB_NAME}.log" "${LOGS_DIR}/${JOB_NAME}.log"
+fi
 
 if [ -d "outputs" ]; then
     echo "Copying additional outputs..."

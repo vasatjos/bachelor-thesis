@@ -101,6 +101,7 @@ class REINFORCEAgent(TrainableAgent):
 
         self.log_data: list[dict[str, Any]] = []
         self.played_cards_subset: np.ndarray
+        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if args is None:
             self.load(path)  # type: ignore
@@ -108,6 +109,7 @@ class REINFORCEAgent(TrainableAgent):
 
         self.args = args
         self._init_played_subset()
+        self.input_size = self._get_input_size()
         self._build_networks()
 
         hyper_str = self._get_hyperparameter_string()
@@ -119,7 +121,7 @@ class REINFORCEAgent(TrainableAgent):
 
     @property
     def device(self) -> torch.device:
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        return self._device
 
     def train(self, env: PrsiEnv) -> None:
         batch_states: list[np.ndarray] = []
@@ -285,6 +287,7 @@ class REINFORCEAgent(TrainableAgent):
         data = torch.load(path, map_location=self.device)
         self.args = argparse.Namespace(**data["args"])
         self._init_played_subset()
+        self.input_size = self._get_input_size()
         self._build_networks()
         self.policy_net.load_state_dict(data["policy_net"])
         if self.value_net is not None and "value_net" in data:
@@ -294,11 +297,13 @@ class REINFORCEAgent(TrainableAgent):
     def clone(self) -> "REINFORCEAgent":
         cloned = REINFORCEAgent.__new__(REINFORCEAgent)
         cloned.args = self.args
+        cloned._device = self._device
         cloned.save_dir = self.save_dir
         cloned.full_model_path = self.full_model_path
         cloned.csv_path = self.csv_path
         cloned.log_data = []
         cloned._init_played_subset()
+        cloned.input_size = self.input_size
         cloned._build_networks()
 
         cloned.policy_net.load_state_dict(self.policy_net.state_dict())
@@ -335,6 +340,7 @@ class REINFORCEAgent(TrainableAgent):
 
     def _build_networks(self) -> None:
         self.policy_net = Network(
+            self.input_size,
             self.args.hidden_layer_size,
             self.args.hidden_layer_count,
             PrsiEnv.ACTION_SPACE_SIZE,
@@ -348,11 +354,39 @@ class REINFORCEAgent(TrainableAgent):
         self.value_optimizer: torch.optim.Adam | None = None
         if self.args.baseline:
             self.value_net = Network(
-                self.args.hidden_layer_size, self.args.hidden_layer_count, 1
+                self.input_size,
+                self.args.hidden_layer_size,
+                self.args.hidden_layer_count,
+                1,
             ).to(self.device)
             self.value_optimizer = torch.optim.Adam(
                 self.value_net.parameters(), lr=self.args.learning_rate
             )
+
+    def _get_input_size(self) -> int:
+        match self.args.hand_state_option:
+            case "count_truncated" | "count":
+                hand_size = 1
+            case "simple":
+                hand_size = 7
+            case "full":
+                hand_size = 32
+            case _:
+                raise ValueError("Invalid hand_state_option")
+
+        fixed_part = 1 + 32 + 4 + 3 + 1
+
+        match self.args.played_subset:
+            case "specials":
+                played_size = 3
+            case "sevens":
+                played_size = 1
+            case "all":
+                played_size = 32
+            case _:
+                raise ValueError("Invalid played_subset")
+
+        return hand_size + fixed_part + played_size
 
     def _learn(
         self,
