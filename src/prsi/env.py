@@ -20,7 +20,7 @@ class PrsiEnv:
     PLAYER_COUNT = 2
     ACTION_SPACE_SIZE = len(INDEX_TO_ACTION)
 
-    MAX_STEPS = 1000
+    MAX_STEPS = 600
 
     def __init__(self, opponent: Agent = GreedyAgent()) -> None:
         self._player_info: Player = Player(0)
