@@ -927,7 +927,24 @@ and continue playing.
 
 == Designing a Reinforcement Learning Environment
 
-#lorem(100)
+When developing #glspl("rl") agents for card games, frameworks like
+RLCard~@rlcard-paper @rlcard-site can be used, as they provide a predefined
+API for combining #gls("rl") with card games.
+However, for this thesis, a custom environment
+was implemented from scratch in Python @python.
+
+This decision was driven by wanting to adhere to the modern Gymnasium API
+(a widely used fork of OpenAI Gym)~@gymnasium more closely.
+Building the environment from the ground up also allowed for
+complete control over the implementation of self-play.
+Finally, our custom implementation utilizes Python type hints, which improves
+code readability and maintainability.
+
+To translate the rules of Prší into this programmable Gymnasium-like interface,
+our implementation models the game as a 1-versus-1 environment. To make the
+environment compatible with standard single-agent algorithms, we embed a
+baseline opponent directly into the environment's `step()` function.
+
 
 = Experiments <chapter:experiments>
 
