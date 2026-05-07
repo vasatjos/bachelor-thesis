@@ -792,7 +792,7 @@ sampled gradients. The updated policy gradient formulation becomes:
 $
     nabla J(bold(theta)) prop
     EE_pi [(q_pi (S_t, A_t) - b(S_t)) nabla ln pi (A_t mid(bar) S_t; bold(theta))].
-$
+$\
 
 A natural and highly effective choice for the baseline is an estimate of the
 state-value function, $hat(v)(S_t; bold(w))$. By using the state-value
@@ -838,7 +838,7 @@ $
     supplement: "Algorithm",
 ) <alg:reinforce-baseline>
 
-#heading([Entropy Regularization], level: 3, numbering: none, outlined: false)
+#heading([A Note on Encouraging Exploration], level: 3, numbering: none)
 
 In policy gradient methods, the agent learns to increase the probability of
 actions that yield high rewards. However, if the agent discovers a locally
@@ -855,7 +855,7 @@ $
     H (pi (dot mid(bar) s; bold(theta))) =
     - sum_(a in cal(A)(s)) pi (a mid(bar) s; bold(theta))
     ln pi (a mid(bar) s; bold(theta)).
-$\
+$
 
 By adding this entropy term to our objective function, weighted by a
 temperature coefficient $beta > 0$, we actively reward the agent for maintaining
@@ -873,10 +873,10 @@ slowly transition from wide exploration to exploiting the optimal strategy.
 
 = Implementing an Environment for Prší <chapter:environment>
 
-With the methods we will be using now defined, let's take a closer look at
-what environment they will actually be tackling. In this chapter, we'll first
-introduce the game of Prší and its ruleset, and afterwards we'll briefly discuss
-an actual implementation of an environment.
+With the theoretical methods established, this chapter
+introduces the specific environment the agents will navigate.
+First, we outline the rules of the card game Prší, followed by a discussion
+on the architectural design of the #gls("rl") environment.
 
 == The Rules of Prší
 
