@@ -7,6 +7,8 @@
 // Custom math definitions
 #let argmax = math.op([arg#h(1.5pt)max], limits: true)
 
+#let first-line-indent = 1.5em
+
 #let template(
     meta: (),
     font: "Libertinus Serif",
@@ -149,7 +151,7 @@
     set heading(outlined: true)
 
     set par(justify: true)
-    set par(first-line-indent: 1.5em)
+    set par(first-line-indent: first-line-indent)
 
     set line(length: 100%, stroke: 1pt + luma(200))
 

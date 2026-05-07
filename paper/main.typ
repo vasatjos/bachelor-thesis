@@ -934,16 +934,155 @@ However, for this thesis, a custom environment
 was implemented from scratch in Python @python.
 
 This decision was driven by wanting to adhere to the modern Gymnasium API
-(a widely used fork of OpenAI Gym)~@gymnasium more closely.
+(a maintained fork of OpenAI's Gym)~@gymnasium more closely.
 Building the environment from the ground up also allowed for
 complete control over the implementation of self-play.
 Finally, our custom implementation utilizes Python type hints, which improves
 code readability and maintainability.
 
 To translate the rules of Prší into this programmable Gymnasium-like interface,
-our implementation models the game as a 1-versus-1 environment. To make the
-environment compatible with standard single-agent algorithms, we embed a
-baseline opponent directly into the environment's `step()` function.
+we must define the core components of the underlying #gls("mdp"):
+the state observations, the action space, and the reward signal.
+
+=== States and Observations
+
+As discussed in @chapter:rl-intro, card games like Prší are inherently
+#glspl("pomdp") because the true state of the game (the exact order of the
+deck and the contents of the opponent's hand) is hidden from the players.
+
+The environment internally tracks the full, perfect-information with the help
+of a `GameState` Python object, which includes
+the top card, the currently active suit
+#footnote([ Which can differ from the top card's suit due to an Ober being played.]),
+and the active card effect (e.g., drawing penalty or skipped turn).
+The environment object `PrsiEnv` itself also tracks the draw pile,
+the discard pile, and the full hands of both players.
+
+However, the agent only receives an observation containing the public
+information and its own private information. Specifically, the agent observes
+its own hand, the current top card, the active suit, the active effect, the
+number of cards remaining in the opponent's hand, and whether the draw pile
+has been flipped. By processing these observations, the agent must learn to
+infer the hidden variables and strategize accordingly. How different
+agents process the state will be discussed further in @chapter:experiments.
+
+=== The Action Space
+
+The action space defines the set of all possible moves an agent can make.
+In Prší, a player can either draw a card from the deck or play a valid
+card from their hand.
+
+While the deck contains 32 cards, the action space must account for the special
+mechanics of the Ober. When an Ober is played, the player
+must also declare the active suit for the next turn. Therefore, playing an Ober
+is not a single action, but four distinct actions (one for each suit).
+The complete discrete action space consists of 45 possible actions:
+- 1 action for drawing a card,
+- 28 actions for playing a standard non-Ober card,
+- 16 actions for playing an Ober and selecting one of the four suits.
+
+#h(first-line-indent) Because an agent only holds a small subset of the deck
+at any given time, and because the rules of the game restrict which
+cards can be placed on the discard pile,
+the vast majority of these 45 actions are illegal in any given
+state. To handle this, the environment provides an action mask -- a boolean
+array that flags valid actions. The agents use this mask to filter their
+decision-making process, ensuring they only select legal moves. Were an agent
+to ignore this mask and decide to cheat, the environment raises a `ValueError`.
+
+=== Reward Signal and Termination
+
+The goal of the agent is to win the game by emptying its hand. To reflect this,
+the environment provides a sparse reward signal:
+- A reward of $1$ is granted if the agent successfully plays its last card
+    and wins the game.
+- A reward of $-1$ is given if the opponent plays their last card.
+- A reward of $0$ is returned for all non-terminal intermediate steps.
+
+#h(first-line-indent) A single game represents one episode.
+Because games of Prší can theoretically
+enter infinite loops (e.g., players endlessly drawing and playing the same
+sequence of cards), the environment enforces a truncation limit of 600 steps.
+If the maximum step limit is reached, the game ends in a draw (a reward of~$0$)
+to prevent the training loop from stalling.
+
+Episodes are also terminated with a reward of $0$ in case the drawing pile
+is emptied completely and a player (either the agent or the opponent) tries
+to draw a card.
+
+=== The Agent Interface
+
+With the environment dynamics established, we define an abstract `Agent` class.
+This ensures that whatever algorithm the agent relies on to choose
+its actions, it exposes a consistent interface
+for the environment to interact with. The interface can be seen
+in @code:agent-interface.
+
+#figure(
+    ```python
+    class Agent(ABC):
+        def clone(self) -> "Agent":
+            return deepcopy(self)
+
+        @abstractmethod
+        def choose_action(
+            self, state: Any, hand: list[Card], info: dict[str, Any]
+        ) -> Action:
+            pass
+
+        @abstractmethod
+        def evaluate(self, *args, **kwargs) -> None:
+            pass
+    ```,
+    caption: [Abstract Agent interface],
+) <code:agent-interface>
+
+The `choose_action` method is the core decision-making function, receiving a
+state representation `state`, the agent's private `hand`,
+and additional `info` (such as the opponent's card count).
+
+Additionally, the `clone` method is a crucial
+architectural component that enables self-play; it allows the environment
+to instantiate a deep copy of the currently training agent to use
+as the opponent for future episodes.
+
+Two baseline agents using this interface are provided:
+`RandomAgent`, that can either play a random card from its hand, or draw a card,
+and `GreedyAgent`, that plays random cards and only draws when no other
+option is available.
+
+=== Environment Dynamics and the Step Function
+
+To finalize the programmable interface, our implementation models the game
+as a 1-versus-1 environment. To make the environment compatible with standard
+single-agent algorithms, we embed the opponent directly into the
+environment's `step()` function. An extracted snippet is shown
+in @code:env-step.
+
+#figure(
+    ```python
+    def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
+        # ... (agent executes action) ...
+
+        # If the game didn't end, the opponent immediately responds
+        opponent_action = self._opponent.choose_action(
+            self._state, self._opponent_player_info.hand, player_info
+        )
+        self._execute_action(self._opponent_player_info, opponent_action)
+
+        # ... (return next state to the agent) ...
+    ```,
+    caption: [Environment step function],
+) <code:env-step>
+
+When the training agent takes an action, the environment executes it, immediately
+queries the embedded opponent for its response, executes the opponent's action,
+and only then returns the next state, a reward, a flag whether
+the game has ended, and a dictionary `info` containing additional data
+the agent may need (such as the cards in his hand).
+From the perspective of the learning agent,
+the environment simply transitions from one of its turns directly to its next turn,
+abstracting away the multi-agent complexity.
 
 
 = Experiments <chapter:experiments>
