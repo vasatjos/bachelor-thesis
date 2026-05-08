@@ -231,7 +231,7 @@ reward over the whole interaction.
 
 Let's take
 a sequence of rewards after timestep $t$: $R_(t+1), R_(t+2), R_(t+3), ...$
-Our goal will be to maximize the *return* $G_t$, which can in its
+Our goal will be to maximize the _return_ $G_t$, which can in its
 simplest form be defined as
 $
     G_t = R_(t+1) + R_(t+2) + R_(t+3) + ... + R_T
@@ -308,14 +308,14 @@ $v_pi_* = v_*$ is called the optimal policy, as there can be more than one.
 A fundamental property of value functions is that they satisfy
 recursive relationships. For any policy $pi$, the value of a state
 can be decomposed into the immediate reward plus the discounted
-value of the expected next state. This is known as the *Bellman equation*
+value of the expected next state. This is known as the _Bellman equation_
 for $v_pi$:
 $
     v_pi (s) = EE[G_t mid(bar) S_t = s]
     = sum_a pi(a mid(bar) s) sum_(s', r) p(s', r mid(bar) s, a) [r + gamma v_pi (s')]
 $
-where $a in cal(A)(s)$ and $s, s' in cal(S)$. We also define the *Bellman
-optimality equation* for $v_*$, which expresses the fact that the value of a
+where $a in cal(A)(s)$ and $s, s' in cal(S)$. We also define the _Bellman
+optimality equation_ for $v_*$, which expresses the fact that the value of a
 state under an optimal policy must equal the expected return for the best action
 from that state:
 $
@@ -326,7 +326,7 @@ The Bellman optimality equation represents a system of equations -- one
 for each state -- the solution to which is the optimal value function $v_*$.
 If the environment dynamics $p(s', r mid(bar) s, a)$ are known, this system
 can be solved using classical Dynamic Programming algorithms such as
-*Value Iteration* or *Policy Iteration*.~@npfl139-lec02
+_Value Iteration_ or _Policy Iteration_.~@npfl139-lec02
 
 However, for many complex tasks, including Prší, the
 transition probabilities are either unknown or too complex to compute.
@@ -371,7 +371,7 @@ a more greedy policy.
 
 With the theoretical foundation established, we can now examine the concrete
 #gls("rl") algorithms that we'll be implementing in @chapter:experiments.
-We begin with *value-based methods*,
+We begin with _value-based methods_,
 which, as the name implies, focus on approximating the optimal
 action-value function $q_*$ through a learned estimate $Q$.
 
@@ -408,8 +408,8 @@ its current policy. Once a terminal state is reached, the agent
 looks back at the trajectory of states, actions, and rewards to calculate
 the true return for each step. Because a state-action pair might be visited
 multiple times within the same episode, we must decide which visits to learn from.
-*First-visit #gls("mc")* averages only the returns following the first time a
-state-action pair is visited in an episode, whereas *every-visit #gls("mc")*
+_First-visit_ #gls("mc") averages only the returns following the first time a
+state-action pair is visited in an episode, whereas _every-visit_ #gls("mc")
 averages the returns following all visits. While every-visit #gls("mc")
 has states which may not be independent, both of these methods still
 converge to the true value function.
@@ -440,7 +440,7 @@ as the update rule.
 
 To guarantee that the estimates for all state-action pairs converge to their
 true values, the agent must continuously explore the environment. In theoretical
-settings, this is often handled by the assumption of *exploring starts*, where
+settings, this is often handled by the assumption of _exploring starts_, where
 every episode is forced to begin with a randomly selected state and action.
 In many environments, enforcing a random initial action is unnatural and
 selecting a random state may not even be possible at all.
@@ -609,7 +609,7 @@ substitute the unknown true return with a bootstrapped #gls("td") target.
 
 This leads us to #gls("dqn", first: true)~@dqn2015, which brought 2
 major innovations in using #glspl("nn") for approximating $Q$ values:
-a separate *target network* and *experience replay*.
+a separate _target network_ and _experience replay_.
 
 To stabilize training with non-linear #glspl("nn"), #gls("dqn")
 first employs experience replay. Because sequential game states are highly
@@ -633,7 +633,7 @@ $\
 However, calculating the target $hat(q)(S_(t+1), a'; bold(w))$ using the exact
 same weight vector $bold(w)$ that is actively being updated
 creates a problem, often described as chasing a moving target.
-To solve this, #gls("dqn") introduces a separate *target network*
+To solve this, #gls("dqn") introduces a separate target network
 parameterized by $bold(w)^-$. This secondary network computes the target
 value $R_(t+1) + gamma max_(a') hat(q)(S_(t+1), a'; bold(w)^-)$.
 Its weights are held completely fixed during backpropagation and are only
@@ -718,7 +718,7 @@ stable training.
 
 == Policy Gradient Methods <chapter:policy-methods>
 
-We now look at *policy gradient methods*, which take a fundamentally different
+We now look at _policy gradient methods_, which take a fundamentally different
 approach to the value-based methods.
 Instead of relying on a value function to dictate behaviour, these methods
 parameterize the policy itself directly. Let $bold(theta) in RR^d$ be
@@ -823,7 +823,7 @@ $\
 A natural and highly effective choice for the baseline is an estimate of the
 state-value function, $hat(v)(S_t; bold(w))$. By using the state-value
 estimate, the update rule effectively evaluates actions based on their
-*advantage* rather than their raw return. If an action yields a return $G_t$
+_advantage_ rather than their raw return. If an action yields a return $G_t$
 that is greater than the expected baseline $hat(v)(S_t; bold(w))$, the
 probability of that action is increased. If the return is lower than expected,
 the probability is decreased.
@@ -873,7 +873,7 @@ of those specific actions to near certainty. When a policy becomes entirely
 deterministic, exploration effectively halts, preventing the agent from ever
 discovering the true global (or at least a better local) optimum.
 
-To prevent this premature convergence, we can employ *entropy regularization*~@A3C.
+To prevent this premature convergence, we can employ _entropy regularization_~@A3C.
 In information theory, entropy measures the unpredictability of a random
 variable. For a stochastic policy $pi$, the entropy at a given state $s$
 is defined as:
@@ -976,8 +976,8 @@ As discussed in @chapter:rl-intro, card games like Prší are inherently
 #glspl("pomdp") because the true state of the game (the exact order of the
 deck and the contents of the opponent's hand) is hidden from the players.
 
-The environment internally tracks the full, perfect-information with the help
-of a `GameState` Python object, which includes
+The environment internally tracks the full, perfect-information state
+with the help of a `GameState` Python object, which includes
 the top card, the currently active suit
 #footnote([ Which can differ from the top card's suit due to an Ober being played.]),
 and the active card effect (e.g., drawing penalty or skipped turn).
@@ -1073,8 +1073,8 @@ to instantiate a deep copy of the currently training agent to use
 as the opponent for future episodes.
 
 Two baseline agents using this interface are provided:
-`RandomAgent`, that can either play a random card from its hand, or draw a card,
-and `GreedyAgent`, that plays random cards and only draws when no other
+`RandomAgent`, which can either play a random card from its hand or draw a card,
+and `GreedyAgent`, which plays random cards and only draws when no other
 option is available.
 
 === Environment Dynamics and the Step Function
