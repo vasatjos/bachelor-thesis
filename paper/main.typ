@@ -459,7 +459,7 @@ in @alg:mc-control.
 #figure(
     algo(
         title: [Monte Carlo Control],
-        parameters: ([episodes], $epsilon$, $gamma$),
+        parameters: ([episodes], $epsilon$, $gamma$, $alpha$),
         line-numbers: false,
     )[
         #let StAt = $(S_t, A_t)$
@@ -595,7 +595,7 @@ $
 $\
 
 In practice, calculating this exact sum is impossible because the true state
-distribution $mu(s)$ and the true values $q_pi (s, a)$ are unknown,
+distribution $mu(s)$ and the true values $v_pi (s)$ are unknown,
 and the state space is typically too vast to iterate over. However, as the
 agent interacts with the environment, it naturally visits states with frequencies
 that approximate $mu(s)$. This allows us to bypass the intractable
@@ -649,7 +649,33 @@ $
     ).
 $
 
-// TODO: DDQN
+=== Double Deep Q-Network
+A well-known issue with both standard Q-Learning and #gls("dqn") is the overestimation
+of action values, often referred to as maximization bias. This occurs because
+the #gls("td") target uses a maximum operator over estimated values, effectively
+using the same network to both select the best action and evaluate its worth.
+This leads to the evaluation being very good, as that's the reason the action
+was selected in the first place. In tabular settings, this overly optimistic
+behaviour is solved by Double Q-Learning~@Hasselt2010, which
+decouples the selection and evaluation steps by maintaining two completely
+separate $Q$ tables. However, maintaining two independent $Q$ tables
+would normally double the memory requirements.
+
+Fortunately, #gls("ddqn")~@Hasselt2016 offers an
+elegant solution that acts essentially as a free upgrade. Since standard
+#gls("dqn") already maintains two separate networks -- the primary network
+$bold(w)$ and the target network $bold(w)^-$ -- #gls("ddqn") simply
+leverages them to
+decouple the maximization step without needing any additional parameters. The
+primary network is used to select the greedy action in the next state, and the
+target network is used to evaluate the value of that specific action.
+The modified target for the loss function becomes:
+$
+    R_(t+1) + gamma hat(q)(S_(t+1), argmax_(a') hat(q)(S_(t+1), a'; bold(w)); bold(w)^-).
+$
+By separating the action selection from the action evaluation, #gls("ddqn")
+prevents positive bias from compounding, leading to significantly more
+stable training.
 
 #figure(
     algo(
@@ -694,7 +720,7 @@ $
 
 We now look at *policy gradient methods*, which take a fundamentally different
 approach to the value-based methods.
-Instead of relying on a value function to dictate behavior, these methods
+Instead of relying on a value function to dictate behaviour, these methods
 parameterize the policy itself directly. Let $bold(theta) in RR^d$ be
 the parameter vector for our policy. We can then denote the probability
 that the agent takes action $a$ in state $s$ as a parameterized mathematical
@@ -913,7 +939,7 @@ to be played, and the player playing an Ober can choose which suit the next play
 card must belong to. Playing a 7 forces the next
 player to draw two cards. If the next player instead also plays a 7, the player
 after them is forced to draw four, etc. If a player has won (has no cards on hand),
-they can be brought back during his winning round if the player before them plays
+they can be brought back during their winning round if the player before them plays
 the 7 of hearts. They must then draw the relevant number of cards (two to eight)
 and continue playing.
 
@@ -928,7 +954,7 @@ and continue playing.
 == Designing a Reinforcement Learning Environment
 
 When developing #glspl("rl") agents for card games, frameworks like
-RLCard~@rlcard-paper @rlcard-site can be used, as they provide a predefined
+RLCard~@rlcard-site can be used, as they provide a predefined
 API for combining #gls("rl") with card games.
 However, for this thesis, a custom environment
 was implemented from scratch in Python @python.
@@ -1062,7 +1088,7 @@ in @code:env-step.
 #figure(
     ```python
     def step(self, action: Action) -> tuple[GameState, float, bool, dict]:
-        # ... (agent executes action) ...
+        # ... (agent's chosen action gets executed) ...
 
         # If the game didn't end, the opponent immediately responds
         opponent_action = self._opponent.choose_action(
@@ -1079,7 +1105,7 @@ When the training agent takes an action, the environment executes it, immediatel
 queries the embedded opponent for its response, executes the opponent's action,
 and only then returns the next state, a reward, a flag whether
 the game has ended, and a dictionary `info` containing additional data
-the agent may need (such as the cards in his hand).
+the agent may need (such as the cards in its hand).
 From the perspective of the learning agent,
 the environment simply transitions from one of its turns directly to its next turn,
 abstracting away the multi-agent complexity.

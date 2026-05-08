@@ -70,4 +70,9 @@
     short: "SGD",
     long: "Stochastic Gradient Descent",
   ),
+  (
+    key: "ddqn",
+    short: "DDQN",
+    long: "Double Deep Q-Network",
+  ),
 )
