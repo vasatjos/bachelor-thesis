@@ -3,7 +3,7 @@
 This project implements various Reinforcement Learning agents for the Czech card game **Prší** (a variant of Mau-Mau or Crazy Eights).
 
 > [!NOTE]
-> If you just want to play against a pre-trained agent without setting up training, check out the **`evaluation`** branch. It comes with a pre-trained model and simplified evaluation defaults.
+> If you just want to play against a pre-trained agent without setting up training, check out the `evaluation` branch. It comes with a pre-trained model and simplified evaluation defaults.
 
 ## Quick Start
 
@@ -59,6 +59,14 @@ uv run -m agents.human --opponent dqn --model_path path/to/a/model/file
 ### Available Opponents:
 - `random`, `greedy` (baselines)
 - `dqn`, `ddqn`, `monte_carlo`, `q_learning`, `reinforce` (RL agents)
+
+### Visual Options (Icons)
+If you have a [Nerd Font](https://www.nerdfonts.com/) installed and set up in your terminal, you can enable graphical card icons for a better experience:
+
+```bash
+export PRSI_USE_ICONS=true
+uv run -m agents.human
+```
 
 ## Project Structure
 
