@@ -3,7 +3,7 @@
 This project implements various Reinforcement Learning agents for the Czech card game **Prší** (a variant of Mau-Mau or Crazy Eights).
 
 > [!NOTE]
-> If you just want to play against a pre-trained agent without setting up training, check out the **`evaluate`** branch. It comes with pre-trained models and simplified evaluation defaults.
+> If you just want to play against a pre-trained agent without setting up training, check out the **`evaluation`** branch. It comes with a pre-trained model and simplified evaluation defaults.
 
 ## Quick Start
 
