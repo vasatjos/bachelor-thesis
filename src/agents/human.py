@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 import random
 from typing import Any
 
@@ -41,6 +42,12 @@ parser.add_argument(
         "reinforce",
     ],
 )
+parser.add_argument(
+    "--stats_path",
+    default=None,
+    type=str,
+    help="Path to save/load human evaluation statistics.",
+)
 
 
 class HumanAgent(Agent):
@@ -64,7 +71,20 @@ class HumanAgent(Agent):
 
         return self._select_action(allowed, hand)
 
-    def evaluate(self, env: PrsiEnv, episodes: int) -> float:
+    def evaluate(
+        self, env: PrsiEnv, episodes: int, stats_path: str | None = None
+    ) -> float:
+        current_wins = 0
+        current_total = 0
+        if stats_path and os.path.exists(stats_path):
+            try:
+                with open(stats_path, "r") as f:
+                    data = json.load(f)
+                    current_wins = data.get("wins", 0)
+                    current_total = data.get("total", 0)
+            except (json.JSONDecodeError, IOError):
+                pass
+
         wins = 0
         for i in range(episodes):
             game_state, info = env.reset()
@@ -86,8 +106,20 @@ class HumanAgent(Agent):
             if reward > 0:
                 wins += 1
 
+        total_wins = current_wins + wins
+        total_played = current_total + episodes
+
+        if stats_path:
+            with open(stats_path, "w") as f:
+                json.dump({"wins": total_wins, "total": total_played}, f, indent=4)
+
         win_rate = wins / episodes
+        overall_win_rate = total_wins / total_played if total_played > 0 else 0
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
+        if stats_path:
+            print(
+                f"Overall stats: {total_wins}/{total_played} wins ({overall_win_rate:.2%})"
+            )
         return win_rate
 
     def _print_hand(
@@ -201,4 +233,4 @@ if __name__ == "__main__":
 
     env = PrsiEnv(opponent)
     agent = HumanAgent()
-    agent.evaluate(env, episodes=args.evaluate_for)
+    agent.evaluate(env, episodes=args.evaluate_for, stats_path=args.stats_path)
