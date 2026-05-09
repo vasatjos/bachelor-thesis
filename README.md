@@ -40,7 +40,7 @@ uv run -m agents.human --stats_path my_results.json
 Set the argument to `None` to disable log saving.
 
 ### Visual Options (Icons)
-If you have a [Nerd Font](https://www.nerdfonts.com/) installed, you can enable graphical card icons for a better experience:
+If you have a [Nerd Font](https://www.nerdfonts.com/) installed and set up in your terminal, you can enable graphical card icons for a better experience:
 
 ```bash
 export PRSI_USE_ICONS=true
