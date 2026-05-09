@@ -1,11 +1,11 @@
-# RL Agents for Prší
+# RL Agents for Prší - Evaluation
 
-This project implements various Reinforcement Learning agents for the Czech card game **Prší** (a variant of Mau-Mau or Crazy Eights).
+This repository provides an interactive environment to play against various Reinforcement Learning agents trained for the Czech card game **Prší**.
 
-## Quick Start
+## Setup
 
 ### 1. Install `uv`
-This project uses [uv](https://github.com/astral-sh/uv) for dependency management. If you don't have it installed, you can install it using:
+This project uses [uv](https://github.com/astral-sh/uv) for dependency management. Install it using:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -20,47 +20,29 @@ cd bachelor-thesis
 uv sync --all-groups
 ```
 
-## Training Agents
+## How to Play
 
-You can train various agents by running their respective modules from the `src` directory. Available algorithms include:
-- **DQN** (`agents.dqn`)
-- **Double DQN** (`agents.ddqn`)
-- **Monte Carlo** (`agents.monte_carlo`)
-- **Q-Learning** (`agents.q_learning`)
-- **REINFORCE** (`agents.reinforce`)
+You can test your skills against a trained agent using the `human.py` script from the `src` directory.
 
-### Example: Training a DQN agent
+### Quick Start (Evaluate against best agent)
+On this branch, reasonable defaults are already set for the best performing agent. Simply specify how many games you want to play:
+
 ```bash
 cd src
-uv run -m agents.dqn --episodes 500000 --epsilon 0.1 --gamma 0.99
+uv run -m agents.human --evaluate_for 5
 ```
 
-Training progress and models are saved by default in the `src/agent_strategies` and `src/logs` directories (or as specified by `--model_path`).
-
-## Playing Against Agents
-
-You can test your own skills by playing against a trained agent or a baseline agent using the `human.py` script.
-
-### Play against a baseline (Greedy) agent:
+### Statistics & Progress
+Your win/loss statistics are automatically saved to `src/human_stats.json`. You can track your overall performance across multiple sessions. To use a different file:
 ```bash
-cd src
-uv run -m agents.human --opponent greedy
+uv run -m agents.human --stats_path my_results.json
 ```
+Set the argument to `None` to disable log saving.
 
-### Play against a trained DQN agent:
+### Visual Options (Icons)
+If you have a [Nerd Font](https://www.nerdfonts.com/) installed, you can enable graphical card icons for a better experience:
+
 ```bash
-cd src
-uv run -m agents.human --opponent dqn --model_path path/to/a/model/file
+export PRSI_USE_ICONS=true
+uv run -m agents.human
 ```
-
-### Available Opponents:
-- `random`, `greedy` (baselines)
-- `dqn`, `ddqn`, `monte_carlo`, `q_learning`, `reinforce` (RL agents)
-
-## Project Structure
-
-- `src/agents/`: Implementation of various RL algorithms.
-- `src/prsi/`: The game environment and logic.
-- `src/tests/`: Unit tests for game logic.
-- `paper/`: Typst source files for the bachelor thesis.
-- `src/agent_strategies/`: Saved models and training logs.

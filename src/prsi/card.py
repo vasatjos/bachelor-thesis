@@ -3,7 +3,7 @@ from functools import total_ordering
 
 from prsi.card_utils import Suit, Rank, CardEffect, COLOR_RESET
 
-USE_ICONS = getenv("PRSI_USE_ICONS", "true").lower() in ("true", "1", "yes", "t")
+USE_ICONS = getenv("PRSI_USE_ICONS", "false").lower() in ("true", "1", "yes", "t")
 
 ICONS = {
     Suit.HEARTS: "󰋑",
