@@ -209,7 +209,7 @@ class REINFORCEAgent(TrainableAgent):
             ):
                 self.save(self.full_model_path)
 
-    def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> None:
+    def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> float:
         self.policy_net.eval()
 
         env.reset(full=True, opponent=opponent)
@@ -239,7 +239,9 @@ class REINFORCEAgent(TrainableAgent):
             if reward > 0:
                 wins += 1
 
-        print(f"Evaluation: {wins}/{episodes} wins ({wins / episodes:.2%})")
+        win_rate = wins / episodes
+        print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
+        return win_rate
 
     def choose_action(
         self, state: GameState, hand: list[Card], info: dict[str, Any]

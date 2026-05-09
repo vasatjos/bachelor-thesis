@@ -64,7 +64,7 @@ class HumanAgent(Agent):
 
         return self._select_action(allowed, hand)
 
-    def evaluate(self, env: PrsiEnv, episodes: int) -> None:
+    def evaluate(self, env: PrsiEnv, episodes: int) -> float:
         wins = 0
         for i in range(episodes):
             game_state, info = env.reset()
@@ -88,6 +88,7 @@ class HumanAgent(Agent):
 
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
+        return win_rate
 
     def _print_hand(
         self, cards: list[Card] | set[Card], show_numbers: bool = True

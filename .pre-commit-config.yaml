@@ -5,6 +5,7 @@ repos:
       name: ruff-format
       language: system
       types: [python]
+      exclude: \.ipynb$
       require_serial: true
       pass_filenames: false
       entry: uv run ruff format
@@ -13,6 +14,7 @@ repos:
       name: ruff
       language: system
       types: [python]
+      exclude: \.ipynb$
       require_serial: true
       pass_filenames: false
       entry: uv run ruff check
@@ -21,6 +23,7 @@ repos:
       name: mypy
       language: system
       types: [python]
+      exclude: \.ipynb$
       require_serial: true
       pass_filenames: false
       entry: uv run mypy .

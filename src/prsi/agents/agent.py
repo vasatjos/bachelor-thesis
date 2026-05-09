@@ -27,7 +27,7 @@ class Agent(ABC):
         raise NotImplementedError("Base class cannot choose action.")
 
     @abstractmethod
-    def evaluate(self, *args, **kwargs) -> None:
+    def evaluate(self, *args, **kwargs) -> float:
         """
         Evaluate the agent performance.
         """

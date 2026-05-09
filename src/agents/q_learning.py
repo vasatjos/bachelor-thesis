@@ -217,7 +217,7 @@ class QLearningAgent(TrainableAgent):
             ):
                 self.save(self.full_model_path)
 
-    def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> None:
+    def evaluate(self, env: PrsiEnv, episodes: int, opponent: Agent) -> float:
         original_epsilon = self.args.epsilon
         self.args.epsilon = 0.0
 
@@ -248,6 +248,7 @@ class QLearningAgent(TrainableAgent):
         self.args.epsilon = original_epsilon
         win_rate = wins / episodes
         print(f"Evaluation: {wins}/{episodes} wins ({win_rate:.2%})")
+        return win_rate
 
     def choose_action(
         self, state: GameState, hand: list[Card], info: dict[str, Any]
