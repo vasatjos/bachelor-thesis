@@ -103,8 +103,29 @@ class HumanAgent(Agent):
                 info["episode"] = i
                 hand = info["hand"]
 
+            os.system("clear -x")
+            print(f"Episode: {info['episode'] + 1}/{info['episodes']}")
+            print(f"\nTop card: {game_state.top_card}")
+            if game_state.top_card.rank is Rank.OBER:  # type: ignore[union-attr]
+                active_suit = game_state.actual_suit
+                icon = f"{ICONS[active_suit]} " if USE_ICONS else ""  # type: ignore[index]
+                print(f"Suit: {active_suit.value}{icon}{active_suit.name}{COLOR_RESET}")  # type: ignore[union-attr]
+            print(f"Opponent card count: {info.get('opponent_card_count', 0)}")
+            print("\nHand:")
+            self._print_hand(hand, show_numbers=False)
+
             if reward > 0:
+                print("\nYou won!")
                 wins += 1
+            elif reward < 0:
+                print("\nYou lost...")
+            else:
+                print("\nGame ended (Draw/Truncated/Empty Deck).")
+
+            if i < episodes - 1:
+                input("\nPress Enter to start the next game...")
+            else:
+                input("\nPress Enter to finish evaluation...")
 
         total_wins = current_wins + wins
         total_played = current_total + episodes
