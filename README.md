@@ -1,7 +1,66 @@
-# Bachelor thesis
+# RL Agents for Prší
 
-## How to train an agent:
-Simply run the following command from the `src` directory.
+This project implements various Reinforcement Learning agents for the Czech card game **Prší** (a variant of Mau-Mau or Crazy Eights).
+
+## Quick Start
+
+### 1. Install `uv`
+This project uses [uv](https://github.com/astral-sh/uv) for dependency management. If you don't have it installed, you can install it using:
+
 ```bash
-uv run -m agents.<agent-filename>
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+### 2. Setup the Project
+Clone the repository and install the dependencies:
+
+```bash
+git clone https://github.com/vasatjos/bachelor-thesis.git
+cd bachelor-thesis
+uv sync --all-groups
+```
+
+## Training Agents
+
+You can train various agents by running their respective modules from the `src` directory. Available algorithms include:
+- **DQN** (`agents.dqn`)
+- **Double DQN** (`agents.ddqn`)
+- **Monte Carlo** (`agents.monte_carlo`)
+- **Q-Learning** (`agents.q_learning`)
+- **REINFORCE** (`agents.reinforce`)
+
+### Example: Training a DQN agent
+```bash
+cd src
+uv run -m agents.dqn --episodes 500000 --epsilon 0.1 --gamma 0.99
+```
+
+Training progress and models are saved by default in the `src/agent_strategies` and `src/logs` directories (or as specified by `--model_path`).
+
+## Playing Against Agents
+
+You can test your own skills by playing against a trained agent or a baseline agent using the `human.py` script.
+
+### Play against a baseline (Greedy) agent:
+```bash
+cd src
+uv run -m agents.human --opponent greedy
+```
+
+### Play against a trained DQN agent:
+```bash
+cd src
+uv run -m agents.human --opponent dqn --model_path path/to/a/model/file
+```
+
+### Available Opponents:
+- `random`, `greedy` (baselines)
+- `dqn`, `ddqn`, `monte_carlo`, `q_learning`, `reinforce` (RL agents)
+
+## Project Structure
+
+- `src/agents/`: Implementation of various RL algorithms.
+- `src/prsi/`: The game environment and logic.
+- `src/tests/`: Unit tests for game logic.
+- `paper/`: Typst source files for the bachelor thesis.
+- `src/agent_strategies/`: Saved models and training logs.
