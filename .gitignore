@@ -1,5 +1,6 @@
 __pycache__/
 .venv/
+src/logs/*
 *.pkl
 *.pt
 *.pth

@@ -8,6 +8,7 @@
 #let argmax = math.op([arg#h(1.5pt)max], limits: true)
 
 #let first-line-indent = 1.5em
+#let start-par = h(first-line-indent)
 
 #let template(
     meta: (),

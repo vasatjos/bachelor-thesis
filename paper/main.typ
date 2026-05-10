@@ -1007,7 +1007,7 @@ The complete discrete action space consists of 45 possible actions:
 - 28 actions for playing a standard non-Ober card,
 - 16 actions for playing an Ober and selecting one of the four suits.
 
-#h(first-line-indent) Because an agent only holds a small subset of the deck
+#start-par Because an agent only holds a small subset of the deck
 at any given time, and because the rules of the game restrict which
 cards can be placed on the discard pile,
 the vast majority of these 45 actions are illegal in any given
@@ -1025,7 +1025,7 @@ the environment provides a sparse reward signal:
 - A reward of $-1$ is given if the opponent plays their last card.
 - A reward of $0$ is returned for all non-terminal intermediate steps.
 
-#h(first-line-indent) A single game represents one episode.
+#start-par A single game represents one episode.
 Because games of Prší can theoretically
 enter infinite loops (e.g., players endlessly drawing and playing the same
 sequence of cards), the environment enforces a truncation limit of 600 steps.
@@ -1113,6 +1113,92 @@ abstracting away the multi-agent complexity.
 
 = Experiments <chapter:experiments>
 
+== Implementation of Agents
+
+While the previous chapter introduces the `GameState` object that is
+returned to the agent when it takes a step in the environment, as well
+as an `info` dictionary, the information
+it contains is actually quite limited. There are many things outside
+these returned values that could be useful to the agent's decision-making
+process.
+
+The main part being the agents might need is memory of what cards were
+played throughout the game. For example, it's a bad idea to end the game
+with a heart-suited card if the 7 of hearts hasn't been played yet, as the other
+player could return the winner into the game by playing that card. Several
+implementations of memory were chosen.
+
+=== Memory for Tabular Methods
+
+Memory in tabular agents is implemented as a hash map (Python dictionary)
+that maps state-action pairs to their estimated values.
+Because the full state space of Prší is too large to represent directly,
+we employ state abstraction to reduce the number of unique states.
+For example, the `hand_state_option` allows the agent to see only
+the count of cards in its hand (possibly bounded) rather than the full
+set of cards. Similarly, the `played_subset` option allows to track
+only a small number of critical cards that have already been played, such as
+Sevens, Obers, and Aces.
+
+This simplified representation allows the $Q$ table to remain small
+enough to fit in memory while still capturing the most important aspects
+of the game. By packing these abstracted features into a compact tuple
+(alongside the values from the `GameState` object),
+the tabular agents can learn efficiently
+from millions of episodes with memory without exceeding
+reasonable hardware limitations.
+
+=== Memory for Deep Learning Methods
+
+Unlike tabular methods, which require discrete states to use as dictionary keys,
+deep learning algorithms like #gls("dqn") and REINFORCE require the environment
+state to be represented as a continuous, fixed-size numerical tensor.
+Furthermore, to ensure stable gradient updates during backpropagation,
+these inputs must be carefully scaled.
+
+To achieve this, the `GameState` and the history of played cards are flattened
+into a 1D vector of 32-bit floats. We utilize two primary encoding strategies:
+_normalization_, which scales integer counts to a range between 0 and 1
+(e.g., dividing the opponent's card count by a theoretical maximum of 31),
+and _one-hot encoding_, which represents categorical variables like suits
+or specific cards as a sparse binary array.
+
+The complete observation vector for the neural networks consists of:
+- _Hand Representation:_ Configurable as either a normalized card count
+  or a full 32-element one-hot encoded array representing exact held cards.
+- _Opponent Card Count:_ A single normalized float.
+- _Top Card:_ A 32-element one-hot encoded array.
+- _Active Suit:_ A 4-element one-hot encoded array.
+- _Card Effect:_ A 3-element one-hot encoded array (no effect, drawing a card,
+    skipping a turn).
+- _Effect Strength:_ When drawing cards because of 7s, signals how many to draw.
+- _Played Cards Memory:_ An array tracking played cards (e.g., just Sevens,
+  special cards, or the full deck), normalized by the maximum possible
+  count of 4 for each rank.
+
+#start-par Because neural networks naturally generalize across similar inputs,
+they do not
+suffer from the same state space explosion as tabular methods. This allows
+our deep #gls("rl") agents to train on the "full" hand representation and the
+complete 32-card memory tracking without exhausting system resources.
+Using abstracted state spaces from the tabular methods is
+still available however.
+
+The architectures used for these agents are standard feed-forward
+_#glspl("mlp")_ with the hidden layers being configurable by both depth
+and width (although width is shared between layers). The implementation
+utilizes the Adam optimizer~@Adam.
+
+=== Limitations of Memory Representation
+
+One problem the agents don't solve is that if a deck is flipped over once
+the draw pile is exhausted, there is an incredible amount of
+information available, as the order of cards in the draw pile is now
+known and deterministic. When representing memory as a set, the order of cards
+is lost and therefore the agents can't use it. Once a deck is flipped
+(information included in the `info` dictionary), the memory buffer is simply
+reset and the agent starts "from scratch".
+
 == Evaluating Agent Performance
 
 #lorem(100)
@@ -1123,6 +1209,27 @@ abstracting away the multi-agent complexity.
 
 == Performance Against Human Players
 
+To evaluate the final trained agent against real human players, a custom
+`HumanAgent` was implemented. Unlike the computational baselines or trained
+neural networks, this agent acts as an interactive command-line
+interface wrapper.
+
+During its `choose_action` call, the agent pauses the environment loop
+and visually renders the public game state directly in the terminal.
+This includes the current top card, the active suit (utilizing Unicode
+icons for visual clarity), the number of cards remaining in the opponent's hand,
+and the human player's private hand. The human player then inputs their
+decision via standard input. The agent validates this input, prompting for
+additional information if an Ober is played to select the next suit,
+and translates the final decision back into the environment's internal
+action format.
+
+To facilitate evaluation over multiple independent play sessions,
+the agent features persistent statistical tracking. The results of each
+game are appended to a JSON file, recording the cumulative wins,
+total games played, and the overall win rate of the human tester.
+
+// TODO: results discussion
 #lorem(100)
 
 

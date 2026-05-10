@@ -1,6 +1,7 @@
 import os
 import argparse
 import random
+import gc
 from time import time
 from typing import Any
 import numpy as np
@@ -221,6 +222,10 @@ class DQNAgent(TrainableAgent):
                 draw_actions = 0
                 batch_steps = 0
 
+                gc.collect()
+                if self.device.type == "cuda":
+                    torch.cuda.empty_cache()
+
             if (
                 self.args.save_each is not None
                 and (episode + 1) % self.args.save_each == 0
@@ -327,7 +332,16 @@ class DQNAgent(TrainableAgent):
         cloned.log_data = []
         cloned._init_played_subset()
         cloned.input_size = self.input_size
-        cloned._build_networks()
+
+        # Cloned agents are used as opponents only (inference),
+        # so we don't need a target network, optimizer, or loss.
+        cloned.online_net = Network(
+            self.input_size,
+            self.args.hidden_layer_size,
+            self.args.hidden_layer_count,
+            PrsiEnv.ACTION_SPACE_SIZE,
+        ).to(self.device)
+
         cloned.online_net.load_state_dict(self.online_net.state_dict())
         cloned.online_net.eval()
         return cloned

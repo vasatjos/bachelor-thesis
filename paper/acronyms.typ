@@ -71,6 +71,13 @@
     long: "Stochastic Gradient Descent",
   ),
   (
+    key: "mlp",
+    short: "MLP",
+    long: "Multilayer Perceptron",
+    plural: "MLPs",
+    longplural: "Multilayer Perceptrons",
+  ),
+  (
     key: "ddqn",
     short: "DDQN",
     long: "Double Deep Q-Network",
