@@ -39,6 +39,11 @@
     long: "Monte Carlo",
   ),
   (
+    key: "mcts",
+    short: "MCTS",
+    long: "Monte Carlo Tree Search",
+  ),
+  (
     key: "ppo",
     short: "PPO",
     long: "Proximal Policy Optimization",
@@ -76,6 +81,18 @@
     long: "Multilayer Perceptron",
     plural: "MLPs",
     longplural: "Multilayer Perceptrons",
+  ),
+  (
+    key: "rnn",
+    short: "RNN",
+    long: "Recurrent Neural Network",
+    longplural: "Recurrent Neural Networks",
+    plural: "RNNs",
+  ),
+  (
+    key: "lstm",
+    short: "LSTM",
+    long: "Long Short-Term Memory",
   ),
   (
     key: "ddqn",

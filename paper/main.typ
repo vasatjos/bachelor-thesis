@@ -1232,7 +1232,7 @@ robust and not simply overfitted to the greedy baseline.
 The Monte Carlo agents were trained using the heavily abstracted state space to
 ensure the $Q$ table could fit into memory. Across all runs, the hand size was
 truncated to a maximum of 4, and the memory of played cards was restricted to
-the `specials` subset (Sevens, Obers, and Aces). 
+the `specials` subset (Sevens, Obers, and Aces).
 
 We experimented with several hyperparameters, comparing first-visit against
 every-visit updates, constant exploration rates ($epsilon = 0.1$ and
@@ -1288,7 +1288,7 @@ a strategy capable of generalizing against different opponents.
 To ensure a fair comparison with the Monte Carlo approach, the tabular Q-Learning
 agents were trained using the exact same abstracted state space configuration: a
 maximum truncated hand size of 4 and a memory of played cards restricted to the
-`specials` subset. 
+`specials` subset.
 
 Because Q-Learning is a #gls("td") method that updates its estimates incrementally
 step-by-step, it inherently requires a fixed step size $alpha$. Therefore, our
@@ -1324,7 +1324,7 @@ well as the impact of self-play. The learning curves for these runs can be seen 
 The highest-performing Q-Learning configuration utilized a constant exploration
 rate of $epsilon = 0.1$ and a step size of $alpha = 0.1$, achieving a 40.10% win
 rate against the `GreedyAgent`. Similar to the Monte Carlo results, constant
-exploration proved to be more effective than a decaying exploration schedule. 
+exploration proved to be more effective than a decaying exploration schedule.
 
 When observing the runs utilizing a decaying $epsilon$, it becomes clear that
 Q-Learning is also sensitive to the step size parameter. A relatively small
@@ -1408,7 +1408,7 @@ approximate in this environment.
 However, even with 4 hidden layers, the performance of the deep value-based
 methods was poor compared to the tabular approaches. The best #gls("dqn") model
 achieved only a 27.60% win rate against the `GreedyAgent`,
-and its #gls("ddqn") counterpart achieved 25.00%. 
+and its #gls("ddqn") counterpart achieved 25.00%.
 
 Interestingly, standard #gls("dqn") slightly outperformed #gls("ddqn"). While
 #gls("ddqn") is explicitly
@@ -1475,7 +1475,7 @@ prematurely converge on sub-optimal strategies, dropping the win rate to 55.10%.
 Conversely, a coefficient that is too high ($beta=0.1$) forced the agent to behave
 too randomly, degrading performance to 57.40%. The "Goldilocks zone" was found at
 $0.05$, which provided just enough exploration to map the complex state space
-without diluting the final deterministic policy. 
+without diluting the final deterministic policy.
 
 While the baseline-equipped agent marginally outperformed the standard REINFORCE
 agent (63.60% versus 62.10% at $beta=0.01$), this slight improvement is likely
@@ -1544,6 +1544,7 @@ for the human evaluation phase detailed in the following section.
 
 == Performance Against Human Players
 
+=== Command-Line Interface
 To evaluate the final trained agent against real human players, a custom
 `HumanAgent` was implemented. Unlike the computational baselines or trained
 neural networks, this agent acts as an interactive command-line
@@ -1564,13 +1565,128 @@ the agent features persistent statistical tracking. The results of each
 game are appended to a JSON file, recording the cumulative wins,
 total games played, and the overall win rate of the human tester.
 
-// TODO: results discussion
-#lorem(100)
+=== Results of Human Evaluation
+
+#let human_greedy_wins = 65
+#let human_greedy_games = 100
+#let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
+
+#let human_rl_wins = 72
+#let human_rl_games = 121
+#let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
+
+To establish a baseline for human performance, an initial testing phase was
+conducted where a single human player competed against the `GreedyAgent`
+for a total of #human_greedy_games games. In this baseline evaluation,
+the human players secured #human_greedy_wins victories, resulting in a
+#human_greedy_rate% win rate. This confirms that while the greedy strategy is
+competent, a human player can consistently exploit its predictable,
+short-sighted nature. It also indirectly puts the REINFORCE agent
+on par with human players, in the sense that they have achieved
+a similar win-rate (although #human_greedy_games games is a relatively small
+sample size).
+
+Next, the human testers faced the champion REINFORCE agent. Over a series of
+#human_rl_games games, human players achieved #human_rl_wins victories, yielding
+a win rate of #human_rl_rate%.
+
+Comparing these two results reveals the tangible strength of the learned policy.
+The REINFORCE agent successfully lowered the human win rate by over 5 percentage
+points compared to the greedy baseline. While the human players still maintained a
+positive win record overall -- highlighting the inherent difficulty of achieving
+superhuman performance in imperfect-information games without look-ahead planning
+algorithms -- the REINFORCE agent proved to be a noticeably more difficult and
+resilient adversary.
 
 
 = Discussion and Future Work // TODO: maybe future work should be a subsection
 
-#lorem(100)
+The experiments conducted in this thesis demonstrate that reinforcement learning
+can be applied to the imperfect-information environment of Prší to a
+somewhat successful degree.
+While tabular methods achieved competent play through heavy state abstraction,
+the deep policy gradient algorithm, REINFORCE, proved capable of mapping the
+full state representation to a competitive strategy. However, the evaluation
+also highlighted several limitations in the current approach and environment
+implementation, opening several avenues for future research.
+
+== Computational Limitations and Language Choice
+
+One of the most significant bottlenecks during the training phase was computational
+efficiency. The custom environment and training loops were implemented entirely in
+Python. While Python is the standard for machine learning research due to its
+rich ecosystem, its interpreted nature makes
+continuous environment interactions inherently slow.
+
+Within the strict 24-hour training limit, this slow execution speed heavily
+penalized the deep learning models. The tabular methods processed millions of
+episodes, whereas the neural networks processed far fewer. It is entirely possible
+that the failure of the deep value-based methods (#gls("dqn") and #gls("ddqn"))
+was not due to algorithmic incompatibility, but simply a lack of sufficient
+experience to converge. Rewriting the core `PrsiEnv` and the simulation loop in a
+compiled language or utilizing a Just-In-Time compiler like JAX,
+could increase the simulation throughput by orders of magnitude, allowing deep
+architectures to train much more effectively. The main benefit of the selected
+approach was the code readability provided by using
+industry-standard technologies.
+
+== State Representation and Memory Architectures
+
+The current deep learning agents utilized a flattened, 1D one-hot encoded vector
+to represent the game state. For #gls("dqn") in particular, this sparse representation
+likely contributed to the network's inability to learn an accurate value function.
+This thesis didn't explore different state representations for the value-based
+agents, such as passing the abstracted state space used by the tabular agents
+into the neural networks.
+This could make the #gls("dl") approaches converge to at least a similar level
+as the tabular methods.
+
+Furthermore, dealing with imperfect information currently relies on a fixed
+"played cards" memory array, effectively representing a set, an unordered
+contained.
+As noted in @chapter:experiments, this static representation completely
+loses the sequential order of cards, which becomes critical information once the
+draw pile is exhausted and the discard pile is flipped. To achieve "real" memory
+that can dynamically track the flow of the game and infer the opponent's hand
+probabilities, the feed-forward #glspl("mlp") could take a learned representation
+of a state embedded by a #gls("rnn") layer using for example
+#gls("lstm")~@LTSM cells. This would allow the agent to maintain a hidden state
+vector that updates with every played card, naturally resolving
+the #gls("pomdp") nature of the game without relying on handcrafted memory arrays.
+
+== Advanced Reinforcement Learning Algorithms
+
+While REINFORCE proved successful, it is one of the most fundamental policy gradient
+methods and suffers from high sample inefficiency. Upgrading the agent to use
+state-of-the-art actor-critic algorithms, such as #gls("ppo")~@PPO,
+could improve training stability and allow for multiple
+epochs of learning on the same batch of data.
+
+Furthermore, the naive self-play mechanism implemented in this thesis yielded
+sub-optimal results, causing the tabular agents to collapse and also
+degrading the performance of REINFORCE.
+To resolve these instabilities and look beyond standard model-free algorithms,
+MuZero~@MuZero represents the frontier of board and card game AI. MuZero builds
+a predictive model of the environment's dynamics and uses #gls("mcts")
+to plan ahead, naturally integrating highly robust self-play
+training loops. Adapting MuZero for the stochastic, hidden-information
+environment of Prší could not only stabilize self-play dynamics, but also
+bridge the gap between the current agent's reactive playstyle and the proactive,
+look-ahead strategies employed by skilled human players.
+
+== The Environment
+
+Currently, the training environment is strictly limited to 1-versus-1 interactions.
+However, Prší is traditionally played as a multiplayer game (typically 3 to 6 players).
+Expanding the `PrsiEnv` to support an arbitrary number of players would introduce
+new strategic layers. This option was left out to limit the scope of our
+experiments, but remains an interesting future possibility.
+
+Another modification that could prove interesting is reward shaping. A flat
+-1 on a loss and +1 on a victory was chosen to ensure the agents find their own
+way to win without influencing their strategy in any way. It could however
+be interesting to see how different rewards (for example -0.01 for drawing
+a card) would affect the tested methods.
 
 
 #heading([Conclusion], numbering: none)
