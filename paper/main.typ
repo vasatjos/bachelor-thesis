@@ -1621,7 +1621,7 @@ total games played, and the overall win rate of the human tester.
 To establish a baseline for human performance, an initial testing phase was
 conducted where a single human player competed against the `GreedyAgent`
 for a total of #human_greedy_games games. In this baseline evaluation,
-the human players secured #human_greedy_wins victories, resulting in a
+the human player secured #human_greedy_wins victories, resulting in a
 #human_greedy_rate% win rate. This confirms that while the greedy strategy is
 competent, a human player can consistently exploit its predictable,
 short-sighted nature. It also indirectly puts the REINFORCE agent
@@ -1634,7 +1634,7 @@ Next, the human testers faced the champion REINFORCE agent. Over a series of
 a win rate of #human_rl_rate%.
 
 Comparing these two results reveals the tangible strength of the learned policy.
-The REINFORCE agent successfully lowered the human win rate by over 5 percentage
+The REINFORCE agent successfully lowered the human win rate by several percentage
 points compared to the greedy baseline. While the human players still maintained a
 positive win record overall -- highlighting the inherent difficulty of achieving
 superhuman performance in imperfect-information games without look-ahead planning
@@ -1663,12 +1663,12 @@ continuous environment interactions inherently slow.
 
 Within the strict 24-hour training limit, this slow execution speed heavily
 penalized the deep learning models. The tabular methods processed millions of
-episodes, whereas the neural networks processed far fewer. It is entirely possible
+episodes, whereas the neural networks processed far fewer. It is possible
 that the failure of the deep value-based methods (#gls("dqn") and #gls("ddqn"))
 was not due to algorithmic incompatibility, but simply a lack of sufficient
 experience to converge. Rewriting the core `PrsiEnv` and the simulation loop in a
-compiled language or utilizing a Just-In-Time compiler like JAX,
-could increase the simulation throughput by orders of magnitude, allowing deep
+compiled language or utilizing a Just-In-Time compiler like JAX
+could increase the simulation throughput, allowing deep
 architectures to train much more effectively. The main benefit of the selected
 approach was the code readability provided by using
 industry-standard technologies.
@@ -1711,7 +1711,7 @@ Furthermore, the naive self-play mechanism implemented in this thesis yielded
 sub-optimal results, causing the tabular agents to collapse and also
 degrading the performance of REINFORCE.
 To resolve these instabilities and look beyond standard model-free algorithms,
-MuZero~@MuZero represents the frontier of board and card game AI. MuZero builds
+MuZero~@MuZero represents the frontier of board game AI. MuZero builds
 a predictive model of the environment's dynamics and uses #gls("mcts")
 to plan ahead, naturally integrating highly robust self-play
 training loops. Adapting MuZero for the stochastic, hidden-information
@@ -1730,9 +1730,9 @@ experiments, but remains an interesting future possibility.
 Another modification that could prove interesting is reward shaping. A flat
 -1 on a loss and +1 on a victory was chosen to ensure the agents find their own
 way to win without influencing their strategy in any way. It could however
-be interesting to see how different rewards (for example -0.01 for drawing
-a card) would affect the tested methods.
-
+be interesting to see how different rewards would affect the tested methods.
+For example -0.01 for drawing a card, or even entirely leaving out wins and
+losses, with purely on -$\#"cards on hand"$ being the reward in each timestep.
 
 #heading([Conclusion], numbering: none)
 
@@ -1772,7 +1772,7 @@ policy gradient methods can learn non-trivial strategies
 in stochastic card games without any prior human knowledge. The developed
 environment provides a foundation for future research, particularly
 in exploring #gls("rnn")-based state representations or more advanced #gls("rl")
-methods like #gls("ppo").
+methods like #gls("ppo") or MuZero.
 
 
 #bibliography("bibliography.bib")
