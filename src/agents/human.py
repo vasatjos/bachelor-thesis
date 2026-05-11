@@ -44,7 +44,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--stats_path",
-    default="human_stats.json",
+    default="logs/human/human_stats.json",
     type=str,
     help="Path to save/load human evaluation statistics.",
 )
@@ -131,6 +131,9 @@ class HumanAgent(Agent):
         total_played = current_total + episodes
 
         if stats_path:
+            dir_name = os.path.dirname(stats_path)
+            if dir_name:
+                os.makedirs(dir_name, exist_ok=True)
             with open(stats_path, "w") as f:
                 json.dump({"wins": total_wins, "total": total_played}, f, indent=4)
 

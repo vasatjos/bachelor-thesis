@@ -33,7 +33,7 @@ uv run -m agents.human --evaluate_for 5
 ```
 
 ### Statistics & Progress
-Your win/loss statistics are automatically saved to `src/human_stats.json`. You can track your overall performance across multiple sessions. To use a different file:
+Your win/loss statistics are automatically saved to `src/logs/human/human_stats.json`. You can track your overall performance across multiple sessions. To use a different file:
 ```bash
 uv run -m agents.human --stats_path my_results.json
 ```
