@@ -1118,11 +1118,11 @@ abstracting away the multi-agent complexity.
 While the previous chapter introduces the `GameState` object that is
 returned to the agent when it takes a step in the environment, as well
 as an `info` dictionary, the information
-it contains is actually quite limited. There are many things outside
+contained in these is actually quite limited. There are things outside
 these returned values that could be useful to the agent's decision-making
 process.
 
-The main part being the agents might need is memory of what cards were
+The main part being that the agents might need memory of what cards were
 played throughout the game. For example, it's a bad idea to end the game
 with a heart-suited card if the 7 of hearts hasn't been played yet, as the other
 player could return the winner into the game by playing that card. Several
@@ -1130,9 +1130,8 @@ implementations of memory were chosen.
 
 === Memory for Tabular Methods
 
-Memory in tabular agents is implemented as a hash map (Python dictionary)
-that maps state-action pairs to their estimated values.
-Because the full state space of Prší is too large to represent directly,
+Because the full state space of Prší is too large for the agents to remember
+and represent directly,
 we employ state abstraction to reduce the number of unique states.
 For example, the `hand_state_option` allows the agent to see only
 the count of cards in its hand (possibly bounded) rather than the full
@@ -1165,7 +1164,7 @@ or specific cards as a sparse binary array.
 
 The complete observation vector for the neural networks consists of:
 - _Hand Representation:_ Configurable as either a normalized card count
-  or a full 32-element one-hot encoded array representing exact held cards.
+    or a full 32-element one-hot encoded array representing exact held cards.
 - _Opponent Card Count:_ A single normalized float.
 - _Top Card:_ A 32-element one-hot encoded array.
 - _Active Suit:_ A 4-element one-hot encoded array.
@@ -1173,8 +1172,8 @@ The complete observation vector for the neural networks consists of:
     skipping a turn).
 - _Effect Strength:_ When drawing cards because of 7s, signals how many to draw.
 - _Played Cards Memory:_ An array tracking played cards (e.g., just Sevens,
-  special cards, or the full deck), normalized by the maximum possible
-  count of 4 for each rank.
+    special cards, or the full deck), normalized by the maximum possible
+    count of 4 for each rank.
 
 #start-par Because neural networks naturally generalize across similar inputs,
 they do not
@@ -1185,7 +1184,7 @@ Using abstracted state spaces from the tabular methods is
 still available however.
 
 The architectures used for these agents are standard feed-forward
-_#glspl("mlp")_ with the hidden layers being configurable by both depth
+#glspl("mlp") with the hidden layers being configurable by both depth
 and width (although width is shared between layers). The implementation
 utilizes the Adam optimizer~@Adam.
 
@@ -1199,13 +1198,349 @@ is lost and therefore the agents can't use it. Once a deck is flipped
 (information included in the `info` dictionary), the memory buffer is simply
 reset and the agent starts "from scratch".
 
-== Evaluating Agent Performance
+== Agent Evaluation
 
-#lorem(100)
+To determine the effectiveness of the implemented #gls("rl") algorithms, each
+agent was subjected to a continuous training phase followed by a strict,
+reproducible evaluation.
 
-== Comparison of Implemented Agents
+Due to hardware constraints, each algorithm was allowed to train for a maximum
+of 24 hours. Because tabular methods and deep neural networks process
+environment steps at vastly different computational speeds, the total number of
+episodes completed within this timeframe varied significantly between the
+different approaches. To monitor the learning progress during this 24-hour
+window, the agents continuously logged their _batch win rate_ -- the percentage
+of games won over the most recent "logging batch" of training episodes.
 
-#lorem(100)
+Following the conclusion of the training phase, the saved models were
+evaluated. The evaluation protocol consisted of $1,000$ independent games
+against the `GreedyAgent` baseline. To ensure fair and reproducible comparisons
+between different hyperparameters, these evaluation games were run using a fixed
+random seed. Furthermore, any exploratory behaviour used during training
+(such as $epsilon$-greedy random actions)
+was strictly disabled. This allowed us to measure the true, underlying strength
+of the agent's deterministic strategy.
+
+The configuration that achieved the highest win rate against the `GreedyAgent`
+for each algorithm was crowned the best model for that approach. Those
+models were subsequently evaluated against the `RandomAgent`
+to ensure its strategy was
+robust and not simply overfitted to the greedy baseline.
+
+=== Monte Carlo
+
+The Monte Carlo agents were trained using the heavily abstracted state space to
+ensure the $Q$ table could fit into memory. Across all runs, the hand size was
+truncated to a maximum of 4, and the memory of played cards was restricted to
+the `specials` subset (Sevens, Obers, and Aces). 
+
+We experimented with several hyperparameters, comparing first-visit against
+every-visit updates, constant exploration rates ($epsilon = 0.1$ and
+$epsilon = 0.05$) against a decaying exploration rate, and a simple incremental
+mean update against an exponential moving average with a fixed step size ($alpha$).
+The learning curves over the training period can be seen in @fig:mc-training,
+and the final evaluation results are summarized in @tab:mc-results.
+
+#figure(
+    image("images/monte_carlo_training.svg", width: 100%),
+    caption: flex-caption(
+        [Monte Carlo Training Curves],
+        [Batch win rates of various Monte Carlo configurations during training],
+    ),
+) <fig:mc-training>
+
+#figure(
+    table(
+        columns: 2,
+        align: (left, center),
+        [ *Configuration* ], [ *Win Rate* ],
+        [ First-visit, $epsilon=0.1$ ], [ 49.80% ],
+        [ Every-visit, $epsilon=0.1$ ], [ 48.40% ],
+        [ First-visit, $epsilon=0.05$ ], [ 47.70% ],
+        [ Decaying $epsilon$, $alpha=0.01$ ], [ 45.20% ],
+        [ Decaying $epsilon$, $alpha=0.05$ ], [ 16.10% ],
+        [ Decaying $epsilon$, $alpha=0.1$ ], [ 9.00% ],
+        [ Decaying $epsilon$, Self-play, $alpha=0.1$ ], [ 6.80% ],
+    ),
+    caption: [Monte Carlo evaluation win rates against `GreedyAgent`],
+) <tab:mc-results>
+
+The most successful configuration utilized a simple incremental mean for its
+updates and a constant $epsilon = 0.1$, achieving a win rate of 49.80% against
+the `GreedyAgent`. Interestingly, first-visit updates slightly outperformed
+every-visit updates in this environment. A difference of 1.2% (12 games) could
+just be random noise.
+
+A drop in performance occurred when introducing a fixed step size $alpha$.
+As $alpha$ increased from 0.01 to 0.1, the agent's win rate plummeted to 9.00%.
+This indicates that weighing recent episodes too heavily aggressively destabilized
+the $Q$ value estimates. Furthermore, training via self-play completely collapsed
+(6.80% win rate).
+
+While the best Monte Carlo agent effectively tied with the `GreedyAgent`
+(falling just short of a $>50%$ win rate), it dominated when
+evaluating this best configuration against the `RandomAgent`.
+It achieved a 92.00% win rate, proving that it successfully learned
+a strategy capable of generalizing against different opponents.
+
+=== Q-Learning
+
+To ensure a fair comparison with the Monte Carlo approach, the tabular Q-Learning
+agents were trained using the exact same abstracted state space configuration: a
+maximum truncated hand size of 4 and a memory of played cards restricted to the
+`specials` subset. 
+
+Because Q-Learning is a #gls("td") method that updates its estimates incrementally
+step-by-step, it inherently requires a fixed step size $alpha$. Therefore, our
+hyperparameter search focused on the interplay between the learning rate $alpha$
+and the exploration strategy (constant $epsilon$ versus decaying $epsilon$), as
+well as the impact of self-play. The learning curves for these runs can be seen in
+@fig:ql-training, with final evaluation results summarized in @tab:ql-results.
+
+#figure(
+    image("images/q-learning_training.svg", width: 100%),
+    caption: flex-caption(
+        [Q-Learning Training Curves],
+        [Batch win rates of various Q-Learning configurations during training],
+    ),
+) <fig:ql-training>
+
+#figure(
+    table(
+        columns: 2,
+        align: (left, center),
+        [ *Configuration* ], [ *Win Rate* ],
+        [ Constant $epsilon=0.1$, $alpha=0.1$ ], [ 40.10% ],
+        [ Decaying $epsilon$, $alpha=0.01$ ], [ 34.80% ],
+        [ Constant $epsilon=0.05$, $alpha=0.1$ ], [ 33.50% ],
+        [ Decaying $epsilon$, $alpha=0.05$ ], [ 16.60% ],
+        [ Decaying $epsilon$, $alpha=0.1$ ], [ 15.10% ],
+        [ Decaying $epsilon$, Self-play, $alpha=0.1$ ], [ 15.00% ],
+        [ Decaying $epsilon$, $alpha=0.2$ ], [ 13.10% ],
+    ),
+    caption: [Q-Learning evaluation win rates against `GreedyAgent`],
+) <tab:ql-results>
+
+The highest-performing Q-Learning configuration utilized a constant exploration
+rate of $epsilon = 0.1$ and a step size of $alpha = 0.1$, achieving a 40.10% win
+rate against the `GreedyAgent`. Similar to the Monte Carlo results, constant
+exploration proved to be more effective than a decaying exploration schedule. 
+
+When observing the runs utilizing a decaying $epsilon$, it becomes clear that
+Q-Learning is also sensitive to the step size parameter. A relatively small
+step size ($alpha = 0.01$) allowed the agent to learn a passable strategy
+(34.80% win rate), but increasing $alpha$ beyond $0.05$ caused the performance
+to collapse entirely. This could suggest that in the highly stochastic environment of
+a card game, bootstrapping off of newly observed, noisy transitions with a high
+learning rate prevents the $Q$ values from converging cleanly. Additionally,
+the self-play paradigm failed to yield positive results here as well, mirroring
+the collapse seen in the Monte Carlo agent.
+
+Overall, the best Q-Learning agent noticeably underperformed the best Monte Carlo
+agent against the `GreedyAgent` (40.10% versus 49.80%). While the cause
+of this discrepancy is obviously unknown, the most likely culprit could be
+the maximization bias, causing overestimations in certain states.
+
+However, despite struggling against the greedy baseline, the best Q-Learning
+agent still defeated the `RandomAgent` with an 88.00% win rate. This
+shows that the algorithm somewhat successfully mapped the abstracted state space
+and learned a generally useable policy, even if its ultimate ceiling was lower
+than its Monte Carlo counterpart.
+
+=== (Double) Deep Q-Network
+
+Unlike the tabular methods, the #gls("dqn") and #gls("ddqn") agents
+were trained using the full, unabstracted state representation. This utilized
+a 32-element one-hot array for the agent's hand and a complete
+32-element array tracking all played cards. Because neural networks
+can naturally generalize across continuous inputs, this allowed the agents to
+observe the exact state of the game without relying on manual feature engineering.
+One might hope that this full representation will allow these agents to learn
+a much stronger estimate. This was however not the case.
+
+Training these deep architectures is computationally expensive. Within the 24-hour
+hardware limit, these agents experienced significantly fewer environmental steps
+than the tabular methods. We experimented with a learning rate of $5 times 10^(-5)$,
+a target network update frequency of 100 steps, and a batch size of 32. Our primary
+variable of interest was network capacity, comparing a 2-layer network against a
+deeper 4-layer network (both with 1024 neurons per hidden layer). The final evaluation
+results for both algorithms are summarized in @tab:dqn-results.
+
+#figure(
+    image("images/dqn_training.svg", width: 100%),
+    caption: flex-caption(
+        [Deep Q-Network Training Curves],
+        [Batch win rates of DQN configurations during training],
+    ),
+) <fig:dqn-training>
+
+#figure(
+    image("images/double_dqn_training.svg", width: 100%),
+    caption: flex-caption(
+        [Double Deep Q-Network Training Curves],
+        [Batch win rates of DDQN configurations during training],
+    ),
+) <fig:ddqn-training>
+
+#figure(
+    table(
+        columns: 3,
+        align: (left, left, center),
+        [ *Algorithm* ], [ *Configuration* ], [ *Win Rate* ],
+        [ DQN ], [ 4 layers, $epsilon=0.05$ ], [ 27.60% ],
+        [ DDQN ], [ 4 layers, $epsilon=0.05$ ], [ 25.00% ],
+        [ DDQN ], [ 4 layers, $epsilon=0.1$ ], [ 20.20% ],
+        [ DDQN ], [ 2 layers, $epsilon=0.1$ ], [ 0.30% ],
+        [ DQN ], [ 2 layers, $epsilon=0.05$ ], [ 0.00% ],
+    ),
+    caption: [DQN and DDQN evaluation win rates against `GreedyAgent`],
+) <tab:dqn-results>
+
+The most immediate takeaway from these results is the stark reliance on network
+capacity. Across both standard #gls("dqn") and #gls("ddqn"),
+the shallower 2-layer architectures
+completely collapsed, returning win rates of essentially zero. This indicates that
+mapping the complex combinations of a full 32-card one-hot state representation
+to accurate $Q$ values probably requires a highly non-linear function that a
+2-layer network with 1024 neurons in each layer cannot adequately
+approximate in this environment.
+
+However, even with 4 hidden layers, the performance of the deep value-based
+methods was poor compared to the tabular approaches. The best #gls("dqn") model
+achieved only a 27.60% win rate against the `GreedyAgent`,
+and its #gls("ddqn") counterpart achieved 25.00%. 
+
+Interestingly, standard #gls("dqn") slightly outperformed #gls("ddqn"). While
+#gls("ddqn") is explicitly
+designed to prevent the overestimation of action values, in environments with
+highly sparse and delayed rewards like Prší, a slight overestimation bias could
+possibly have acted as a form of optimistic exploration. It is however entirely
+possible that this was just noise and "bad luck" on the #gls("ddqn") part.
+
+When evaluated against the entirely random baseline (`RandomAgent`),
+the best #gls("dqn") model secured a 53.40% win rate (and #gls("ddqn") secured
+47.20%). While this shows the network learned slightly more than random noise,
+it heavily underperformed the tabular Monte Carlo agent's 92.00% win rate.
+
+=== REINFORCE
+
+The final algorithm evaluated was the REINFORCE policy gradient method. Like the
+#gls("dqn") agents, it utilized the full, unabstracted state representation.
+However, while the value-based #gls("dqn") agents
+failed to learn using a 2-layer network and achieved subpar results
+with a 4-layer network, the REINFORCE agents successfully
+utilized even the shallower architecture of 2 hidden layers with 1024 neurons each.
+
+Because policy gradient methods learn a parameterized probability distribution over
+actions rather than deterministic value estimates, our hyperparameter tuning focused
+on variance reduction and exploration. Specifically, we tested the impact of a
+learned state-value baseline, various coefficients for entropy
+regularization ($beta$), and training via self-play. The learning curves are shown
+in @fig:reinforce-training, and the final evaluation metrics are summarized in
+@tab:reinforce-results.
+
+#figure(
+    image("images/reinforce_training.svg", width: 100%),
+    caption: flex-caption(
+        [REINFORCE Training Curves],
+        [Batch win rates of various REINFORCE configurations during training],
+    ),
+) <fig:reinforce-training>
+
+#figure(
+    table(
+        columns: 2,
+        align: (left, center),
+        [ *Configuration* ], [ *Win Rate* ],
+        [ Baseline, $beta=0.05$ ], [ 64.90% ],
+        [ Baseline, $beta=0.01$ ], [ 63.60% ],
+        [ Baseline, $beta=0.05$, Self-play ], [ 62.40% ],
+        [ No Baseline, $beta=0.01$ ], [ 62.10% ],
+        [ Baseline, $beta=0.1$ ], [ 57.40% ],
+        [ Baseline, $beta=0.001$ ], [ 55.10% ],
+    ),
+    caption: [REINFORCE evaluation win rates against `GreedyAgent`],
+) <tab:reinforce-results>
+
+The results mark a significant breakthrough in performance. The optimal REINFORCE
+configuration (utilizing a baseline and an entropy coefficient of $beta=0.05$)
+achieved a highly decisive 64.90% win rate against the `GreedyAgent`. This is the
+only algorithm that confidently and consistently defeated the greedy baseline,
+proving that it discovered a superior, long-term strategic policy. Against the
+`RandomAgent`, this model reached a near-perfect 95.70% win rate.
+
+The data illustrates the delicate balance required when applying entropy
+regularization. A coefficient that is too low ($beta=0.001$) caused the policy to
+prematurely converge on sub-optimal strategies, dropping the win rate to 55.10%.
+Conversely, a coefficient that is too high ($beta=0.1$) forced the agent to behave
+too randomly, degrading performance to 57.40%. The "Goldilocks zone" was found at
+$0.05$, which provided just enough exploration to map the complex state space
+without diluting the final deterministic policy. 
+
+While the baseline-equipped agent marginally outperformed the standard REINFORCE
+agent (63.60% versus 62.10% at $beta=0.01$), this slight improvement is likely
+just statistical noise. Because the environment's reward signal is strictly sparse
+and bounded between $-1$ and $1$, the true expected value of most non-terminal
+states probably hovers near $0$. Consequently, subtracting this near-zero baseline
+from the return provides minimal variance reduction in practice.
+
+However, it is
+highly noteworthy that the baseline network did not diverge. The baseline relies
+on a continuous state-value function approximation trained via Monte Carlo returns.
+The fact that this value network remained stable stands in stark contrast to the
+#gls("dqn") results, where similar deep value-approximation architectures
+completely collapsed. This suggests that estimating deep value functions
+via Monte Carlo returns is more stable in this
+highly stochastic environment than relying on temporal difference bootstrapping.
+This is further supported by the fact that tabular #gls("mc") methods outshined
+Q-Learning during their evaluation against `GreedyAgent`.
+
+Finally, unlike the value-based algorithms, REINFORCE successfully maintained its
+stability during self-play. The self-play configuration secured a fairly
+competitive 62.40% win rate. While notable, this is still lower than what the
+agents trained against the baseline achieved and somewhat follows the trend from
+the value-based methods.
+
+=== Selecting the Best Agent
+
+To select the best agent, which will be tested against
+real human opponents, the single best-performing
+configuration from each algorithm family was compared side-by-side. The summary
+of their win rates against both the `GreedyAgent` and `RandomAgent` baselines is
+presented in @tab:best-agents.
+
+#figure(
+    table(
+        columns: 3,
+        align: (left, center, center),
+        [ *Algorithm* ], [ *Win Rate vs. Greedy* ], [ *Win Rate vs. Random* ],
+        [ REINFORCE ], [ 64.90% ], [ 95.70% ],
+        [ Monte Carlo ], [ 49.80% ], [ 92.00% ],
+        [ Q-Learning ], [ 40.10% ], [ 88.00% ],
+        [ (D)DQN ], [ 27.60% ], [ 53.40% ],
+    ),
+    caption: [Performance summary of the best agents from each algorithm family],
+) <tab:best-agents>
+
+Looking at the aggregated results, a clear hierarchy emerges. The deep policy
+gradient method, REINFORCE, stands out as the champion of this
+environment. It was the only algorithm to conclusively defeat the
+greedy baseline and achieved near-perfect consistency against random play.
+
+The tabular methods performed respectably well given their heavily abstracted
+state space constraints. Monte Carlo, in particular, proved to be a highly
+stable approach, effectively fighting the greedy baseline to a standstill.
+However, their reliance on manual feature abstraction ultimately placed a ceiling
+on their strategic capabilities, which can be seen in their respective graphs.
+Conversely, the deep value-based methods
+struggled heavily to parse the full state representation within the time constraints,
+falling far behind even the simplest tabular approaches.
+
+Because of its dominant performance, the REINFORCE agent (configured with a
+state-value baseline and an entropy coefficient of $beta=0.05$) was officially
+selected as the final representative model. This specific agent represents the
+culmination of the training efforts and serves as the primary AI opponent
+for the human evaluation phase detailed in the following section.
 
 == Performance Against Human Players
 
