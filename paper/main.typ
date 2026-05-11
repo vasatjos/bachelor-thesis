@@ -370,7 +370,7 @@ The Bellman optimality equation represents a system of equations -- one
 for each state -- the solution to which is the optimal value function $v_*$.
 If the environment dynamics $p(s', r mid(bar) s, a)$ are known, this system
 can be solved using classical Dynamic Programming algorithms such as
-_Value Iteration_ or _Policy Iteration_.~@npfl139-lec02
+_Value Iteration_ or _Policy Iteration_.
 
 However, for many complex tasks, including Prší, the
 transition probabilities are either unknown or too complex to compute.
@@ -772,7 +772,7 @@ function:
 $
     pi (a mid(bar) s; bold(theta)) =
     upright(Pr){A_t = a mid(bar) S_t = s, bold(theta)}.
-$
+$\
 
 Learning the policy directly offers several distinct advantages. Most notably
 for environments with imperfect information like Prší, it allows the agent to
@@ -1246,7 +1246,8 @@ reset and the agent starts "from scratch".
 
 To determine the effectiveness of the implemented #gls("rl") algorithms, each
 agent was subjected to a continuous training phase followed by a strict,
-reproducible evaluation.
+reproducible evaluation. For all agents, we used a discount factor
+$gamma = 0.99$.
 
 Due to hardware constraints, each algorithm was allowed to train for a maximum
 of 24 hours. Because tabular methods and deep neural networks process
