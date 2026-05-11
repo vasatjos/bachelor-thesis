@@ -60,6 +60,10 @@ uv run -m agents.human --opponent dqn --model_path path/to/a/model/file
 - `random`, `greedy` (baselines)
 - `dqn`, `ddqn`, `monte_carlo`, `q_learning`, `reinforce` (RL agents)
 
+
+> [!TIP]
+> A trained REINFORCE agent is available on the `evaluation` branch
+
 ### Visual Options (Icons)
 If you have a [Nerd Font](https://www.nerdfonts.com/) installed and set up in your terminal, you can enable graphical card icons for a better experience:
 
