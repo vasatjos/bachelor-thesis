@@ -46,7 +46,7 @@
         just under 50% against a greedy baseline.
         The REINFORCE policy gradient algorithm emerged as the top
         performer, achieving a ~65% win rate against the greedy baseline. In a final
-        human evaluation across  games, the REINFORCE agent successfully held
+        human evaluation across #human_rl_games games, the REINFORCE agent successfully held
         human players to a ~#human_rl_rate% win rate -- a tangible reduction from
         the 65% human win rate against the baseline. These results demonstrate that
         policy gradient methods can learn somewhat competitive strategies in
@@ -70,9 +70,9 @@
         Algoritmus REINFORCE se ukázal jako nejúspěšnější a dosáhl
         přibližně 65% míry výher proti hladové referenční strategii.
         V závěrečném vyhodnocení proti lidem agent úspěšně udržel míru výher
-        lidských hráčů na ~#human_rl_rate % – což představuje
+        lidských hráčů na ~#human_rl_rate % -- což představuje
         znatelný pokles oproti 65% úspěšnosti lidí proti referenčnímu agentovi.
-        Tyto výsledky dokazují, že metody posilované učení se dokážou naučit
+        Tyto výsledky dokazují, že metody posilovaného učení se dokážou naučit
         do jisté míry konkurenceschopné
         strategie v komplexních karetních hrách pouze na
         základě interakcí s pravidly prostředí.
@@ -779,7 +779,7 @@ for environments with imperfect information like Prší, it allows the agent to
 learn any distribution over actions. The agent can then choose actions
 by sampling from this distribution. A value-based agent can only learn
 one-hot (or soft) policies, while using policy gradient methods
-allows for a stochastic policy, which can be benefitial in certain environments.
+allows for a stochastic policy, which can be beneficial in certain environments.
 
 To optimize the policy parameters, we define a scalar performance measure
 $J(bold(theta))$, which represents the expected return. The parameters are
@@ -1166,7 +1166,7 @@ contained in these is actually quite limited. There are things outside
 these returned values that could be useful to the agent's decision-making
 process.
 
-The main part being that the agents might need memory of what cards were
+A crucial aspect is that the agents might need memory of what cards were
 played throughout the game. For example, it's a bad idea to end the game
 with a heart-suited card if the 7 of hearts hasn't been played yet, as the other
 player could return the winner into the game by playing that card. Several
@@ -1225,7 +1225,7 @@ suffer from the same state space explosion as tabular methods. This allows
 our deep #gls("rl") agents to train on the "full" hand representation and the
 complete 32-card memory tracking without exhausting system resources.
 Using abstracted state spaces from the tabular methods is
-still available however.
+still available, however.
 
 The architectures used for these agents are standard feed-forward
 #glspl("mlp") with the hidden layers being configurable by both depth
@@ -1314,7 +1314,7 @@ The most successful configuration utilized a simple incremental mean for its
 updates and a constant $epsilon = 0.1$, achieving a win rate of 49.80% against
 the `GreedyAgent`. Interestingly, first-visit updates slightly outperformed
 every-visit updates in this environment. A difference of 1.2% (12 games) could
-just be random noise however.
+just be random noise, however.
 
 A drop in performance occurred when introducing a fixed step size $alpha$.
 As $alpha$ increased from 0.01 to 0.1, the agent's win rate plummeted to 9.00%.
@@ -1383,13 +1383,13 @@ the collapse seen in the Monte Carlo agent.
 
 Overall, the best Q-Learning agent noticeably underperformed the best Monte Carlo
 agent against the `GreedyAgent` (40.10% versus 49.80%). While the cause
-of this discrepancy is obviously unknown, the most likely culprit could be
+of this discrepancy is not definitively known, a likely culprit could be
 the maximization bias, causing overestimations in certain states.
 
 However, despite struggling against the greedy baseline, the best Q-Learning
 agent still defeated the `RandomAgent` with an 88.00% win rate. This
 shows that the algorithm somewhat successfully mapped the abstracted state space
-and learned a generally useable policy, even if its ultimate ceiling was lower
+and learned a generally usable policy, even if its ultimate ceiling was lower
 than its Monte Carlo counterpart.
 
 === (Double) Deep Q-Network
@@ -1401,7 +1401,7 @@ a 32-element one-hot array for the agent's hand and a complete
 can naturally generalize across continuous inputs, this allowed the agents to
 observe the exact state of the game without relying on manual feature engineering.
 One might hope that this full representation will allow these agents to learn
-a much stronger estimate. This was however not the case.
+a much stronger estimate. This was, however, not the case.
 
 Training these deep architectures is computationally expensive. Within the 24-hour
 hardware limit, these agents experienced significantly fewer environmental steps
@@ -1459,7 +1459,7 @@ Interestingly, standard #gls("dqn") slightly outperformed #gls("ddqn"). While
 #gls("ddqn") is explicitly
 designed to prevent the overestimation of action values, in environments with
 highly sparse and delayed rewards like Prší, a slight overestimation bias could
-possibly have acted as a form of optimistic exploration. It is however entirely
+possibly have acted as a form of optimistic exploration. It is, however, entirely
 possible that this was just noise and "bad luck" on the #gls("ddqn") part.
 
 When evaluated against the entirely random baseline (`RandomAgent`),
@@ -1621,7 +1621,7 @@ total games played, and the overall win rate of the human tester.
 To establish a baseline for human performance, an initial testing phase was
 conducted where a single human player competed against the `GreedyAgent`
 for a total of #human_greedy_games games. In this baseline evaluation,
-the human players secured #human_greedy_wins victories, resulting in a
+the human player secured #human_greedy_wins victories, resulting in a
 #human_greedy_rate% win rate. This confirms that while the greedy strategy is
 competent, a human player can consistently exploit its predictable,
 short-sighted nature. It also indirectly puts the REINFORCE agent
@@ -1634,7 +1634,7 @@ Next, the human testers faced the champion REINFORCE agent. Over a series of
 a win rate of #human_rl_rate%.
 
 Comparing these two results reveals the tangible strength of the learned policy.
-The REINFORCE agent successfully lowered the human win rate by over 5 percentage
+The REINFORCE agent successfully lowered the human win rate by several percentage
 points compared to the greedy baseline. While the human players still maintained a
 positive win record overall -- highlighting the inherent difficulty of achieving
 superhuman performance in imperfect-information games without look-ahead planning
@@ -1645,8 +1645,8 @@ resilient adversary.
 = Discussion and Future Work
 
 The experiments conducted in this thesis demonstrate that #gls("rl")
-can be applied to the imperfect-information environment of Prší to a
-somewhat successful degree.
+can be applied to the imperfect-information environment of Prší with a
+reasonable degree of success.
 While tabular methods achieved competent play through heavy state abstraction,
 the deep policy gradient algorithm, REINFORCE, proved capable of mapping the
 full state representation to a competitive strategy. However, the evaluation
@@ -1663,27 +1663,27 @@ continuous environment interactions inherently slow.
 
 Within the strict 24-hour training limit, this slow execution speed heavily
 penalized the deep learning models. The tabular methods processed millions of
-episodes, whereas the neural networks processed far fewer. It is entirely possible
+episodes, whereas the neural networks processed far fewer. It is possible
 that the failure of the deep value-based methods (#gls("dqn") and #gls("ddqn"))
 was not due to algorithmic incompatibility, but simply a lack of sufficient
 experience to converge. Rewriting the core `PrsiEnv` and the simulation loop in a
-compiled language or utilizing a Just-In-Time compiler like JAX,
-could increase the simulation throughput by orders of magnitude, allowing deep
+compiled language or utilizing a Just-In-Time compiler like JAX
+could increase the simulation throughput, allowing deep
 architectures to train much more effectively. The main benefit of the selected
 approach was the code readability provided by using
 industry-standard technologies.
 
-== State Representation and Memory Architectures
+== State Representation, Architectures, Hyperparameters
 
 The current deep learning agents utilized a flattened, 1D one-hot encoded vector
 to represent the game state. For #gls("dqn") in particular, this sparse representation
 likely contributed to the network's inability to learn an accurate value function.
-This thesis didn't explore different state representations for the value-based
+This thesis did not explore different state representations for the value-based
 agents, such as passing the abstracted state space used by the tabular agents
 into the neural networks.
 This could make the #gls("dl") approaches converge to at least a similar level
-as the tabular methods. Overall, there are many hyperparameter combination
-that weren't tried due to time and hardware constraints that could result
+as the tabular methods. Overall, there are many hyperparameter combinations
+that were not tried due to time and hardware constraints that could result
 in #gls("dqn") convergence.
 
 Furthermore, dealing with imperfect information currently relies on a fixed
@@ -1711,7 +1711,7 @@ Furthermore, the naive self-play mechanism implemented in this thesis yielded
 sub-optimal results, causing the tabular agents to collapse and also
 degrading the performance of REINFORCE.
 To resolve these instabilities and look beyond standard model-free algorithms,
-MuZero~@MuZero represents the frontier of board and card game AI. MuZero builds
+MuZero~@MuZero represents the frontier of board game AI. MuZero builds
 a predictive model of the environment's dynamics and uses #gls("mcts")
 to plan ahead, naturally integrating highly robust self-play
 training loops. Adapting MuZero for the stochastic, hidden-information
@@ -1728,11 +1728,12 @@ new strategic layers. This option was left out to limit the scope of our
 experiments, but remains an interesting future possibility.
 
 Another modification that could prove interesting is reward shaping. A flat
--1 on a loss and +1 on a victory was chosen to ensure the agents find their own
+$-1$ on a loss and $+1$ on a victory was chosen to ensure the agents find their own
 way to win without influencing their strategy in any way. It could however
-be interesting to see how different rewards (for example -0.01 for drawing
-a card) would affect the tested methods.
-
+be interesting to see how different rewards would affect the tested methods.
+For example -0.01 for drawing a card, or even entirely leaving out wins and
+losses, with purely using the negative number of cards in hand as the
+reward in each timestep.
 
 #heading([Conclusion], numbering: none)
 
@@ -1754,7 +1755,7 @@ The deep value-based #gls("dqn") agents unfortunately failed to stabilize
 with their selected hyperparameters within the training constraints
 when exposed to the full, unabstracted game state.
 
-The most significant achievement were the results of the REINFORCE algorithm.
+The most significant achievement was the success of the REINFORCE algorithm.
 It successfully mapped the full one-hot encoded state space into a
 reasonable policy. It was the only algorithm to conclusively and consistently
 defeat the `GreedyAgent` baseline, achieving a win rate of nearly 65%.
@@ -1772,7 +1773,7 @@ policy gradient methods can learn non-trivial strategies
 in stochastic card games without any prior human knowledge. The developed
 environment provides a foundation for future research, particularly
 in exploring #gls("rnn")-based state representations or more advanced #gls("rl")
-methods like #gls("ppo").
+methods like #gls("ppo") or MuZero.
 
 
 #bibliography("bibliography.bib")
