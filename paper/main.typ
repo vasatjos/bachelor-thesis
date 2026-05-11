@@ -1118,7 +1118,7 @@ as the opponent for future episodes.
 
 Two baseline agents using this interface are provided:
 `RandomAgent`, which can either play a random card from its hand or draw a card,
-and `GreedyAgent`, which plays random cards and only draws when no other
+and `GreedyAgent`, which also plays random cards, but only draws when no other
 option is available.
 
 === Environment Dynamics and the Step Function
@@ -1258,7 +1258,7 @@ window, the agents continuously logged their _batch win rate_ -- the percentage
 of games won over the most recent "logging batch" of training episodes.
 
 Following the conclusion of the training phase, the saved models were
-evaluated. The evaluation protocol consisted of $1,000$ independent games
+evaluated. The evaluation protocol consisted of $1000$ independent games
 against the `GreedyAgent` baseline. To ensure fair and reproducible comparisons
 between different hyperparameters, these evaluation games were run using a fixed
 random seed. Furthermore, any exploratory behaviour used during training
@@ -1269,8 +1269,8 @@ of the agent's deterministic strategy.
 The configuration that achieved the highest win rate against the `GreedyAgent`
 for each algorithm was crowned the best model for that approach. Those
 models were subsequently evaluated against the `RandomAgent`
-to ensure its strategy was
-robust and not simply overfitted to the greedy baseline.
+to ensure its strategy was robust and capable of generalizing against
+a different opponent.
 
 === Monte Carlo
 
@@ -1314,7 +1314,7 @@ The most successful configuration utilized a simple incremental mean for its
 updates and a constant $epsilon = 0.1$, achieving a win rate of 49.80% against
 the `GreedyAgent`. Interestingly, first-visit updates slightly outperformed
 every-visit updates in this environment. A difference of 1.2% (12 games) could
-just be random noise.
+just be random noise however.
 
 A drop in performance occurred when introducing a fixed step size $alpha$.
 As $alpha$ increased from 0.01 to 0.1, the agent's win rate plummeted to 9.00%.
@@ -1464,8 +1464,14 @@ possible that this was just noise and "bad luck" on the #gls("ddqn") part.
 
 When evaluated against the entirely random baseline (`RandomAgent`),
 the best #gls("dqn") model secured a 53.40% win rate (and #gls("ddqn") secured
-47.20%). While this shows the network learned slightly more than random noise,
-it heavily underperformed the tabular Monte Carlo agent's 92.00% win rate.
+47.20%). This shows that the network learned essentially just random noise,
+likely not even being able to learn that drawing when unnecessary is generally
+a sub-optimal action (which is presumably what makes even the tabular methods
+capable of defeating `RandomAgent`).
+It heavily underperformed the tabular Monte Carlo agent's 92.00% win rate.
+In a sense, the model that loses almost all the games is actually more
+interesting, as it essentially means the agent somehow learned that drawing
+cards is the best action.
 
 === REINFORCE
 
@@ -1636,7 +1642,7 @@ algorithms -- the REINFORCE agent proved to be a noticeably more difficult and
 resilient adversary.
 
 
-= Discussion and Future Work // TODO: maybe future work should be a subsection
+= Discussion and Future Work
 
 The experiments conducted in this thesis demonstrate that #gls("rl")
 can be applied to the imperfect-information environment of Prší to a
@@ -1676,7 +1682,9 @@ This thesis didn't explore different state representations for the value-based
 agents, such as passing the abstracted state space used by the tabular agents
 into the neural networks.
 This could make the #gls("dl") approaches converge to at least a similar level
-as the tabular methods.
+as the tabular methods. Overall, there are many hyperparameter combination
+that weren't tried due to time and hardware constraints that could result
+in #gls("dqn") convergence.
 
 Furthermore, dealing with imperfect information currently relies on a fixed
 "played cards" memory array, effectively representing a set, an unordered
