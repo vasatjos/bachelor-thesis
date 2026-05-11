@@ -56,7 +56,7 @@
     abstract-cz: [
         Tato práce zkoumá aplikaci posilovaného učení (reinforcement learning)
         na Prší, stochastickou karetní hru s neúplnou informací. Pro účely
-        vyhodnocení čtyř algoritmů –- Monte Carlo, Q-Learning, Deep Q-Network (DQN)
+        vyhodnocení čtyř algoritmů -- Monte Carlo, Q-Learning, Deep Q-Network (DQN)
         a REINFORCE -- bylo vytvořeno prostředí v jazyce Python.
         Pro zvládnutí složitosti prostředí
         se tabulkové metody spoléhaly na abstrahované reprezentace stavů,
