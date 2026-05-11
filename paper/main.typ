@@ -3,6 +3,15 @@
 #import "@preview/algo:0.3.6": algo, code, comment, d, i
 #import "./acronyms.typ": entry-list
 
+#let human_greedy_wins = 65
+#let human_greedy_games = 100
+#let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
+
+#let human_rl_wins = 72
+#let human_rl_games = 121
+#let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
+
+
 #show: template.with(
     meta: (
         title: "Reinforcement Learning for Prší Card Game",
@@ -22,16 +31,51 @@
     // set to true if generating a PDF for print (shifts page layout, correctly aligns odd/even pages,...)
     print: false,
 
-    abstract-en: [
-        #lorem(40)
+    two-page-abstract: true,
 
-        #lorem(60)
+    abstract-en: [
+        This thesis investigates the application of reinforcement learning to
+        Prší, a stochastic, imperfect-information Czech card game. A custom Python
+        environment was developed to evaluate four algorithms: Monte Carlo,
+        Q-Learning, Deep Q-Network (DQN), and REINFORCE. To handle the environment's
+        complexity, tabular methods relied on abstracted state representations,
+        while the deep learning agents processed full one-hot encoded observations.
+
+        While deep value-based methods (DQN) struggled to converge within training
+        constraints, the best tabular method runs achieved a win rate of
+        just under 50% against a greedy baseline.
+        The REINFORCE policy gradient algorithm emerged as the top
+        performer, achieving a ~65% win rate against the greedy baseline. In a final
+        human evaluation across  games, the REINFORCE agent successfully held
+        human players to a ~#human_rl_rate% win rate -- a tangible reduction from
+        the 65% human win rate against the baseline. These results demonstrate that
+        policy gradient methods can learn somewhat competitive strategies in
+        complex card games using purely rule-based interactions.
     ],
 
     abstract-cz: [
-        #lorem(40)
+        Tato práce zkoumá aplikaci posilovaného učení (reinforcement learning)
+        na Prší, stochastickou karetní hru s neúplnou informací. Pro účely
+        vyhodnocení čtyř algoritmů –- Monte Carlo, Q-Learning, Deep Q-Network (DQN)
+        a REINFORCE -- bylo vytvořeno prostředí v jazyce Python.
+        Pro zvládnutí složitosti prostředí
+        se tabulkové metody spoléhaly na abstrahované reprezentace stavů,
+        zatímco agenti
+        využívající hluboké učení zpracovávali kompletní pozorování kódovaná metodou one-hot.
 
-        #lorem(60)
+        Zatímco hluboké metody založené na hodnotách (DQN) měly potíže
+        s konvergencí v rámci tréninkových omezení, nejlepší běhy
+        tabulkových metod dosáhly míry výher těsně pod
+        50 % proti referenční hladové (greedy) strategii.
+        Algoritmus REINFORCE se ukázal jako nejúspěšnější a dosáhl
+        přibližně 65% míry výher proti hladové referenční strategii.
+        V závěrečném vyhodnocení proti lidem agent úspěšně udržel míru výher
+        lidských hráčů na ~#human_rl_rate % – což představuje
+        znatelný pokles oproti 65% úspěšnosti lidí proti referenčnímu agentovi.
+        Tyto výsledky dokazují, že metody posilované učení se dokážou naučit
+        do jisté míry konkurenceschopné
+        strategie v komplexních karetních hrách pouze na
+        základě interakcí s pravidly prostředí.
     ],
 
     keywords-en: [
@@ -161,7 +205,7 @@ where the loop begins anew. Formally, we'll model these environments as
     ),
 ) <fig:mdp-loop>
 
-To formalize any reinforcement learning problem, we model the environment as
+To formalize any #gls("rl") problem, we model the environment as
 a #gls("mdp", first: true). This model captures the interaction between
 the agent and its environment through states, actions, transition probabilities,
 and rewards. An illustration of an #gls("mdp") can be seen in @fig:mdp-loop.
@@ -330,7 +374,7 @@ _Value Iteration_ or _Policy Iteration_.~@npfl139-lec02
 
 However, for many complex tasks, including Prší, the
 transition probabilities are either unknown or too complex to compute.
-In these cases, we must rely on model-free reinforcement learning methods.
+In these cases, we must rely on model-free #gls("rl") methods.
 These methods allow the agent to learn the optimal policy through direct
 interaction with the environment without requiring explicit knowledge of
 the dynamics.
@@ -389,7 +433,7 @@ $
 
 === Monte Carlo
 
-#Gls("mc") methods are a fundamental class of reinforcement learning algorithms
+#Gls("mc") methods are a fundamental class of #gls("rl") algorithms
 that learn value functions directly from raw episodes of experience.
 Unlike dynamic programming approaches, #gls("mc") methods do not require prior
 knowledge of the environment's transition probabilities or reward dynamics.
@@ -1567,14 +1611,6 @@ total games played, and the overall win rate of the human tester.
 
 === Results of Human Evaluation
 
-#let human_greedy_wins = 65
-#let human_greedy_games = 100
-#let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
-
-#let human_rl_wins = 72
-#let human_rl_games = 121
-#let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
-
 To establish a baseline for human performance, an initial testing phase was
 conducted where a single human player competed against the `GreedyAgent`
 for a total of #human_greedy_games games. In this baseline evaluation,
@@ -1601,7 +1637,7 @@ resilient adversary.
 
 = Discussion and Future Work // TODO: maybe future work should be a subsection
 
-The experiments conducted in this thesis demonstrate that reinforcement learning
+The experiments conducted in this thesis demonstrate that #gls("rl")
 can be applied to the imperfect-information environment of Prší to a
 somewhat successful degree.
 While tabular methods achieved competent play through heavy state abstraction,
@@ -1643,7 +1679,7 @@ as the tabular methods.
 
 Furthermore, dealing with imperfect information currently relies on a fixed
 "played cards" memory array, effectively representing a set, an unordered
-contained.
+container.
 As noted in @chapter:experiments, this static representation completely
 loses the sequential order of cards, which becomes critical information once the
 draw pile is exhausted and the discard pile is flipped. To achieve "real" memory
@@ -1691,7 +1727,43 @@ a card) would affect the tested methods.
 
 #heading([Conclusion], numbering: none)
 
-#lorem(100)
+The primary goal of this thesis was to evaluate the application of modern
+#gls("rl") algorithms in the hidden-information environment of the
+Czech card game Prší, and to train an artificial agent capable of challenging
+human opponents.
+
+To achieve this, a custom training environment was implemented
+from scratch in Python, mostly conforming to the standard Gymnasium interface.
+We used the environment to evaluate two distinct
+classes of #gls("rl") algorithms:
+tabular value-based methods (Monte Carlo and Q-Learning) and deep learning
+approaches (#gls("dqn") and REINFORCE). Due to the exponential size of the true
+state space, the tabular agents were restricted to heavily abstracted state
+representations. Despite this handicap, the tabular Monte Carlo approach proved
+highly resilient, nearly matching the performance of a greedy baseline agent.
+The deep value-based #gls("dqn") agents unfortunately failed to stabilize
+with their selected hyperparameters within the training constraints
+when exposed to the full, unabstracted game state.
+
+The most significant achievement were the results of the REINFORCE algorithm.
+It successfully mapped the full one-hot encoded state space into a
+reasonable policy. It was the only algorithm to conclusively and consistently
+defeat the `GreedyAgent` baseline, achieving a win rate of nearly 65%.
+
+In the final evaluation phase, the most successful REINFORCE agent was deployed
+against human players via a simple command-line interface. Over a sample of
+#human_rl_games games, the human players achieved a win rate of #human_rl_rate%.
+While the humans ultimately won more often than not,
+this win rate represents a notable drop in
+human performance compared to games against the baseline heuristic.
+
+This thesis demonstrates that while deep #gls("rl") can
+be highly sensitive to hyperparameter selection,
+policy gradient methods can learn non-trivial strategies
+in stochastic card games without any prior human knowledge. The developed
+environment provides a foundation for future research, particularly
+in exploring #gls("rnn")-based state representations or more advanced #gls("rl")
+methods like #gls("ppo").
 
 
 #bibliography("bibliography.bib")

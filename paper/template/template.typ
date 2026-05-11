@@ -20,6 +20,7 @@
     abstract-cz: "",
     keywords-en: "",
     keywords-cz: "",
+    two-page-abstract: false,
     assignment: "",
     ..intro-args,
     body,
@@ -116,7 +117,7 @@
         h(1em)
         keywords-en
 
-        if print {
+        if print or two-page-abstract {
             pagebreak()
         }
         v(28mm)
