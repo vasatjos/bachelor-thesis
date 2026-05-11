@@ -28,6 +28,7 @@ You can test your skills against a trained agent using the `human.py` script fro
 On this branch, reasonable defaults are already set for the best performing agent. Simply specify how many games you want to play:
 
 ```bash
+git checkout evaluation
 cd src
 uv run -m agents.human --evaluate_for 5
 ```
