@@ -29,10 +29,10 @@ def merge_json_files():
 
     result = {"wins": total_wins, "total": total_games}
 
-    with open("human_total.json", "w") as f:
+    with open(OUTPUT_FILENAME, "w") as f:
         json.dump(result, f, indent=4)
 
-    print(f"Successfully merged into human_total.json: {result}")
+    print(f"Successfully merged into {OUTPUT_FILENAME}: {result}")
     print(f"Final win rate of human players: {total_wins / total_games:.2%}")
 
 

@@ -7,8 +7,8 @@
 #let human_greedy_games = 100
 #let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
 
-#let human_rl_wins = 100
-#let human_rl_games = 181
+#let human_rl_wins = 111
+#let human_rl_games = 211
 #let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
 
 
@@ -29,10 +29,11 @@
     font: "New Computer Modern",
 
     // set to true if generating a PDF for print (shifts page layout, correctly aligns odd/even pages,...)
-    print: false,
+    print: true,
 
     two-page-abstract: true,
 
+    // TODO: edit abstract, evaluation and conclusion based on final win rates
     abstract-en: [
         This thesis investigates the application of reinforcement learning to
         Prší, a stochastic, imperfect-information Czech card game. A custom Python
@@ -1246,7 +1247,7 @@ reset and the agent starts "from scratch".
 To determine the effectiveness of the implemented #gls("rl") algorithms, each
 agent was subjected to a continuous training phase followed by a strict,
 reproducible evaluation. For all agents, we used a discount factor
-$gamma = 0.99$.
+$gamma = 0.99$ and a random seed of 42.
 
 Due to hardware constraints, each algorithm was allowed to train for a maximum
 of 24 hours. Because tabular methods and deep neural networks process
@@ -1267,8 +1268,8 @@ of the agent's deterministic strategy.
 
 The configuration that achieved the highest win rate against the `GreedyAgent`
 for each algorithm was crowned the best model for that approach. Those
-models were subsequently evaluated against the `RandomAgent`
-to ensure its strategy was robust and capable of generalizing against
+models were subsequently also evaluated against the `RandomAgent`
+to ensure their strategy was robust and capable of generalizing against
 a different opponent.
 
 === Monte Carlo
@@ -1569,7 +1570,11 @@ presented in @tab:best-agents.
         [ Q-Learning ], [ 40.10% ], [ 88.00% ],
         [ (D)DQN ], [ 27.60% ], [ 53.40% ],
     ),
-    caption: [Performance summary of the best agents from each algorithm family],
+
+    caption: flex-caption(
+        [Performance summary of the best agents],
+        [Performance summary of the best agents from each algorithm family],
+    ),
 ) <tab:best-agents>
 
 Looking at the aggregated results, a clear hierarchy emerges. The deep policy

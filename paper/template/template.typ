@@ -21,6 +21,7 @@
     keywords-en: "",
     keywords-cz: "",
     two-page-abstract: false,
+    two-page-assignment: false,
     assignment: "",
     ..intro-args,
     body,
@@ -52,7 +53,7 @@
 
 
     // TODO: if title page goes first, put this after the title-page call
-    if print {
+    if print and not two-page-assignment{
         page[]
     }
 
