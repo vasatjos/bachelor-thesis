@@ -7,8 +7,8 @@
 #let human_greedy_games = 100
 #let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
 
-#let human_rl_wins = 111
-#let human_rl_games = 211
+#let human_rl_wins = 122
+#let human_rl_games = 231
 #let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
 
 
@@ -67,11 +67,11 @@
         Zatímco metody založené na odhadu $q$ funkce s pomocí hlubokého
         učení (DQN) nedokázaly konvergovat v rámci tréninkových omezení,
         nejlepší běhy tabulkových metod dosáhly úspěšnosti těsně pod
-        50 % proti referenční hladové (greedy) strategii.
+        50~% proti referenční hladové (greedy) strategii.
         Algoritmus REINFORCE se ukázal jako nejlepší a dosáhl
         přibližně 65% úspěšnosti proti referenční hladové strategii.
         V závěrečném vyhodnocení proti lidem agent úspěšně udržel výhry
-        lidských hráčů na ~#human_rl_rate % -- což představuje
+        lidských hráčů na ~#human_rl_rate~% -- což představuje
         znatelný pokles oproti #human_greedy_rate% lidské úspěšnosti
         proti referenčnímu agentovi. Tyto výsledky proti lidem ukazují,
         že metody posilovaného učení se dokážou učit i ve vysoce stochastických
