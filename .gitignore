@@ -1,9 +1,10 @@
 __pycache__/
 .venv/
-src/logs/*
 *.pkl
 *.pt
 *.pth
 *.pdf
 *.csv
-*.json
+*.out
+*.err
+*.log
