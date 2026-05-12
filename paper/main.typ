@@ -7,8 +7,8 @@
 #let human_greedy_games = 100
 #let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
 
-#let human_rl_wins = 72
-#let human_rl_games = 121
+#let human_rl_wins = 100
+#let human_rl_games = 181
 #let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
 
 
@@ -45,37 +45,36 @@
         constraints, the best tabular method runs achieved a win rate of
         just under 50% against a greedy baseline.
         The REINFORCE policy gradient algorithm emerged as the top
-        performer, achieving a ~65% win rate against the greedy baseline. In a final
-        human evaluation across #human_rl_games games, the REINFORCE agent successfully held
-        human players to a ~#human_rl_rate% win rate -- a tangible reduction from
-        the 65% human win rate against the baseline. These results demonstrate that
-        policy gradient methods can learn somewhat competitive strategies in
-        complex card games using purely rule-based interactions.
+        performer, achieving a ~65% win rate against the greedy baseline.
+        In a final human evaluation across #human_rl_games games,
+        the REINFORCE agent successfully held human players to a ~#human_rl_rate%
+        win rate -- a tangible reduction from the #human_greedy_rate% human
+        win rate against the baseline. These results against human players
+        demonstrate that reinforcement learning methods are capable of
+        tackling even highly stochastic imperfect-information card games.
     ],
 
     abstract-cz: [
-        Tato práce zkoumá aplikaci posilovaného učení (reinforcement learning)
-        na Prší, stochastickou karetní hru s neúplnou informací. Pro účely
-        vyhodnocení čtyř algoritmů -- Monte Carlo, Q-Learning, Deep Q-Network (DQN)
-        a REINFORCE -- bylo vytvořeno prostředí v jazyce Python.
-        Pro zvládnutí složitosti prostředí
-        se tabulkové metody spoléhaly na abstrahované reprezentace stavů,
-        zatímco agenti
-        využívající hluboké učení zpracovávali kompletní pozorování kódovaná metodou one-hot.
+        Práce zkoumá aplikaci posilovaného učení na Prší, stochastickou karetní
+        hru s neúplnou informací. Pro účely vyhodnocení čtyř algoritmů --
+        Monte Carlo, Q-Learning, Deep Q-Network (DQN) a REINFORCE --
+        bylo vytvořeno prostředí v jazyce Python. Pro zvládnutí složitosti
+        prostředí se tabulkové metody spoléhaly na abstrahované reprezentace stavů,
+        zatímco agenti využívající hluboké učení zpracovávali kompletní
+        pozorování kódovaná metodou one-hot.
 
-        Zatímco hluboké metody založené na odhadu $q$ funkce (DQN) měly potíže
-        s konvergencí v rámci tréninkových omezení, nejlepší běhy
-        tabulkových metod dosáhly míry výher těsně pod
+        Zatímco metody založené na odhadu $q$ funkce s pomocí hlubokého
+        učení (DQN) nedokázaly konvergovat v rámci tréninkových omezení,
+        nejlepší běhy tabulkových metod dosáhly úspěšnosti těsně pod
         50 % proti referenční hladové (greedy) strategii.
-        Algoritmus REINFORCE se ukázal jako nejúspěšnější a dosáhl
-        přibližně 65% míry výher proti hladové referenční strategii.
-        V závěrečném vyhodnocení proti lidem agent úspěšně udržel míru výher
+        Algoritmus REINFORCE se ukázal jako nejlepší a dosáhl
+        přibližně 65% úspěšnosti proti referenční hladové strategii.
+        V závěrečném vyhodnocení proti lidem agent úspěšně udržel výhry
         lidských hráčů na ~#human_rl_rate % -- což představuje
-        znatelný pokles oproti 65% úspěšnosti lidí proti referenčnímu agentovi.
-        Tyto výsledky dokazují, že metody posilovaného učení se dokážou naučit
-        do jisté míry konkurenceschopné
-        strategie v komplexních karetních hrách pouze na
-        základě interakcí s pravidly prostředí.
+        znatelný pokles oproti #human_greedy_rate% lidské úspěšnosti
+        proti referenčnímu agentovi. Tyto výsledky proti lidem ukazují,
+        že metody posilovaného učení se dokážou učit i ve vysoce stochastických
+        karetních hrách s neúplnou informací.
     ],
 
     keywords-en: [
@@ -1646,32 +1645,16 @@ resilient adversary.
 
 The experiments conducted in this thesis demonstrate that #gls("rl")
 can be applied to the imperfect-information environment of Prší with a
-reasonable degree of success.
+somewhat reasonable degree of success.
 While tabular methods achieved competent play through heavy state abstraction,
 the deep policy gradient algorithm, REINFORCE, proved capable of mapping the
-full state representation to a competitive strategy. However, the evaluation
-also highlighted several limitations in the current approach and environment
+full state representation to a competitive strategy. An interesting observation
+could be made: Monte Carlo methods seemed to fare better in both the tabular
+and the #gls("dl") case.
+
+However, the evaluation
+also highlighted several limitations of the current approach and environment
 implementation, opening several avenues for future research.
-
-== Computational Limitations and Language Choice
-
-One of the most significant bottlenecks during the training phase was computational
-efficiency. The custom environment and training loops were implemented entirely in
-Python. While Python is the standard for machine learning research due to its
-rich ecosystem, its interpreted nature makes
-continuous environment interactions inherently slow.
-
-Within the strict 24-hour training limit, this slow execution speed heavily
-penalized the deep learning models. The tabular methods processed millions of
-episodes, whereas the neural networks processed far fewer. It is possible
-that the failure of the deep value-based methods (#gls("dqn") and #gls("ddqn"))
-was not due to algorithmic incompatibility, but simply a lack of sufficient
-experience to converge. Rewriting the core `PrsiEnv` and the simulation loop in a
-compiled language or utilizing a Just-In-Time compiler like JAX
-could increase the simulation throughput, allowing deep
-architectures to train much more effectively. The main benefit of the selected
-approach was the code readability provided by using
-industry-standard technologies.
 
 == State Representation, Architectures, Hyperparameters
 
@@ -1701,8 +1684,8 @@ the #gls("pomdp") nature of the game without relying on handcrafted memory array
 
 == Advanced Reinforcement Learning Algorithms
 
-While REINFORCE proved successful, it is one of the most fundamental policy gradient
-methods and suffers from high sample inefficiency. Upgrading the agent to use
+While REINFORCE proved successful, it is one of the most fundamental
+policy gradient methods. Upgrading the agent to use
 state-of-the-art actor-critic algorithms, such as #gls("ppo")~@PPO,
 could improve training stability and allow for multiple
 epochs of learning on the same batch of data.
@@ -1722,7 +1705,7 @@ look-ahead strategies employed by skilled human players.
 == The Environment
 
 Currently, the training environment is strictly limited to 1-versus-1 interactions.
-However, Prší is traditionally played as a multiplayer game (typically 3 to 6 players).
+However, Prší is traditionally played as a multiplayer game with up to six players.
 Expanding the `PrsiEnv` to support an arbitrary number of players would introduce
 new strategic layers. This option was left out to limit the scope of our
 experiments, but remains an interesting future possibility.
@@ -1747,7 +1730,7 @@ from scratch in Python, mostly conforming to the standard Gymnasium interface.
 We used the environment to evaluate two distinct
 classes of #gls("rl") algorithms:
 tabular value-based methods (Monte Carlo and Q-Learning) and deep learning
-approaches (#gls("dqn") and REINFORCE). Due to the exponential size of the true
+approaches (#gls("dqn") and REINFORCE). Due to the massive size of the true
 state space, the tabular agents were restricted to heavily abstracted state
 representations. Despite this handicap, the tabular Monte Carlo approach proved
 highly resilient, nearly matching the performance of a greedy baseline agent.
@@ -1763,17 +1746,16 @@ defeat the `GreedyAgent` baseline, achieving a win rate of nearly 65%.
 In the final evaluation phase, the most successful REINFORCE agent was deployed
 against human players via a simple command-line interface. Over a sample of
 #human_rl_games games, the human players achieved a win rate of #human_rl_rate%.
-While the humans ultimately won more often than not,
+While the humans were ultimately victorious,
 this win rate represents a notable drop in
-human performance compared to games against the baseline heuristic.
+human performance compared to games against the baseline.
+It still shows that #gls("rl") can be used to learn strategies for
+a stochastic game like Prší.
 
-This thesis demonstrates that while deep #gls("rl") can
-be highly sensitive to hyperparameter selection,
-policy gradient methods can learn non-trivial strategies
-in stochastic card games without any prior human knowledge. The developed
-environment provides a foundation for future research, particularly
-in exploring #gls("rnn")-based state representations or more advanced #gls("rl")
-methods like #gls("ppo") or MuZero.
+The developed environment provides a foundation for future research,
+particularly in exploring different hyperparameters,
+#gls("rnn")-based state representations or more
+advanced #gls("rl") methods like #gls("ppo") or MuZero.
 
 
 #bibliography("bibliography.bib")
@@ -1790,3 +1772,28 @@ methods like #gls("ppo") or MuZero.
     user-print-glossary: acronym-table,
     disable-back-references: true,
 )
+
+= Contents of attachments
+
+#[
+    #import "@preview/treet:0.1.1": *
+
+    #set text(font: "DejaVu Sans Mono", size: 9pt)
+    #let dots() = box(width: 1fr, repeat[.])
+
+    #tree-list[
+        - LICENSE.md #dots() project license
+        - README.md #dots() project overview
+        - pyproject.toml #dots() Python project configuration
+        - uv.lock #dots() dependency lockfile
+        - paper #dots() thesis source files + helpers
+        - src #dots() source code
+            - prsi #dots() Prší environment implementation
+            - agents #dots() agent implementations
+            - agent_strategies #dots() trained models
+            - logs #dots() human evaluation results
+            - scripts #dots() helper training scripts
+            - tests #dots() unit tests
+    ]
+
+]
