@@ -35,6 +35,9 @@ class PrsiEnv:
 
     @property
     def state(self) -> GameState:
+        """
+        Return the current game state.
+        """
         return self._state
 
     def reset(

@@ -46,6 +46,12 @@ class ReplayBuffer(Generic[T]):
     """
 
     def __init__(self, max_length: int | None = None):
+        """
+        Initialize the replay buffer.
+
+        Args:
+            max_length: Maximum number of items to store. If None, the buffer has unlimited capacity.
+        """
         if max_length is not None:
             assert isinstance(max_length, int), (
                 "The max_length argument must be an integer"
@@ -56,13 +62,22 @@ class ReplayBuffer(Generic[T]):
         self._offset = 0
 
     def __len__(self) -> int:
+        """
+        Return the current number of items in the buffer.
+        """
         return len(self._data)
 
     @property
     def max_length(self) -> int | None:
+        """
+        Return the maximum capacity of the buffer.
+        """
         return self._max_length
 
     def append(self, item: T) -> None:
+        """
+        Add a single item to the buffer.
+        """
         if self._max_length is not None and len(self._data) >= self._max_length:
             self._data[self._offset] = item
             self._offset = (self._offset + 1) % self._max_length
@@ -70,6 +85,9 @@ class ReplayBuffer(Generic[T]):
             self._data.append(item)
 
     def extend(self, items: Sequence[T]) -> None:
+        """
+        Add multiple items to the buffer.
+        """
         if self._max_length is None:
             self._data.extend(items)
         else:
@@ -81,6 +99,9 @@ class ReplayBuffer(Generic[T]):
                     self._data.append(item)
 
     def __getitem__(self, index: int) -> T:
+        """
+        Retrieve an item from the buffer by index.
+        """
         assert -len(self._data) <= index < len(self._data)
         return self._data[(self._offset + index) % len(self._data)]
 

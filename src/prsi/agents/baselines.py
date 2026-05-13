@@ -29,6 +29,9 @@ class RandomAgent(Agent):
         return behave_randomly(state, hand)
 
     def evaluate(self, *args: Any, **kwargs: Any) -> float:
+        """
+        Evaluate the agent performance. Not implemented for RandomAgent.
+        """
         raise NotImplementedError("TODO: should be simple though")
 
 
@@ -60,4 +63,7 @@ class GreedyAgent(Agent):
         return chosen_card, chosen_suit
 
     def evaluate(self, *args: Any, **kwargs: Any) -> float:
+        """
+        Evaluate the agent performance. Not implemented for GreedyAgent.
+        """
         raise NotImplementedError("TODO: should be simple though")

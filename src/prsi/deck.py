@@ -135,4 +135,7 @@ class Deck:
         return card.effect
 
     def available_card_count(self) -> int:
+        """
+        Return the total number of cards available in the deck (drawing + discard piles).
+        """
         return len(self.drawing_pile) + len(self.discard_pile)
