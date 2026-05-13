@@ -22,7 +22,6 @@
     keywords-cz: "",
     two-page-abstract: false,
     two-page-assignment: false,
-    assignment: "",
     ..intro-args,
     body,
 ) = {

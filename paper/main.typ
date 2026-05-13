@@ -7,9 +7,10 @@
 #let human_greedy_games = 100
 #let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
 
-#let human_rl_wins = 122
-#let human_rl_games = 231
+#let human_rl_wins = 148
+#let human_rl_games = 272
 #let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
+#let agent_win_rate = 100 - human_rl_rate
 
 
 #show: template.with(
@@ -29,7 +30,7 @@
     font: "New Computer Modern",
 
     // set to true if generating a PDF for print (shifts page layout, correctly aligns odd/even pages,...)
-    print: true,
+    print: false,
 
     two-page-abstract: true,
 
@@ -80,17 +81,19 @@
 
     keywords-en: [
         machine learning, reinforcement learning, Q-Learning,
-        DQN, neural networks, imperfect information games, card games, Prší
+        DQN, REINFORCE, neural networks, imperfect information games,
+        card games, Prší
     ],
     keywords-cz: [
         strojové učení, posilované učení, Q-Learning,
-        DQN, neuronové sítě, hry s neúplnou informací, karetní hry, Prší
+        DQN, #box[REINFORCE], neuronové sítě, hry s neúplnou informací,
+        karetní hry, Prší
     ],
 
     acknowledgement: [
-        I would like to express my gratitude to my dear friends and family for their support,
-        encouragement, and, naturally, the thousands of hands of Prší played together
-        during my academic journey.
+        I would like to express my gratitude to my dear friends and family for
+        their support, encouragement, and, naturally, the thousands of hands of
+        Prší played together during my academic journey.
         I would also like to thank my supervisor, Ing. Daniel Vašata, Ph.D.,
         for his guidance and insight during the writing of this thesis.
     ],
@@ -112,7 +115,6 @@
         the generated content. I confirm that I am aware that I am fully responsible for the content of the
         thesis.
     ],
-    assignment: read("assignment.pdf", encoding: none),
 )
 
 #show: make-glossary
@@ -788,7 +790,9 @@ $
     bold(theta)_(t+1) = bold(theta)_t + alpha nabla J(bold(theta)_t),
 $
 where $alpha$ is the step-size parameter and $nabla J(bold(theta)_t)$ is the
-policy gradient.
+policy gradient. In episodic environments, the performance measure can be
+defined as $J(bold(theta)) dot(=) v_pi_bold(theta) (s_0)$, where $s_0$ is
+some non-random starting state.
 
 === REINFORCE
 
@@ -1438,7 +1442,10 @@ results for both algorithms are summarized in @tab:dqn-results.
         [ DDQN ], [ 2 layers, $epsilon=0.1$ ], [ 0.30% ],
         [ DQN ], [ 2 layers, $epsilon=0.05$ ], [ 0.00% ],
     ),
-    caption: [DQN and DDQN evaluation win rates against `GreedyAgent`],
+    caption: flex-caption(
+        [(D)DQN evaluation win rates against `GreedyAgent`],
+        [DQN and DDQN evaluation win rates against `GreedyAgent`],
+    ),
 ) <tab:dqn-results>
 
 The most immediate takeaway from these results is the stark reliance on network
@@ -1544,7 +1551,7 @@ completely collapsed. This suggests that estimating deep value functions
 via Monte Carlo returns is more stable in this
 highly stochastic environment than relying on temporal difference bootstrapping.
 This is further supported by the fact that tabular #gls("mc") methods outshined
-Q-Learning during their evaluation against `GreedyAgent`.
+Q-Learning during their evaluation against the `GreedyAgent`.
 
 Finally, unlike the value-based algorithms, REINFORCE successfully maintained its
 stability during self-play. The self-play configuration secured a fairly
@@ -1635,15 +1642,22 @@ sample size).
 
 Next, the human testers faced the champion REINFORCE agent. Over a series of
 #human_rl_games games, human players achieved #human_rl_wins victories, yielding
-a win rate of #human_rl_rate%.
+them a win rate of #human_rl_rate%, leaving a respectable
+#agent_win_rate% win rate for the agent. This shows REINFORCE performed
+better against humans than Q-Learning did against even simple the `GreedyAgent`.
 
-Comparing these two results reveals the tangible strength of the learned policy.
+Comparing these results reveals the tangible strength of the learned policy.
 The REINFORCE agent successfully lowered the human win rate by several percentage
-points compared to the greedy baseline. While the human players still maintained a
+points compared to the greedy baseline, nearly equaling their ability.
+While the human players still maintained a
 positive win record overall -- highlighting the inherent difficulty of achieving
 superhuman performance in imperfect-information games without look-ahead planning
 algorithms -- the REINFORCE agent proved to be a noticeably more difficult and
-resilient adversary.
+resilient adversary, coming very close to matching the human performance.
+#footnote([
+    It is possible REINFORCE is truly on par with humans, but a much
+    larger sample size would be necessary to make such a result conclusive.
+])
 
 
 = Discussion and Future Work
