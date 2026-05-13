@@ -43,6 +43,21 @@
     let text-width = 130mm
     let margin = (a4-width - text-width) / 2
 
+    let footer-display = context {
+        let i = counter(page).display()
+        if i == [] { return }
+        if print {
+            let offset = if two-page-assignment { 2 } else { 1 }
+            if calc.odd(here().page() + offset) {
+                align(right, i)
+            } else {
+                align(left, i)
+            }
+        } else {
+            align(center, i)
+        }
+    }
+
 
     set page(
         paper: "a4",
@@ -102,7 +117,7 @@
 
     pagebreak()
 
-    set page(numbering: "i")
+    set page(numbering: "i", footer: footer-display)
 
     {
         set par(justify: true)
@@ -264,7 +279,7 @@
     pagebreak(weak: true)
 
     // start numbering from the first page of actual text
-    set page(numbering: "1")
+    set page(numbering: "1", footer: footer-display)
     counter(heading).update(0)
     counter(page).update(1)
 
