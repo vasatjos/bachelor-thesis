@@ -7,8 +7,8 @@
 #let human_greedy_games = 100
 #let human_greedy_rate = calc.round((human_greedy_wins / human_greedy_games) * 100, digits: 1)
 
-#let human_rl_wins = 148
-#let human_rl_games = 272
+#let human_rl_wins = 154
+#let human_rl_games = 284
 #let human_rl_rate = calc.round((human_rl_wins / human_rl_games) * 100, digits: 1)
 #let agent_win_rate = 100 - human_rl_rate
 
@@ -39,11 +39,9 @@
         This thesis investigates the application of reinforcement learning to
         Prší, a stochastic, imperfect-information Czech card game. A custom Python
         environment was developed to evaluate four algorithms: Monte Carlo,
-        Q-Learning, Deep Q-Network (DQN), and REINFORCE. To handle the environment's
-        complexity, tabular methods relied on abstracted state representations,
-        while the deep learning agents processed full one-hot encoded observations.
+        Q-Learning, Deep Q-Network, and REINFORCE.
 
-        While deep value-based methods (DQN) struggled to converge within training
+        While deep value-based methods struggled to converge within training
         constraints, the best tabular method runs achieved a win rate of
         just under 50% against a greedy baseline.
         The REINFORCE policy gradient algorithm emerged as the top
@@ -53,30 +51,29 @@
         win rate -- a tangible reduction from the #human_greedy_rate% human
         win rate against the baseline. These results against human players
         demonstrate that reinforcement learning methods are capable of
-        tackling even highly stochastic imperfect-information card games.
+        tackling even highly stochastic imperfect-information card games and
+        can at the very least come close to human performance.
     ],
 
     abstract-cz: [
         Práce zkoumá aplikaci posilovaného učení na Prší, stochastickou karetní
         hru s neúplnou informací. Pro účely vyhodnocení čtyř algoritmů --
         Monte Carlo, Q-Learning, Deep Q-Network (DQN) a REINFORCE --
-        bylo vytvořeno prostředí v jazyce Python. Pro zvládnutí složitosti
-        prostředí se tabulkové metody spoléhaly na abstrahované reprezentace stavů,
-        zatímco agenti využívající hluboké učení zpracovávali kompletní
-        pozorování kódovaná metodou one-hot.
+        bylo vytvořeno prostředí v jazyce Python.
 
         Zatímco metody založené na odhadu $q$ funkce s pomocí hlubokého
-        učení (DQN) nedokázaly konvergovat v rámci tréninkových omezení,
+        učení nedokázaly konvergovat v rámci tréninkových omezení,
         nejlepší běhy tabulkových metod dosáhly úspěšnosti těsně pod
         50~% proti referenční hladové (greedy) strategii.
         Algoritmus REINFORCE se ukázal jako nejlepší a dosáhl
         přibližně 65% úspěšnosti proti referenční hladové strategii.
-        V závěrečném vyhodnocení proti lidem agent úspěšně udržel výhry
-        lidských hráčů na ~#human_rl_rate~% -- což představuje
+        V závěrečných #human_rl_games hrách proti lidem agent úspěšně udržel
+        úspěšnost lidských hráčů na ~#human_rl_rate~% -- což představuje
         znatelný pokles oproti #human_greedy_rate% lidské úspěšnosti
         proti referenčnímu agentovi. Tyto výsledky proti lidem ukazují,
         že metody posilovaného učení se dokážou učit i ve vysoce stochastických
-        karetních hrách s neúplnou informací.
+        karetních hrách s neúplnou informací a dokážou se přinejmenším
+        přiblížit lidským schopnostem.
     ],
 
     keywords-en: [

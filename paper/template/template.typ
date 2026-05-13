@@ -52,7 +52,7 @@
 
 
     // TODO: if title page goes first, put this after the title-page call
-    if print and not two-page-assignment{
+    if print and not two-page-assignment {
         page[]
     }
 
@@ -121,6 +121,8 @@
             pagebreak()
         }
         v(28mm)
+
+        set text(lang: "cs")
         [ = Abstrakt]
         abstract-cz
         v(1em)
@@ -130,6 +132,7 @@
         ]
         h(1em)
         keywords-cz
+        set text(lang: "en")
     }
     pagebreak()
 
