@@ -25,6 +25,8 @@
         bachelor: true,
         faculty: "Information Technology",
         department: "Applied Mathematics",
+        programme: "Informatics",
+        specialization: "Artificial Intelligence 2021",
         supervisor: "Ing. Daniel Vašata, Ph.D.",
     ),
     font: "New Computer Modern",

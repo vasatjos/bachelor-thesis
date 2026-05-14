@@ -10,6 +10,8 @@
     bachelor: true,
     faculty: "",
     department: "",
+    programme: "",
+    specialization: "",
     supervisor: "",
     font: "Libertinus Serif",
 ) = {
@@ -55,8 +57,11 @@
     {
         // set text(size: 10pt, weight: "regular")
         [
-            // Faculty of #faculty\ // NOTE: Logo image contains faculty name, uncomment if logo changes
+            Czech Technical University in Prague\
+            Faculty of #faculty\
             Department of #department\
+            Study programme: #programme\
+            Specialization: #specialization\
             Supervisor: #supervisor\
             \
             #submission-date.display("[day padding:none] [month repr:long] [year]")
@@ -76,6 +81,8 @@
     bachelor: false,
     faculty: "",
     department: "",
+    programme: "",
+    specialization: "",
     supervisor: "",
 ) = {
     show: page.with(margin: (bottom: 40mm, top: 46mm, left: 39.5mm, right: 40mm))
