@@ -34,12 +34,11 @@
 
     two-page-abstract: true,
 
-    // TODO: edit abstract, evaluation and conclusion based on final win rates
     abstract-en: [
-        This thesis investigates the application of reinforcement learning to
-        Prší, a stochastic, imperfect-information Czech card game. A custom Python
-        environment was developed to evaluate four algorithms: Monte Carlo,
-        Q-Learning, Deep Q-Network, and REINFORCE.
+        This thesis investigates the application of reinforcement learning
+        methods to Prší, a stochastic, imperfect-information Czech card game.
+        A custom Python environment was developed to evaluate four algorithms:
+        Monte Carlo, Q-Learning, Deep Q-Network, and REINFORCE.
 
         While deep value-based methods struggled to converge within training
         constraints, the best tabular method runs achieved a win rate of
@@ -56,10 +55,10 @@
     ],
 
     abstract-cz: [
-        Práce zkoumá aplikaci posilovaného učení na Prší, stochastickou karetní
-        hru s neúplnou informací. Pro účely vyhodnocení čtyř algoritmů --
-        Monte Carlo, Q-Learning, Deep Q-Network (DQN) a REINFORCE --
-        bylo vytvořeno prostředí v jazyce Python.
+        Práce zkoumá aplikaci metod posilovaného učení na Prší, stochastickou
+        karetní hru s neúplnou informací. Pro účely vyhodnocení čtyř algoritmů
+        -- Monte Carlo, Q-Learning, Deep Q-Network (DQN) a REINFORCE -- bylo
+        vytvořeno prostředí v jazyce Python.
 
         Zatímco metody založené na odhadu $q$ funkce s pomocí hlubokého
         učení nedokázaly konvergovat v rámci tréninkových omezení,
@@ -253,7 +252,7 @@ defined as a sextuple
 //
 $(cal(S), cal(A), p, gamma, cal(O), o)$,
 where $cal(O)$ is the set of observations and $o(O_(t+1) mid(bar) S_t, A_t)$ is
-the observation model. We then give agents $O_t$ as input instead of $S_t$. An
+the observation model. We then give the agent $O_t$ as input instead of $S_t$. An
 illustration can be seen in @fig:pomdp-loop.
 
 #figure(
@@ -1031,8 +1030,9 @@ the discard pile, and the full hands of both players.
 
 However, the agent only receives an observation containing the public
 information and its own private information. Specifically, the agent observes
-its own hand, the current top card, the active suit, the active effect, the
-number of cards remaining in the opponent's hand, and whether the draw pile
+its own hand, the current top card, a list of cards played since its last turn,
+the active suit, the active effect, the number of cards remaining
+in the opponent's hand, and whether the draw pile
 has been flipped. By processing these observations, the agent must learn to
 infer the hidden variables and strategize accordingly. How different
 agents process the state will be discussed further in @chapter:experiments.
@@ -1164,7 +1164,7 @@ While the previous chapter introduces the `GameState` object that is
 returned to the agent when it takes a step in the environment, as well
 as an `info` dictionary, the information
 contained in these is actually quite limited. There are things outside
-these returned values that could be useful to the agent's decision-making
+these returned values that could be useful to the agents' decision-making
 process.
 
 A crucial aspect is that the agents might need memory of what cards were
@@ -1195,7 +1195,7 @@ reasonable hardware limitations.
 === Memory for Deep Learning Methods
 
 Unlike tabular methods, which require discrete states to use as dictionary keys,
-deep learning algorithms like #gls("dqn") and REINFORCE require the environment
+#gls("dl") algorithms like #gls("dqn") and REINFORCE require the environment
 state to be represented as a continuous, fixed-size numerical tensor.
 Furthermore, to ensure stable gradient updates during backpropagation,
 these inputs must be carefully scaled.
@@ -1314,7 +1314,7 @@ and the final evaluation results are summarized in @tab:mc-results.
 The most successful configuration utilized a simple incremental mean for its
 updates and a constant $epsilon = 0.1$, achieving a win rate of 49.80% against
 the `GreedyAgent`. Interestingly, first-visit updates slightly outperformed
-every-visit updates in this environment. A difference of 1.2% (12 games) could
+every-visit updates in this environment. A difference of 1.4% (14 games) could
 just be random noise, however.
 
 A drop in performance occurred when introducing a fixed step size $alpha$.
@@ -1550,11 +1550,11 @@ highly stochastic environment than relying on temporal difference bootstrapping.
 This is further supported by the fact that tabular #gls("mc") methods outshined
 Q-Learning during their evaluation against the `GreedyAgent`.
 
-Finally, unlike the value-based algorithms, REINFORCE successfully maintained its
+Finally, REINFORCE successfully maintained its
 stability during self-play. The self-play configuration secured a fairly
 competitive 62.40% win rate. While notable, this is still lower than what the
-agents trained against the baseline achieved and somewhat follows the trend from
-the value-based methods.
+agents trained against the baseline achieved and shows self-play is not
+particularly helpful in this environment (at least in the attempted configurations).
 
 === Selecting the Best Agent
 
@@ -1631,7 +1631,7 @@ conducted where a single human player competed against the `GreedyAgent`
 for a total of #human_greedy_games games. In this baseline evaluation,
 the human player secured #human_greedy_wins victories, resulting in a
 #human_greedy_rate% win rate. This confirms that while the greedy strategy is
-competent, a human player can consistently exploit its predictable,
+competent, a human player can consistently exploit its
 short-sighted nature. It also indirectly puts the REINFORCE agent
 on par with human players, in the sense that they have achieved
 a similar win-rate (although #human_greedy_games games is a relatively small
@@ -1641,15 +1641,13 @@ Next, the human testers faced the champion REINFORCE agent. Over a series of
 #human_rl_games games, human players achieved #human_rl_wins victories, yielding
 them a win rate of #human_rl_rate%, leaving a respectable
 #agent_win_rate% win rate for the agent. This shows REINFORCE performed
-better against humans than Q-Learning did against even simple the `GreedyAgent`.
+better against humans than Q-Learning did against even the simple `GreedyAgent`.
 
 Comparing these results reveals the tangible strength of the learned policy.
 The REINFORCE agent successfully lowered the human win rate by several percentage
 points compared to the greedy baseline, nearly equaling their ability.
-While the human players still maintained a
-positive win record overall -- highlighting the inherent difficulty of achieving
-superhuman performance in imperfect-information games without look-ahead planning
-algorithms -- the REINFORCE agent proved to be a noticeably more difficult and
+While the human players still maintained a positive win record overall,
+the REINFORCE agent proved to be a noticeably more difficult and
 resilient adversary, coming very close to matching the human performance.
 #footnote([
     It is possible REINFORCE is truly on par with humans, but a much
@@ -1674,7 +1672,7 @@ implementation, opening several avenues for future research.
 
 == State Representation, Architectures, Hyperparameters
 
-The current deep learning agents utilized a flattened, 1D one-hot encoded vector
+The current #gls("dl") agents utilized a flattened, 1D one-hot encoded vector
 to represent the game state. For #gls("dqn") in particular, this sparse representation
 likely contributed to the network's inability to learn an accurate value function.
 This thesis did not explore different state representations for the value-based
@@ -1707,8 +1705,8 @@ could improve training stability and allow for multiple
 epochs of learning on the same batch of data.
 
 Furthermore, the naive self-play mechanism implemented in this thesis yielded
-sub-optimal results, causing the tabular agents to collapse and also
-degrading the performance of REINFORCE.
+sub-optimal results, fairing generally worse than agents trained
+without self-play.
 To resolve these instabilities and look beyond standard model-free algorithms,
 MuZero~@MuZero represents the frontier of board game AI. MuZero builds
 a predictive model of the environment's dynamics and uses #gls("mcts")
@@ -1764,8 +1762,8 @@ against human players via a simple command-line interface. Over a sample of
 #human_rl_games games, the human players achieved a win rate of #human_rl_rate%.
 While the humans were ultimately victorious,
 this win rate represents a notable drop in
-human performance compared to games against the baseline.
-It still shows that #gls("rl") can be used to learn strategies for
+human performance compared to games against the baseline
+and shows that #gls("rl") can be used to learn strategies for
 a stochastic game like Prší.
 
 The developed environment provides a foundation for future research,
@@ -1802,8 +1800,8 @@ advanced #gls("rl") methods like #gls("ppo") or MuZero.
         - README.md #dots() project overview
         - pyproject.toml #dots() Python project configuration
         - uv.lock #dots() dependency lockfile
-        - paper #dots() thesis source files + helpers
-        - src #dots() source code
+        - paper/ #dots() thesis source files + helpers
+        - src/ #dots() source code
             - prsi #dots() Prší environment implementation
             - agents #dots() agent implementations
             - agent_strategies #dots() trained models
