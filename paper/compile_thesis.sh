@@ -16,3 +16,5 @@ if [[ "$MODE" == "title_first" ]]; then  # Title page first:
 else  # Default: assignment page first
     pdftk assignment.pdf main.pdf cat output full_thesis.pdf
 fi
+
+gs  -o  final_PRINT.pdf  -dNoOutputFonts  -sDEVICE=pdfwrite  full_thesis.pdf
