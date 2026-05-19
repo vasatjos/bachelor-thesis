@@ -59,16 +59,6 @@
         #linebreak()
         #text(size: 14pt, style: "italic")[Obhajoba bakalářské práce]
         #v(2em)
-        #grid(
-            columns: (1fr, 1fr),
-            align(left)[
-                #text(size: 16pt)[*Vedoucí:* Ing. Daniel Vašata, Ph.D.] \
-                #text(size: 16pt)[*Obor:* Umělá inteligence]
-            ],
-            align(right)[
-                #text(size: 16pt)[Květen 2026]
-            ],
-        )
     ]
 ]
 
@@ -77,39 +67,36 @@
 #slide("Motivace")[
     - Prší -- populární hra v ČR
     - Zajímavý problém pro AI
-        - Stochasticita
+        - Velká míra stochasticity
         - Neúplná informace
 ]
 
 #slide("Cíle práce")[
     1. Implementace prostředí pro Prší
     2. Srovnání více RL přístupů:
-        - Tabulkové metody: Monte Carlo, Q-Learning
-        - Hluboké učení: DQN, REINFORCE
+        - Tabulkové metody
+        - Hluboké učení
     3. Vyhodnocení:
-        - Úspěšnost proti hladové heuristice
+        - Úspěšnost proti greedy heuristice
         - Úspěšnost proti lidským hráčům
 ]
 
 #slide("Formalizace problému")[
     - Hra je modelována jako _částečně pozorovatelný Markovský rozhodovací proces_ (POMDP)
-    // - *Prostor pozorování*:
-    //     - Karty v ruce, horní karta + barva, efekt (např. "ber 2"), počet karet protihráče
-    // - *Prostor akcí*:
-    //     - Validní karty k vynesení, volba barvy (pro svrška)
-    #align(center, image("images/pomdp.png", height: 40%))
+    #align(center, image("images/pomdp.png", height: 50%))
 ]
 
-#slide("Evaluované algoritmy")[
-    - Tabulkové metody (MC, Q-Learning):
+#slide("Algoritmy")[
+    - Tabulkové metody -- Monte Carlo, Q-Learning:
         - Metody založené na odhadu Q funkce
         - Vyžadují diskrétní stavový prostor
     - Deep Q-Network (DQN):
-        - Metoda založená na Q funkci
+        - Metoda založená na odhadu Q funkce
         - Využívá neuronové sítě
-        - Podobné stavy = podobná hodnota
+        - Podobné stavy $=>$ podobná hodnota
     - REINFORCE:
-        - Metoda *policy gradient* (Přímo optimalizuje strategii $pi_theta(a|s)$)
+        - *Policy gradient* metoda (Přímo optimalizuje strategii
+            $pi_bold(theta) (a mid(bar) s)$)
 ]
 
 #slide("Výsledky trénování")[
@@ -117,7 +104,7 @@
         columns: (1.2fr, 1fr),
         gutter: 1em,
         [
-            - *REINFORCE* dosáhl *65% úspěšnosti* proti hladové strategii
+            - *REINFORCE* dosáhl *65% úspěšnosti* proti greedy strategii
             - Tabulkové metody dosáhly přibližně 50 %
             - DQN divergovalo
         ],
@@ -130,35 +117,34 @@
 
 #slide("Výsledky testování proti lidem")[
     - Srovnání výkonu:
-        - Člověk vs. hladový agent: ~65% úspěšnost člověka
+        - Člověk vs. greedy agent: ~65% úspěšnost člověka
         - Člověk vs. REINFORCE: *~54%* úspěšnost člověka
     - Agent REINFORCE výrazně snížil převahu člověka
 ]
 
 #slide("Přínos práce")[
     - Implementace prostředí:
-        - Rozšiřitelné prostředí pro Prší v Pythonu
-        - Následuje API Gymnasium
+        - Rozšiřitelné prostředí pro Prší v Pythonu\ (Gymnasium API)
     - Benchmarking:
         - Srovnání moderních a tradičních metod posilovaného učení ve stochastickém
-          prostředí
+            prostředí
     - Evaluace proti lidem:
         - Vytvoření terminálového rozhraní pro testování agentů proti reálným hráčům
-        - Sběr a analýza dat z interaktivního testování
 ]
 
 #slide("Závěr a budoucí práce")[
     - Shrnutí:
-        - Metody policy gradient jsou pro Prší vhodnější než hodnotové metody
+        - Metody policy gradient se dokázaly naučit strategii i~přes velkou
+          úroveň stochasticity
     - Budoucí práce:
-        - Reprezentace stavu: Využití RNN pro lepší paměť
-        - Pokročilé algoritmy: Proximal Policy Optimization, Soft Actor-Critic (SAC),
-            MuZero
+        - Reprezentace stavu: Využití RNN
+        - Pokročilé algoritmy: Proximal Policy Optimization (PPO),
+            Soft Actor-Critic (SAC), MuZero
 ]
 
-#slide("Děkuji za pozornost")[
+#slide("")[
     #align(center + horizon)[
-        #text(size: 40pt, weight: "bold", fill: fit-blue)[Děkuji za pozornost!]
+        #text(size: 40pt, weight: "bold", fill: fit-blue)[Děkuji za pozornost]
         #v(2em)
         #text(size: 24pt)[Dotazy?]
     ]
@@ -166,10 +152,6 @@
 
 #slide("Otázky oponenta")[
     #set text(size: 18pt)
-    /*
-    Zde doplňte otázky z posudku oponenta a své odpovědi.
-    Například:
-    */
 
     *Otázka 1:* [Žádná není, jsem fakt dobrej]
 
