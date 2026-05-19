@@ -51,17 +51,19 @@
 // --- Titulní snímek ---
 #page(header: none, footer: none)[
     #align(center + horizon)[
-        #image(logo, width: 30%)
-        #v(2em)
-        #text(size: 36pt, weight: "bold", fill: fit-blue)[Posilované učení pro karetní hru Prší]
+        #image(logo, width: 25%)
         #v(1em)
-        #text(size: 26pt)[Josef Vašata]
+        #text(size: 34pt, weight: "bold", fill: fit-blue)[Posilované učení pro karetní hru Prší]
+        #v(0.5em)
+        #text(size: 24pt)[Josef Vašata]
         #linebreak()
         #text(size: 14pt, style: "italic")[Obhajoba bakalářské práce]
+        #v(2em)
         #grid(
             columns: (1fr, 1fr),
             align(left)[
-                #text(size: 16pt)[Vedoucí práce:\ Ing. Daniel Vašata, Ph.D.]
+                #text(size: 16pt)[*Vedoucí:* Ing. Daniel Vašata, Ph.D.] \
+                #text(size: 16pt)[*Obor:* Umělá inteligence]
             ],
             align(right)[
                 #text(size: 16pt)[Květen 2026]
@@ -72,55 +74,52 @@
 
 // --- Snímky ---
 
-#slide("Úvod do hry Prší")[
-    - *Prší* je populární česká karetní hra
-    - Hlavní výzvy pro AI:
-        - _Stochasticita_: Náhodné lízání karet a míchání balíčku
-        - _Neúplná informace_: Karty protihráčů jsou skryté
-        - _Dynamika_: Změna pravidel během hry (např. svršek mění barvu)
-    - Hraje se s *32 německými kartami* (mariášky)
+#slide("Motivace")[
+    - Prší -- populární hra v ČR
+    - Zajímavý problém pro AI
+        - Stochasticita
+        - Neúplná informace
 ]
 
 #slide("Cíle práce")[
-    1. *Prostředí*: Implementace výkonného prostředí pro Prší v jazyce Python
-    2. *Algoritmy*: Srovnání více přístupů:
-        - Tabulkové: Monte Carlo, Q-Learning
+    1. Implementace prostředí pro Prší
+    2. Srovnání více RL přístupů:
+        - Tabulkové metody: Monte Carlo, Q-Learning
         - Hluboké učení: DQN, REINFORCE
-    3. *Vyhodnocení*:
-        - Úspěšnost proti *hladové* (greedy) heuristice
-        - Úspěšnost proti *lidským hráčům*
+    3. Vyhodnocení:
+        - Úspěšnost proti hladové heuristice
+        - Úspěšnost proti lidským hráčům
 ]
 
 #slide("Formalizace problému")[
-    - Hra je modelována jako *částečně pozorovatelný Markovův rozhodovací proces*
-    - *Prostor pozorování*:
-        - Vlastní ruka, horní karta, aktuální barva, počet trestných karet
-    - *Prostor akcí*:
-        - Validní karty k vynesení, volba barvy (pro svrška)
+    - Hra je modelována jako _částečně pozorovatelný Markovský rozhodovací proces_ (POMDP)
+    // - *Prostor pozorování*:
+    //     - Karty v ruce, horní karta + barva, efekt (např. "ber 2"), počet karet protihráče
+    // - *Prostor akcí*:
+    //     - Validní karty k vynesení, volba barvy (pro svrška)
     #align(center, image("images/pomdp.png", height: 40%))
 ]
 
 #slide("Evaluované algoritmy")[
-    - *Tabulkové metody (MC & Q-Learning)*:
-        - Vyžadují diskretizaci stavového prostoru
-        - Fungují pro menší hry, ale Prší je komplexní
-    - *Deep Q-Network (DQN)*:
-        - Metoda založená na hodnotové funkci, využívá neuronové sítě
-        - Problémy s konvergencí kvůli vysokému rozptylu
-    - *REINFORCE*:
-        - Metoda *policy gradient*
-        - Přímo optimalizuje strategii $pi_theta(a|s)$
-        - Nejsouspěšnější algoritmus v této studii
+    - Tabulkové metody (MC, Q-Learning):
+        - Metody založené na odhadu Q funkce
+        - Vyžadují diskrétní stavový prostor
+    - Deep Q-Network (DQN):
+        - Metoda založená na Q funkci
+        - Využívá neuronové sítě
+        - Podobné stavy = podobná hodnota
+    - REINFORCE:
+        - Metoda *policy gradient* (Přímo optimalizuje strategii $pi_theta(a|s)$)
 ]
 
-#slide("Výsledky trénování (Agent vs. Agent)")[
+#slide("Výsledky trénování")[
     #grid(
         columns: (1.2fr, 1fr),
         gutter: 1em,
         [
             - *REINFORCE* dosáhl *65% úspěšnosti* proti hladové strategii
             - Tabulkové metody dosáhly přibližně 50 %
-            - Hluboké hodnotové metody (DQN) byly méně stabilní
+            - DQN divergovalo
         ],
         [
             #image("images/reinforce_training.svg", width: 100%)
@@ -130,23 +129,31 @@
 ]
 
 #slide("Výsledky testování proti lidem")[
-    - *Testovací fáze*: 284 odehraných her proti lidem
-    - *Srovnání výkonu*:
-        - Člověk vs. *Hladový agent*: ~65% úspěšnost člověka
-        - Člověk vs. *REINFORCE*: *~54%* úspěšnost člověka
-    - *Závěr*:
-        - Agent REINFORCE výrazně snížil převahu člověka
-        - Prokázána schopnost učení ve vysoce stochastickém prostředí
+    - Srovnání výkonu:
+        - Člověk vs. hladový agent: ~65% úspěšnost člověka
+        - Člověk vs. REINFORCE: *~54%* úspěšnost člověka
+    - Agent REINFORCE výrazně snížil převahu člověka
+]
+
+#slide("Přínos práce")[
+    - Implementace prostředí:
+        - Rozšiřitelné prostředí pro Prší v Pythonu
+        - Následuje API Gymnasium
+    - Benchmarking:
+        - Srovnání moderních a tradičních metod posilovaného učení ve stochastickém
+          prostředí
+    - Evaluace proti lidem:
+        - Vytvoření terminálového rozhraní pro testování agentů proti reálným hráčům
+        - Sběr a analýza dat z interaktivního testování
 ]
 
 #slide("Závěr a budoucí práce")[
-    - *Shrnutí*:
+    - Shrnutí:
         - Metody policy gradient jsou pro Prší vhodnější než hodnotové metody
-        - Vlastní prostředí se ukázalo jako efektivní pro benchmarking
-    - *Budoucí práce*:
-        - *Self-Play*: Trénování proti vlastním verzím
-        - *Reprezentace stavu*: Využití RNN/LSTM pro lepší paměť
-        - *Pokročilé algoritmy*: PPO nebo Soft Actor-Critic (SAC)
+    - Budoucí práce:
+        - Reprezentace stavu: Využití RNN pro lepší paměť
+        - Pokročilé algoritmy: Proximal Policy Optimization, Soft Actor-Critic (SAC),
+            MuZero
 ]
 
 #slide("Děkuji za pozornost")[
@@ -155,4 +162,22 @@
         #v(2em)
         #text(size: 24pt)[Dotazy?]
     ]
+]
+
+#slide("Otázky oponenta")[
+    #set text(size: 18pt)
+    /*
+    Zde doplňte otázky z posudku oponenta a své odpovědi.
+    Například:
+    */
+
+    *Otázka 1:* [Žádná není, jsem fakt dobrej]
+
+    - [Nemám zatím posudek]
+
+    #v(1em)
+
+    *Otázka 2:* [...]
+
+    - [...]
 ]
