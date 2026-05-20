@@ -58,6 +58,17 @@
         #text(size: 24pt)[Josef Vašata]
         #linebreak()
         #text(size: 14pt, style: "italic")[Obhajoba bakalářské práce]
+        #v(3em)
+        #grid(
+            columns: (1fr, 1fr),
+            align(left)[
+                #text(size: 15pt)[*Vedoucí:* Ing. Daniel Vašata, Ph.D.] \
+                #text(size: 15pt)[*Obor:* Umělá inteligence]
+            ],
+            align(right)[
+                #text(size: 15pt)[2026]
+            ],
+        )
         #v(2em)
     ]
 ]
@@ -122,6 +133,8 @@
     - Agent REINFORCE výrazně snížil převahu člověka
 ]
 
+// TODO: add human agent CLI screenshots
+
 #slide("Přínos práce")[
     - Implementace prostředí:
         - Rozšiřitelné prostředí pro Prší v Pythonu\ (Gymnasium API)
@@ -135,7 +148,7 @@
 #slide("Závěr a budoucí práce")[
     - Shrnutí:
         - Metody policy gradient se dokázaly naučit strategii i~přes velkou
-          úroveň stochasticity
+            úroveň stochasticity
     - Budoucí práce:
         - Reprezentace stavu: Využití RNN
         - Pokročilé algoritmy: Proximal Policy Optimization (PPO),
