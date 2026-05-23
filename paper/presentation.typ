@@ -1,5 +1,7 @@
 #let fit-blue = rgb("0064bb")
-#let logo = "template/res/logo-fit-cz-blue.svg"
+#let logo = "template/res/logo-fit-en-blue.svg"
+#let title = [Reinforcement Learning for Prší Card Game]
+#let author = [Josef Vašata]
 
 #set page(
     paper: "presentation-4-3",
@@ -12,7 +14,7 @@
                 align: horizon,
                 [
                     #v(0.3em)
-                    #text(size: 12pt, fill: gray, [Posilované učení pro karetní hru Prší])
+                    #text(size: 12pt, fill: gray, title)
                 ],
                 image(logo, height: 1.5em),
             )
@@ -26,7 +28,7 @@
             v(-0.4em)
             grid(
                 columns: (1fr, auto),
-                text(size: 12pt, fill: gray, [Josef Vašata -- Obhajoba bakalářské práce]),
+                text(size: 12pt, fill: gray, author),
                 text(size: 12pt, fill: gray, counter(page).display()),
             )
         }
@@ -48,76 +50,71 @@
     body
 }
 
-// --- Titulní snímek ---
 #page(header: none, footer: none)[
     #align(center + horizon)[
         #image(logo, width: 25%)
         #v(1em)
-        #text(size: 34pt, weight: "bold", fill: fit-blue)[Posilované učení pro karetní hru Prší]
+        #text(size: 34pt, weight: "bold", fill: fit-blue)[#title]
         #v(0.5em)
-        #text(size: 24pt)[Josef Vašata]
-        #linebreak()
-        #text(size: 14pt, style: "italic")[Obhajoba bakalářské práce]
+        #text(size: 24pt)[#author]
         #v(3em)
         #grid(
             columns: (1fr, 1fr),
             align(left)[
-                #text(size: 15pt)[*Vedoucí:* Ing. Daniel Vašata, Ph.D.] \
-                #text(size: 15pt)[*Obor:* Umělá inteligence]
+                #text(size: 15pt)[*Supervisor:* Ing. Daniel Vašata, Ph.D.]
             ],
             align(right)[
-                #text(size: 15pt)[2026]
+                #text(size: 15pt)[#datetime.today().display("[month repr:long] [year]")]
             ],
         )
         #v(2em)
     ]
 ]
 
-// --- Snímky ---
-
-#slide("Motivace")[
-    - Prší -- populární hra v ČR
-    - Zajímavý problém pro AI
-        - Velká míra stochasticity
-        - Neúplná informace
+#slide("Motivation")[
+    - Prší -- popular card game in the Czech Republic
+    - Interesting problem for AI
+        - High level of stochasticity
+        - Incomplete information
 ]
 
-#slide("Cíle práce")[
-    1. Implementace prostředí pro Prší
-    2. Srovnání více RL přístupů:
-        - Tabulkové metody
-        - Hluboké učení
-    3. Vyhodnocení:
-        - Úspěšnost proti greedy heuristice
-        - Úspěšnost proti lidským hráčům
+#slide("Goals")[
+    1. Implement an environment for Prší
+    2. Compare multiple RL approaches:
+        - Tabular methods
+        - Deep learning methods
+    3. Evaluation:
+        - Win-rate against greedy baseline
+        - Win-rate against humans
 ]
 
-#slide("Formalizace problému")[
-    - Hra je modelována jako _částečně pozorovatelný Markovský rozhodovací proces_ (POMDP)
+#slide("Formalizing The Problem")[
+    - The game is modeled as a _partially observeable Markov decision process_ (POMDP)
     #align(center, image("images/pomdp.png", height: 50%))
 ]
+// TODO: Introduce return and Q function
 
-#slide("Algoritmy")[
-    - Tabulkové metody -- Monte Carlo, Q-Learning:
-        - Metody založené na odhadu Q funkce
-        - Vyžadují diskrétní stavový prostor
+#slide("Algorithms")[
+    - Tabular methods -- Monte Carlo, Q-Learning:
+        - Based on estimating the Q function
+        - Descrete state space
     - Deep Q-Network (DQN):
         - Metoda založená na odhadu Q funkce
-        - Využívá neuronové sítě
-        - Podobné stavy $=>$ podobná hodnota
+        - Uses neural networks
+        - Similar states $=>$ similar Q estimate
     - REINFORCE:
-        - *Policy gradient* metoda (Přímo optimalizuje strategii
+        - *Policy gradient* method (Directly optimize the policy
             $pi_bold(theta) (a mid(bar) s)$)
 ]
 
-#slide("Výsledky trénování")[
+#slide("Training Results")[
     #grid(
         columns: (1.2fr, 1fr),
         gutter: 1em,
         [
-            - *REINFORCE* dosáhl *65% úspěšnosti* proti greedy strategii
-            - Tabulkové metody dosáhly přibližně 50 %
-            - DQN divergovalo
+            - *REINFORCE* achieved *65% win-rate* against the greedy agent
+            - Tabular methods reached almost 50%
+            - DQN diverged (win-rate under 30%)
         ],
         [
             #image("images/reinforce_training.svg", width: 100%)
@@ -126,53 +123,50 @@
     )
 ]
 
-#slide("Výsledky testování proti lidem")[
-    - Srovnání výkonu:
-        - Člověk vs. greedy agent: ~65% úspěšnost člověka
-        - Člověk vs. REINFORCE: *~54%* úspěšnost člověka
-    - Agent REINFORCE výrazně snížil převahu člověka
+#slide("Evaluation Against Human Players")[
+    - Performance comparison
+        - Human vs. greedy agent: ~65% human win-rate
+        - Human vs. REINFORCE: *~54%* human win-rate
+    - The REINFORCE agent lowered the human win-rate significantly,
+        performance was almost even
 ]
 
 // TODO: add human agent CLI screenshots
 
-#slide("Přínos práce")[
-    - Implementace prostředí:
-        - Rozšiřitelné prostředí pro Prší v Pythonu\ (Gymnasium API)
-    - Benchmarking:
-        - Srovnání moderních a tradičních metod posilovaného učení ve stochastickém
-            prostředí
-    - Evaluace proti lidem:
-        - Vytvoření terminálového rozhraní pro testování agentů proti reálným hráčům
+#slide("Value of The Work")[
+    - Environment implementation:
+        - Extensible Prší environment written in Pythonu\ (Gymnasium API, self-play support)
+    - Evaluation against human players:
+        - A custom CLI was created to compare agent performance to humans
 ]
 
-#slide("Závěr a budoucí práce")[
-    - Shrnutí:
-        - Metody policy gradient se dokázaly naučit strategii i~přes velkou
-            úroveň stochasticity
-    - Budoucí práce:
-        - Reprezentace stavu: Využití RNN
-        - Pokročilé algoritmy: Proximal Policy Optimization (PPO),
+#slide("Conclusion and Future work")[
+    - Policy gradient methods managed to learn a non-trivial policy
+      even through the game's high level of stochasticity
+    - Future work:
+        - State representation: Using RNNs
+        - Advanced algorithms: Proximal Policy Optimization (PPO),
             Soft Actor-Critic (SAC), MuZero
 ]
 
 #slide("")[
     #align(center + horizon)[
-        #text(size: 40pt, weight: "bold", fill: fit-blue)[Děkuji za pozornost]
+        #text(size: 40pt, weight: "bold", fill: fit-blue)[Thank you for your time]
         #v(2em)
-        #text(size: 24pt)[Dotazy?]
+        #text(size: 24pt)[Questions?]
     ]
 ]
 
-#slide("Otázky oponenta")[
+#slide("Opponent's questions")[
     #set text(size: 18pt)
 
-    *Otázka 1:* [Žádná není, jsem fakt dobrej]
+    *Q1:* [Nothing, I'm so good]
 
-    - [Nemám zatím posudek]
+    - [No assessment yet]
 
     #v(1em)
 
-    *Otázka 2:* [...]
+    *Q2:* [...]
 
     - [...]
 ]
