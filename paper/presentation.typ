@@ -1,8 +1,5 @@
 #import "@preview/diatypst:0.9.3": *
 
-// #set text(font: "DejaVu Sans", lang: "en")
-
-// #set text(size: 9pt)
 #show: slides.with(
     title: "Reinforcement Learning For Prší Card Game",
     subtitle: "Josef Vašata",
@@ -10,13 +7,9 @@
     authors: "Supervisor: Ing. Daniel Vašata Ph.D.",
     toc: false,
     theme: "full",
-    count: "number"
+    count: none,
 )
 #set heading(numbering: none)
-
-
-
-// #set text(size: 11pt)
 
 
 == Motivation
@@ -24,6 +17,7 @@
 - Interesting problem for AI
     - High level of stochasticity
     - Incomplete information
+
 
 == Goals
 + Implement an environment for Prší
@@ -34,11 +28,11 @@
     - Win-rate against greedy baseline
     - Win-rate against humans
 
+
 == Formalizing The Problem
 - The game is modeled as a _partially observeable Markov decision process_ (POMDP)
 
 #align(center, image("images/pomdp.png", height: 50%))
-
 
 #pagebreak()
 
@@ -53,28 +47,40 @@
         q_pi (s, a) = EE_pi [G_t mid(bar) S_t = s, A_t = a]
     $
 
+
 == Algorithms
 - Tabular methods -- Monte Carlo, Q-Learning:
     - Based on estimating the action-value function through
-        a learned estimate~Q
+        a learned Q table
     - Descrete state space
-- (Double) Deep Q-Network -- (D)DQN:
-    - Learns to estimate Q
+- (Double) Deep Q-Network:
+    - Learns to estimate Q as a function
     - Uses neural networks
     - Similar states $=>$ similar Q estimate
 - REINFORCE:
-    - Policy gradient method (Directly optimize the policy
-        $pi_bold(theta) (a mid(bar) s)$)
+    - Policy gradient method -- directly optimizes the policy
+        $pi_bold(theta) (a mid(bar) s)$
+
 
 == Training Results
 #grid(
-    columns: (1.2fr, 1fr),
+    columns: (1.21fr, 1fr),
     gutter: 1em,
     [
-        // TODO: concrete win-rates
-        - *REINFORCE* achieved *65% win-rate* against the greedy agent
+        #v(3em)
+        #table(
+            columns: 2,
+            align: (left, right),
+            [ *Best Agent* ], [ *Win-rate vs. greedy* ],
+            [ REINFORCE ], [ 64.90% ],
+            [ Monte Carlo ], [ 49.80% ],
+            [ Q-Learning ], [ 40.10% ],
+            [ DQN ], [ 27.60% ],
+            [ DDQN ], [ 25.00% ],
+        )
+        - *REINFORCE* achieved *\~65% win-rate*
         - Tabular methods reached almost 50%
-        - (D)DQN diverged (win-rate under 30%)
+        - (D)DQN diverged
     ],
     [
         #image("images/reinforce_training.svg", width: 100%)
@@ -84,13 +90,25 @@
     ],
 )
 
+
 == Evaluation Against Human Players
-- Performance comparison
-    - Human vs. greedy agent: ~65% human win-rate
-    - Human vs. REINFORCE: *~54%* human win-rate
+#v(3em)
+#align(
+    [
+        #table(
+            columns: 4,
+            align: (left, right, right, right),
+            [ *Agent* ], [ *Human win-rate* ], [ *Games played* ], [ *Players* ],
+            [ Greedy ], [ 65% ], [ 100 ], [ 1 ],
+            [ REINFORCE ], [ *54.20%* ], [ 284 ], [ 10 ],
+        )
+    ],
+    center,
+)
+#v(1em)
 - The REINFORCE agent lowered the human win-rate significantly,
-    performance was almost even
-// TODO: table
+    performance was nearly even
+
 
 == Value of The Work
 - Environment implementation:
@@ -111,15 +129,46 @@
 #align(center)[#text(size: 9pt)[_Human evaluation CLI with and without icons_]]
 
 
-== Conclusion and Future work
-    - Policy gradient methods managed to learn a non-trivial policy
-      even through the game's high level of stochasticity
-    - Future work:
-        - State representation: Using RNNs
-        - Advanced algorithms: Proximal Policy Optimization (PPO),
-            Soft Actor-Critic (SAC), MuZero
+== Conclusion and Future Work
+- Policy gradient methods managed to learn a non-trivial policy
+    even through the game's high level of stochasticity
+- Future work:
+    - Multi-agent environment (currently 1v1)
+    - State representation: Using RNNs
+    - Advanced algorithms: Proximal Policy Optimization (PPO),
+        Soft Actor-Critic (SAC), MuZero
+    - GUI for human evaluation
 
-= Thank you for your attention
 
-== Opponent questions
-- TODO
+= Thank you for your attention \ #text([
+    Questions?
+], size: 12pt, weight: "medium", fill: black)
+
+
+== Opponent question \#01
+*The Prší environment is a game with incomplete information and a significant
+random component. How would your approach change if the agent had access to
+complete information about the game state? Do you think that in
+such an environment, (D)DQN would have a better chance of success?*
+
+#line(length: 100%)
+// TODO: ANSWER!!
+
+_[original]: Prostředí Prší představuje hru s neúplnou informací a významnou
+náhodnou složkou. Jak byste změnil svůj přístup, pokud by agent měl k dispozici
+úplnou informaci o stavu hry, tedy i karty soupeře a pořadí karet
+v lízacím balíčku? Myslíte si, že by v takovém prostředí měly metody
+DQN a DDQN větší šanci na úspěch?_
+
+
+== Opponent question \#02
+*To what extent do you think the failure of (D)DQN is due to incomplete
+information about the game state, and to what extent is it due to
+limited computational capacity or the chosen state representation?*
+
+#line(length: 100%)
+// TODO: ANSWER!!
+
+_[original]: Do jaké míry podle vás za neúspěchem DQN a DDQN stojí neúplná
+informace o stavu hry a do jaké míry omezená výpočetní kapacita či
+zvolená reprezentace stavu?_
