@@ -32,7 +32,7 @@
     font: "New Computer Modern",
 
     // set to true if generating a PDF for print (shifts page layout, correctly aligns odd/even pages,...)
-    print: false,
+    print: true,
 
     two-page-abstract: true,
 

@@ -18,6 +18,10 @@
     - High level of stochasticity
     - Incomplete information
 
+#v(2.5em)
+#align(center, image("images/kings.jpg", height: 40%))
+#v(-0.8em)
+#align(center)[#text(size: 9pt)[_King cards of each suit in a Prší deck_]]
 
 == Goals
 + Implement an environment for Prší
@@ -71,7 +75,7 @@
         #table(
             columns: 2,
             align: (left, right),
-            [ *Best Agent* ], [ *Win-rate vs. greedy* ],
+            [ *Best agent* ], [ *Win-rate vs. greedy* ],
             [ REINFORCE ], [ 64.90% ],
             [ Monte Carlo ], [ 49.80% ],
             [ Q-Learning ], [ 40.10% ],
