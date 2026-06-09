@@ -38,18 +38,12 @@
 
 #align(center, image("images/pomdp.png", height: 50%))
 
-#pagebreak()
+- We define the return $G_t$ as the cummulative sum of (discounted) rewards,
+    $G_t = sum_(k=0)^infinity gamma^k R_(t+1+k)$
+    , the agent then tries to maximize $EE [G_t]$
 
-- We define the return $G_t$ as the cummulative sum of rewards,
-    the agent then tries to maximize $EE [G_t]$
-/ *Return $G_t$*: $
-        G_t = R_(t+1) + gamma R_(t+2) + gamma^2 R_(t+3) + ...
-        = sum_(k=0)^infinity gamma^k R_(t+1+k)
-    $
-- For an agent's policy $pi$ we also define the action-value function $q_pi (s, a)$
-/ *Action-value function $q_pi (s, a)$*: $
-        q_pi (s, a) = EE_pi [G_t mid(bar) S_t = s, A_t = a]
-    $
+- For an agent's policy $pi$ we also define the action-value function
+    \ $q_pi (s, a) = EE_pi [G_t mid(bar) S_t = s, A_t = a]$
 
 
 == Algorithms
@@ -150,29 +144,16 @@
 
 
 == Opponent question \#01
-*The Prší environment is a game with incomplete information and a significant
-random component. How would your approach change if the agent had access to
-complete information about the game state? Do you think that in
-such an environment, (D)DQN would have a better chance of success?*
 
-#line(length: 100%)
-// TODO: ANSWER!!
-
-_[original]: Prostředí Prší představuje hru s neúplnou informací a významnou
+Prostředí Prší představuje hru s neúplnou informací a významnou
 náhodnou složkou. Jak byste změnil svůj přístup, pokud by agent měl k dispozici
 úplnou informaci o stavu hry, tedy i karty soupeře a pořadí karet
 v lízacím balíčku? Myslíte si, že by v takovém prostředí měly metody
-DQN a DDQN větší šanci na úspěch?_
+DQN a DDQN větší šanci na úspěch?
 
 
 == Opponent question \#02
-*To what extent do you think the failure of (D)DQN is due to incomplete
-information about the game state, and to what extent is it due to
-limited computational capacity or the chosen state representation?*
 
-#line(length: 100%)
-// TODO: ANSWER!!
-
-_[original]: Do jaké míry podle vás za neúspěchem DQN a DDQN stojí neúplná
+Do jaké míry podle vás za neúspěchem DQN a DDQN stojí neúplná
 informace o stavu hry a do jaké míry omezená výpočetní kapacita či
-zvolená reprezentace stavu?_
+zvolená reprezentace stavu?
