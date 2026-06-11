@@ -81,9 +81,9 @@
         - (D)DQN diverged
     ],
     [
-        #image("images/reinforce_training.svg", width: 100%)
+        #align(center, image("images/reinforce_training.svg", width: 110%))
         #align(center)[#text(size: 9pt)[_REINFORCE win-rate throughout learning_]]
-        #image("images/double_dqn_training.svg", width: 100%)
+        #image("images/double_dqn_training.svg", width: 110%)
         #align(center)[#text(size: 9pt)[_DDQN win-rate throughout learning_]]
     ],
 )
@@ -143,7 +143,7 @@
 ], size: 12pt, weight: "medium", fill: black)
 
 
-== Opponent question \#01
+== Otázka opponenta \#01
 
 Prostředí Prší představuje hru s neúplnou informací a významnou
 náhodnou složkou. Jak byste změnil svůj přístup, pokud by agent měl k dispozici
@@ -151,9 +151,34 @@ náhodnou složkou. Jak byste změnil svůj přístup, pokud by agent měl k dis
 v lízacím balíčku? Myslíte si, že by v takovém prostředí měly metody
 DQN a DDQN větší šanci na úspěch?
 
+#pagebreak()
 
-== Opponent question \#02
+- Metody (D)DQN by dostávaly stejný / ještě komplikovanější stav
+- Znalost úplné informace o hře $=>$ dosud nepoužitelné algoritmy
+    - Minimax, Alpha-Beta Pruning, ...
+    - Monte Carlo Tree Search (AlphaZero)
+
+#align(center, image("images/ab-pruning.png", height: 60%))
+
+== Otázka opponenta \#02
 
 Do jaké míry podle vás za neúspěchem DQN a DDQN stojí neúplná
 informace o stavu hry a do jaké míry omezená výpočetní kapacita či
 zvolená reprezentace stavu?
+
+#pagebreak()
+
+*Reprezentace stavu jako pro tabulkové metody*
+- 1000 epizod, $epsilon = 0.1$, $gamma = 0.99$ learning rate = $5 dot 10^(-5)$, batch size = 32,\
+    $2 times 1024$ skrytých neuronů, spouštěno lokálně
+#align(center, image("images/dqn-small-training.png", width: 25em))
+#align(center, image("images/dqn-small-eval.png", width: 25em))
+
+#pagebreak()
+
+*REINFORCE with Baseline*
+- Monte Carlo odhad state-value funkce
+/ * REINFORCE Baseline update*: $
+delta <- G_t - hat(v)(S_t; bold(w))\
+bold(w) <- bold(w) + alpha_w delta nabla hat(v)(S_t; bold(w))\
+$
